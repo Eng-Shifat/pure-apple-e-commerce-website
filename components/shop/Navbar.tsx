@@ -2,14 +2,55 @@
 
 import Link from "next/link";
 import ShineLogo from "./ShineLogo";
-import { useState } from "react";
-import { Search, Heart, ShoppingCart, User, ChevronDown, Menu, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import {
+  Search, Heart, ShoppingCart, User, ChevronDown, ChevronRight, Menu, X,
+  Home, ShoppingBag, LayoutGrid, BadgePercent, Info,
+} from "lucide-react";
+
+const mobileLinks = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Shop", href: "/products", icon: ShoppingBag },
+  { label: "Categories", href: "/products?view=categories", icon: LayoutGrid },
+  { label: "Deals", href: "/products?deals=true", icon: BadgePercent },
+  { label: "About", href: "/about", icon: Info },
+];
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
+  const pathname = usePathname();
+  const close = () => setMobileOpen(false);
+
+  // only links without a query string can be matched by path alone
+  const isActive = (href: string) =>
+    !href.includes("?") && (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
+  // close when the page changes
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // while the menu is open: Esc closes it, page behind doesn't scroll, resizing to desktop closes it
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onMq = () => mq.matches && setMobileOpen(false);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    mq.addEventListener("change", onMq);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+      mq.removeEventListener("change", onMq);
+    };
+  }, [mobileOpen]);
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl backdrop-saturate-150 border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.05)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -79,6 +120,9 @@ export default function Navbar() {
             </Link>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
               className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-white/60 text-gray-800 active:scale-95 transition-transform"
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -87,16 +131,61 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ── Mobile Menu ── */}
-      <div className={`md:hidden border-t border-white/40 overflow-hidden transition-all duration-300 ${mobileOpen ? "max-h-64 py-4" : "max-h-0"}`}>
-        <div className="px-4 space-y-3">
-          <Link href="/" className="block text-brand-600 font-medium text-sm">Home</Link>
-          <Link href="/products" className="block text-gray-800 text-sm">Shop</Link>
-          <Link href="/products?view=categories" className="block text-gray-800 text-sm">Categories</Link>
-          <Link href="/products?deals=true" className="block text-gray-800 text-sm">Deals</Link>
-          <Link href="/about" className="block text-gray-800 text-sm">About</Link>
-        </div>
-      </div>
     </header>
+
+    {/* ── Mobile menu: glass panel (sits outside <header> so its blur sees the page behind it) ── */}
+    <div className="md:hidden">
+      <div
+        aria-hidden="true"
+        onClick={close}
+        className={`fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-[2px] transition-opacity duration-300 ${
+          mobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      />
+      <nav
+        id="mobile-menu"
+        aria-label="Mobile"
+        className={`fixed left-3 right-3 top-[72px] z-50 origin-top rounded-3xl border border-white/60 bg-white/60 p-2 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_24px_60px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.7)] transition-all duration-300 ease-out ${
+          mobileOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-3 scale-95 pointer-events-none invisible"
+        }`}
+      >
+        <ul className="space-y-1">
+          {mobileLinks.map((l, i) => {
+            const Icon = l.icon;
+            const active = isActive(l.href);
+            return (
+              <li
+                key={l.label}
+                className={`transition-all duration-300 ${mobileOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+                style={{ transitionDelay: mobileOpen ? `${70 + i * 45}ms` : "0ms" }}
+              >
+                <Link
+                  href={l.href}
+                  onClick={close}
+                  className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors ${
+                    active ? "bg-white/75 shadow-sm" : "hover:bg-white/50 active:bg-white/60"
+                  }`}
+                >
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                      active
+                        ? "bg-gradient-to-b from-brand-400 to-brand-500 text-white shadow-md shadow-brand-500/30"
+                        : "bg-white/70 text-gray-700"
+                    }`}
+                  >
+                    <Icon size={18} strokeWidth={2} />
+                  </span>
+                  <span className={`flex-1 text-[15px] font-semibold tracking-tight ${active ? "text-brand-600" : "text-gray-800"}`}>
+                    {l.label}
+                  </span>
+                  <ChevronRight size={16} className={active ? "text-brand-500" : "text-gray-400"} />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
+    </>
   );
 }
