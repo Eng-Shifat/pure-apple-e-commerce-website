@@ -1,19 +1,90 @@
 "use client";
 
-import { Suspense, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, ContactShadows, PresentationControls } from "@react-three/drei";
+import { useGLTF, Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 
-function IPhone({ ...props }: any) {
+type DragState = {
+  dragging: boolean;
+  lastX: number;
+  lastY: number;
+  dx: number; // pending horizontal drag (px)
+  dy: number; // pending vertical drag (px)
+  velocity: number; // inertia (rad/frame)
+  lastInteraction: number;
+};
+
+const AUTO_SPEED = 0.006; // right to left
+const RESUME_DELAY = 1500; // ms after release before auto-rotate resumes
+
+function IPhone({ drag, ...props }: any) {
   const { scene } = useGLTF("/models/iphone.glb");
   const ref = useRef<THREE.Group>(null);
 
+  // Kill all glare on the phones:
+  //  - "Screen glass" (transmission layer) and "Setka" (glare overlay PNG) are hidden
+  //  - the display ("Screen") becomes an unlit material, so lights / environment
+  //    can never wash the wallpaper out with white reflections
+  useEffect(() => {
+    const swap = new Map<THREE.Material, THREE.Material>();
+    scene.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const apply = (m: THREE.Material) => {
+        const name = (m.name || "").toLowerCase().trim();
+        if (name === "screen glass" || name === "setka") {
+          m.visible = false;
+          return m;
+        }
+        if (name === "screen") {
+          if (!swap.has(m)) {
+            const src = m as THREE.MeshStandardMaterial;
+            if (src.map) src.map.colorSpace = THREE.SRGBColorSpace;
+            swap.set(
+              m,
+              new THREE.MeshBasicMaterial({
+                map: src.map ?? null,
+                color: src.map ? 0xffffff : 0x050507,
+                toneMapped: false,
+                side: src.side,
+              })
+            );
+          }
+          return swap.get(m)!;
+        }
+        return m;
+      };
+      mesh.material = Array.isArray(mesh.material)
+        ? mesh.material.map(apply)
+        : apply(mesh.material);
+    });
+  }, [scene]);
+
   useFrame(() => {
-    if (ref.current) {
-      // Right to left rotation (negative = right to left)
-      ref.current.rotation.y -= 0.006;
+    const g = ref.current;
+    if (!g) return;
+    const d: DragState = drag.current;
+
+    if (d.dragging) {
+      g.rotation.y += d.dx * 0.01;
+      g.rotation.x = THREE.MathUtils.clamp(g.rotation.x + d.dy * 0.006, -0.6, 0.6);
+      d.velocity = d.dx * 0.01;
+      d.dx = 0;
+      d.dy = 0;
+      return;
     }
+
+    // inertia after release
+    if (Math.abs(d.velocity) > 0.0005) {
+      g.rotation.y += d.velocity;
+      d.velocity *= 0.95;
+    } else if (performance.now() - d.lastInteraction > RESUME_DELAY) {
+      g.rotation.y -= AUTO_SPEED;
+    }
+
+    // ease tilt back to upright
+    g.rotation.x *= 0.92;
   });
 
   return (
@@ -50,8 +121,63 @@ function Stand() {
 }
 
 export default function PhoneModel() {
+  const drag = useRef<DragState>({
+    dragging: false,
+    lastX: 0,
+    lastY: 0,
+    dx: 0,
+    dy: 0,
+    velocity: 0,
+    lastInteraction: 0,
+  });
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const d = drag.current;
+
+    const down = (e: PointerEvent) => {
+      d.dragging = true;
+      d.lastX = e.clientX;
+      d.lastY = e.clientY;
+      d.velocity = 0;
+      el.setPointerCapture(e.pointerId);
+      el.style.cursor = "grabbing";
+    };
+    const move = (e: PointerEvent) => {
+      if (!d.dragging) return;
+      d.dx += e.clientX - d.lastX;
+      d.dy += e.clientY - d.lastY;
+      d.lastX = e.clientX;
+      d.lastY = e.clientY;
+    };
+    const up = (e: PointerEvent) => {
+      if (!d.dragging) return;
+      d.dragging = false;
+      d.lastInteraction = performance.now();
+      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+      el.style.cursor = "grab";
+    };
+
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+    };
+  }, []);
+
   return (
-    <div className="relative w-72 h-[480px] lg:w-80 lg:h-[520px]">
+    <div
+      ref={wrapRef}
+      className="relative w-80 h-[440px] lg:w-[420px] lg:h-[500px] select-none"
+      style={{ cursor: "grab", touchAction: "pan-y" }}
+    >
       <Suspense
         fallback={
           <div className="w-full h-full flex items-center justify-center">
@@ -63,6 +189,7 @@ export default function PhoneModel() {
           camera={{ position: [0, 0, 4.2], fov: 38 }}
           style={{ background: "transparent" }}
           gl={{ alpha: true, antialias: true }}
+          onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
           shadows
         >
           {/* Lighting setup — premium studio feel */}
@@ -89,16 +216,7 @@ export default function PhoneModel() {
 
           <Environment preset="studio" />
 
-          <PresentationControls
-            global
-            snap
-            zoom={1}
-            rotation={[0.05, 0, 0]}
-            polar={[-Math.PI / 8, Math.PI / 8]}
-            azimuth={[-Math.PI, Math.PI]}
-          >
-            <IPhone scale={10.5} position={[0, 0.3, 0]} />
-          </PresentationControls>
+          <IPhone drag={drag} scale={11.5} position={[0, 0.1, 0]} />
 
           <Stand />
 

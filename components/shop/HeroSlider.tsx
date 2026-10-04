@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, lazy } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Truck, RotateCcw, ShieldCheck } from "lucide-react";
 
 const PhoneModel = lazy(() => import("./PhoneModel"));
 
@@ -81,10 +81,10 @@ export default function HeroSlider() {
         style={{ background: "radial-gradient(circle, #a5b4fc 0%, transparent 70%)" }} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative flex items-center min-h-[560px] py-6">
+        <div className="relative flex items-center min-h-[440px] pt-6 pb-4">
 
           {/* ── LEFT: Text ─────────────────────── */}
-          <div className="flex-1 z-10 max-w-xs lg:max-w-sm">
+          <div className="flex-1 z-10 max-w-xs lg:max-w-sm pointer-events-none [&>*]:pointer-events-auto">
             <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">
               <span className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
               {slide.eyebrow}
@@ -110,34 +110,37 @@ export default function HeroSlider() {
             </div>
 
             {/* Trust badges */}
-            <div className="flex items-center gap-6 mt-10 pt-6 border-t border-blue-100">
+            <div className="trust-row flex items-center gap-2.5 mt-5 flex-wrap lg:flex-nowrap lg:w-[440px]">
               {[
-                { title: "Free Shipping", sub: "On orders over $50" },
-                { title: "Easy Returns", sub: "30-day policy" },
-                { title: "Secure Payment", sub: "100% secure" },
-              ].map((b) => (
-                <div key={b.title}>
-                  <p className="text-gray-800 text-xs font-semibold">{b.title}</p>
-                  <p className="text-gray-400 text-[11px]">{b.sub}</p>
-                </div>
-              ))}
+                { icon: Truck, title: "Free Shipping", sub: "On orders over $50" },
+                { icon: RotateCcw, title: "Easy Returns", sub: "30-day policy" },
+                { icon: ShieldCheck, title: "Secure Payment", sub: "100% secure" },
+              ].map((b, i) => {
+                const Icon = b.icon;
+                return (
+                  <div key={b.title} className="trust-chip" style={{ animationDelay: `${0.15 + i * 0.12}s` }}>
+                    <span className="trust-icon">
+                      <Icon size={14} strokeWidth={2.2} />
+                    </span>
+                    <span className="flex flex-col leading-tight text-left">
+                      <span className="text-gray-800 text-[11px] font-semibold whitespace-nowrap">{b.title}</span>
+                      <span className="text-gray-400 text-[10px] whitespace-nowrap">{b.sub}</span>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* ── CENTER: 3D Phone ────────────────── */}
-          <div className="absolute left-1/2 -translate-x-1/2 z-0 flex items-center justify-center">
-            {/* Rotating rings */}
-            <div className="absolute w-[380px] h-[380px] rounded-full border border-dashed border-blue-300/50"
-              style={{ animation: "spinRing 18s linear infinite" }} />
-            <div className="absolute w-[280px] h-[280px] rounded-full border border-indigo-200/40"
-              style={{ animation: "spinRing 11s linear infinite reverse" }} />
+          <div className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center justify-center">
             {/* Center glow */}
-            <div className="absolute w-64 h-64 rounded-full blur-3xl"
+            <div className="absolute pointer-events-none w-64 h-64 rounded-full blur-3xl"
               style={{ background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)" }} />
 
             <Suspense
               fallback={
-                <div className="w-72 h-[480px] flex items-center justify-center">
+                <div className="w-80 h-[440px] flex items-center justify-center">
                   <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
                 </div>
               }
@@ -147,8 +150,8 @@ export default function HeroSlider() {
           </div>
 
           {/* ── RIGHT: Product Card ─────────────── */}
-          <div className="flex-1 flex justify-end z-10">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl shadow-blue-100 p-5 w-44 lg:w-52 border border-white">
+          <div className="flex-1 flex justify-end z-10 pointer-events-none">
+            <div className="pointer-events-auto bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl shadow-blue-100 p-5 w-44 lg:w-52 border border-white">
               <span className="inline-block bg-blue-50 text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-full mb-3">
                 {slide.cardBadge}
               </span>
@@ -176,7 +179,7 @@ export default function HeroSlider() {
       </button>
 
       {/* Dots */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
         {slides.map((_, i) => (
           <button key={i} onClick={() => goTo(i)}
             className={`rounded-full transition-all ${i === current ? "w-6 h-2 bg-blue-600" : "w-2 h-2 bg-blue-300"}`} />
@@ -184,9 +187,71 @@ export default function HeroSlider() {
       </div>
 
       <style jsx>{`
-        @keyframes spinRing {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
+        @keyframes chipIn {
+          from { opacity: 0; transform: translateY(10px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes chipShine {
+          0%, 60% { transform: translateX(-130%) skewX(-20deg); }
+          100%    { transform: translateX(260%) skewX(-20deg); }
+        }
+        @keyframes iconPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35); }
+          50%      { box-shadow: 0 0 0 5px rgba(37, 99, 235, 0); }
+        }
+        .trust-chip {
+          position: relative;
+          overflow: hidden;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 14px 6px 6px;
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.65);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.9);
+          box-shadow: 0 4px 14px -6px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          cursor: default;
+          opacity: 0;
+          animation: chipIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.35s ease, background 0.35s ease;
+        }
+        .trust-chip::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: 40%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+          transform: translateX(-130%) skewX(-20deg);
+          animation: chipShine 5s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .trust-chip:nth-child(2)::after { animation-delay: 0.4s; }
+        .trust-chip:nth-child(3)::after { animation-delay: 0.8s; }
+        .trust-chip:hover {
+          transform: translateY(-3px);
+          background: rgba(255, 255, 255, 0.95);
+          box-shadow: 0 12px 24px -8px rgba(37, 99, 235, 0.4), inset 0 1px 0 #fff;
+        }
+        .trust-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border-radius: 9999px;
+          color: #fff;
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          animation: iconPulse 2.8s ease-in-out infinite;
+          transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .trust-chip:hover .trust-icon { transform: rotate(-12deg) scale(1.12); }
+        @media (prefers-reduced-motion: reduce) {
+          .trust-chip, .trust-chip::after, .trust-icon { animation: none; opacity: 1; }
         }
       `}</style>
     </section>
