@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 import PhoneModelLazy from "./PhoneModelLazy";
 
@@ -38,23 +38,70 @@ const slides = [
   },
 ];
 
+const AUTO_MS = 6000; // normal time between slides
+const RESUME_MS = 2000; // after the 3D phone is released / un-hovered: wait this long, then change slide
+
 export default function HeroSlider() {
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
+
+  // Auto-slide is paused while the 3D phone is touched (finger down) or hovered (mouse).
+  // When it is let go, the slide changes after RESUME_MS of no interaction.
+  const nextAt = useRef(Date.now() + AUTO_MS);
+  const holds = useRef({ pointers: new Set<number>(), hover: false, last: 0 });
 
   const goTo = (index: number) => {
     if (animating) return;
     setAnimating(true);
     setCurrent(index);
+    nextAt.current = Date.now() + AUTO_MS;
     setTimeout(() => setAnimating(false), 600);
   };
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length);
-    }, 6000);
+      const h = holds.current;
+      // safety: a finger that never reported "up" must not freeze the slider forever
+      if (h.pointers.size && Date.now() - h.last > 10000) h.pointers.clear();
+      if (h.pointers.size > 0 || h.hover) return; // being touched / hovered → stay on this slide
+      if (Date.now() >= nextAt.current) {
+        setCurrent((prev) => (prev + 1) % slides.length);
+        nextAt.current = Date.now() + AUTO_MS;
+      }
+    }, 200);
     return () => clearInterval(timer);
   }, []);
+
+  const released = () => {
+    const h = holds.current;
+    if (h.pointers.size === 0 && !h.hover) nextAt.current = Date.now() + RESUME_MS;
+  };
+  const hold3d = {
+    onPointerDown: (e: React.PointerEvent) => {
+      holds.current.pointers.add(e.pointerId);
+      holds.current.last = Date.now();
+    },
+    onPointerMove: () => {
+      holds.current.last = Date.now();
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      holds.current.pointers.delete(e.pointerId);
+      released();
+    },
+    onPointerCancel: (e: React.PointerEvent) => {
+      holds.current.pointers.delete(e.pointerId);
+      released();
+    },
+    onPointerEnter: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") holds.current.hover = true;
+    },
+    onPointerLeave: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") {
+        holds.current.hover = false;
+        released();
+      }
+    },
+  };
 
   const slide = slides[current];
 
@@ -155,14 +202,14 @@ export default function HeroSlider() {
             </div>
           </div>
 
-          {/* Buttons under the banner (mobile / tablet) */}
-          {cta("flex lg:hidden p-3 pt-2")}
+          {/* Buttons under the banner (tablet only; hidden on phones) */}
+          {cta("hidden sm:flex lg:hidden p-3 pt-2")}
         </div>
         {/* ═════════ end LEFT ═════════ */}
 
         {/* ═════════ RIGHT (30%): 3D phone + product card ═════════ */}
         <div
-          className="relative overflow-hidden rounded-3xl shadow-sm h-[440px] sm:h-[480px] lg:h-auto min-w-0"
+          className="relative overflow-hidden rounded-3xl shadow-sm h-[350px] sm:h-[480px] lg:h-auto min-w-0"
           style={{ background: "linear-gradient(160deg, #0b1230 0%, #050814 60%, #1a0d08 100%)" }}
         >
           <div
@@ -171,27 +218,30 @@ export default function HeroSlider() {
           />
 
           {/* 3D phone sits above the product card (changes together with the banner) */}
-          <div className="absolute inset-x-0 top-0 bottom-28">
+          <div className="absolute inset-x-0 top-0 bottom-[84px] sm:bottom-28" {...hold3d}>
             <PhoneModelLazy fill model={slide.model} />
           </div>
 
           {/* ── Product card (changes with every slide) ── */}
-          <div className="absolute inset-x-3 bottom-4 z-20">
-            <div className="flex items-center justify-between gap-3 rounded-2xl pl-4 pr-2.5 py-2.5 bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.18)]">
-              <div className="min-w-0">
-                <span className="inline-block bg-brand-500/20 text-brand-300 border border-brand-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full mb-1">
+          <div className="absolute inset-x-3 bottom-3 sm:bottom-4 z-20">
+            <div className="relative grid grid-cols-[1fr_auto] items-center gap-3 rounded-[22px] sm:rounded-2xl py-3 pl-4 pr-3.5 sm:pr-2.5 sm:py-2.5 bg-gradient-to-br from-white/[0.16] to-white/[0.05] sm:bg-none sm:bg-white/10 backdrop-blur-2xl border border-white/[0.14] sm:border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.22)]">
+              <div className="min-w-0 flex flex-col items-start gap-1.5 sm:gap-0 sm:block">
+                <span className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-brand-300 sm:inline-block sm:bg-brand-500/20 sm:border sm:border-brand-400/30 sm:px-2 sm:py-0.5 sm:rounded-full sm:mb-1 sm:normal-case sm:tracking-normal">
+                  <span aria-hidden="true" className="sm:hidden w-1 h-1 rounded-full bg-brand-400 shadow-[0_0_6px_2px_rgba(251,87,36,0.6)]" />
                   {slide.cardBadge}
                 </span>
-                <h3 className="text-white font-bold text-sm leading-tight line-clamp-2">{slide.cardName}</h3>
-                <p className="text-white/55 text-[11px] leading-tight mt-0.5">
-                  {slide.cardPriceLabel} <span className="text-white font-extrabold text-base">{slide.cardPrice}</span>
+                <h3 className="text-white font-bold text-base sm:text-sm tracking-tight leading-tight line-clamp-2">{slide.cardName}</h3>
+                <p className="flex items-baseline gap-1.5 sm:block text-white/50 text-[11px] leading-none sm:leading-tight sm:mt-0.5">
+                  {slide.cardPriceLabel} <span className="text-white font-extrabold text-xl sm:text-base tracking-tight">{slide.cardPrice}</span>
                 </p>
               </div>
               <Link
                 href={slide.cardHref}
-                className="shrink-0 text-center bg-brand-500 hover:bg-brand-400 text-white font-semibold text-xs px-4 py-3 rounded-xl transition-colors shadow-lg shadow-brand-500/30"
+                className="inline-flex items-center justify-center gap-1.5 shrink-0 h-11 px-5 rounded-full bg-gradient-to-b from-brand-400 to-brand-500 text-white text-[13px] font-semibold tracking-wide shadow-[0_6px_18px_rgba(251,87,36,0.45),inset_0_1px_0_rgba(255,255,255,0.35)] transition active:scale-95 hover:brightness-110 sm:h-auto sm:px-4 sm:py-3 sm:rounded-xl sm:bg-none sm:bg-brand-500 sm:hover:bg-brand-400 sm:hover:brightness-100 sm:text-xs sm:tracking-normal sm:shadow-lg sm:shadow-brand-500/30"
               >
-                BUY NOW →
+                BUY NOW
+                <ArrowRight size={15} strokeWidth={2.5} className="sm:hidden" />
+                <span className="hidden sm:inline">→</span>
               </Link>
             </div>
           </div>

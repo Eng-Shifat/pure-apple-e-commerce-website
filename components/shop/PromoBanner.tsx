@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function PromoBanner() {
   return (
-    <section className="py-8 bg-gray-50">
+    <section className="py-5 md:py-8 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           className="relative rounded-2xl overflow-hidden"

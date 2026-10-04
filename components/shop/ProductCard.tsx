@@ -96,7 +96,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       </div>
 
       {/* ── Info Zone ── */}
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
 
         {/* Name */}
         <Link href={`/products/${product.slug}`}>
@@ -110,20 +110,20 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
         {/* Specs pills (optional) */}
         {product.specs && (
-          <div className="flex items-center flex-nowrap gap-1.5 mt-2 overflow-hidden">
+          <div className="flex items-center flex-nowrap gap-1 sm:gap-1.5 mt-2 overflow-hidden">
             {product.specs.screen && (
-              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1.5 py-0.5">
-                📱 {product.specs.screen}
+              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1 sm:px-1.5 py-0.5">
+                <span className="hidden sm:inline">📱</span>{product.specs.screen}
               </span>
             )}
             {product.specs.ram && (
-              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1.5 py-0.5">
-                ⚙️ {product.specs.ram}
+              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1 sm:px-1.5 py-0.5">
+                <span className="hidden sm:inline">⚙️</span>{product.specs.ram}
               </span>
             )}
             {product.specs.camera && (
-              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1.5 py-0.5">
-                📷 {product.specs.camera}
+              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1 sm:px-1.5 py-0.5">
+                <span className="hidden sm:inline">📷</span>{product.specs.camera}
               </span>
             )}
           </div>
@@ -145,23 +145,23 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         <div className="flex-1 min-h-[8px]" />
 
         {/* Buttons */}
-        <div className="flex gap-2 mt-3">
+        <div className="grid grid-cols-[3fr_2fr] sm:grid-cols-[1fr_auto] gap-1.5 sm:gap-2 mt-3">
           <button
             onClick={handleAddToCart}
-            className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl transition-all duration-200 active:scale-95 shadow-sm
+            className={`min-w-0 h-9 flex items-center justify-center gap-1.5 whitespace-nowrap text-[11px] sm:text-xs font-semibold px-1 sm:px-3 rounded-xl transition-all duration-200 active:scale-95 shadow-sm
               ${added
                 ? "bg-leaf-500 text-white"
                 : "bg-brand-500 hover:bg-brand-600 text-white hover:shadow-md"
               }`}
           >
-            <ShoppingCart size={13} />
+            <ShoppingCart size={13} className="hidden sm:block shrink-0" />
             {added ? "Added!" : "Add to Cart"}
           </button>
           <Link
             href={`/products/${product.slug}`}
-            className="flex items-center justify-center gap-1 text-xs font-semibold py-2.5 px-3 rounded-xl border-2 border-brand-200 text-brand-500 hover:bg-brand-50 transition-all"
+            className="min-w-0 h-9 flex items-center justify-center gap-1 whitespace-nowrap text-[11px] sm:text-xs font-semibold px-1 sm:px-3 rounded-xl border-2 border-brand-200 text-brand-500 hover:bg-brand-50 transition-all"
           >
-            <Zap size={12} />
+            <Zap size={12} className="hidden sm:block shrink-0" />
             Buy
           </Link>
         </div>

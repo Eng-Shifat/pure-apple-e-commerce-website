@@ -4,6 +4,7 @@ import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNo
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
+import { Plus, Minus, RotateCcw } from "lucide-react";
 
 type DragState = {
   dragging: boolean;
@@ -13,6 +14,7 @@ type DragState = {
   dy: number; // pending vertical drag (px)
   velocity: number; // inertia (rad/frame)
   lastInteraction: number;
+  zoom: number; // zoom target (1 = normal) – set by pinch / ctrl+wheel
 };
 
 // "sway": the pair gently swings around the showcase pose (recommended)
@@ -22,6 +24,8 @@ const AUTO_SPEED = 0.5; // rad/second, used by "spin" (~12.5 s per full turn)
 const SWAY_AMOUNT = 0.32; // radians each side, used by "sway"
 const SWAY_SPEED = 0.55;
 const RESUME_DELAY = 1500; // ms after release before auto motion resumes
+const ZOOM_MIN = 0.7; // pinch / wheel zoom limits
+const ZOOM_MAX = 2.4;
 
 // Showcase pose: the back-view phone sits behind-left, the front-view phone
 // sits in front-right, both fanned outward and overlapping (like a product render).
@@ -94,6 +98,7 @@ function IPhone({ drag, url }: { drag: any; url: string }) {
   const ref = useRef<THREE.Group>(null); // drag / auto rotation
   const intro = useRef<THREE.Group>(null); // pop-in when the slide changes
   const t = useRef(0);
+  const zoomCur = useRef(1); // smoothed zoom actually applied
 
   // size of the canvas decides how big the model may be
   const aspect = size.width / Math.max(size.height, 1);
@@ -112,7 +117,9 @@ function IPhone({ drag, url }: { drag: any; url: string }) {
 
   let fitScale: number;
   if (cfg.fit) {
-    fitScale = Math.min((visW * 0.84) / box.size.x, (visH * 0.74) / box.size.y);
+    // wide, short canvas (phones) → let the model use more of the height
+    const hFrac = aspect > 1.2 ? 0.88 : 0.74;
+    fitScale = Math.min((visW * 0.84) / box.size.x, (visH * hFrac) / box.size.y);
   } else {
     // legacy: fixed scale, slightly larger on short canvases and smaller on narrow ones
     const base = size.height >= 450 ? 1 : 1.05;
@@ -197,6 +204,12 @@ function IPhone({ drag, url }: { drag: any; url: string }) {
     if (!g) return;
     const d: DragState = drag.current;
 
+    // smooth pinch / wheel zoom (scale + re-centre so the model zooms around its middle)
+    zoomCur.current += (d.zoom - zoomCur.current) * Math.min(1, delta * 12);
+    const s = fitScale * zoomCur.current;
+    g.scale.setScalar(s);
+    if (cfg.fit) g.position.set(-box.center.x * s, -box.center.y * s, -box.center.z * s);
+
     if (d.dragging) {
       g.rotation.y += d.dx * 0.01;
       g.rotation.x = THREE.MathUtils.clamp(g.rotation.x + d.dy * 0.006, -0.6, 0.6);
@@ -266,6 +279,7 @@ export default function PhoneModel({ fill = false, model = "/models/apple-iphone
     dy: 0,
     velocity: 0,
     lastInteraction: 0,
+    zoom: 1,
   });
   const wrapRef = useRef<HTMLDivElement>(null);
   const modelOk = useModelExists(model);
@@ -289,20 +303,67 @@ export default function PhoneModel({ fill = false, model = "/models/apple-iphone
     return () => io.disconnect();
   }, []);
 
+  // on-screen zoom buttons (always work: touch, mouse, emulator)
+  const zoomBy = (f: number) => {
+    const d = drag.current;
+    d.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, d.zoom * f));
+    d.lastInteraction = performance.now();
+  };
+  const zoomReset = () => {
+    drag.current.zoom = 1;
+    drag.current.lastInteraction = performance.now();
+  };
+
+  // a new slide/model always starts un-zoomed
+  useEffect(() => {
+    drag.current.zoom = 1;
+  }, [model]);
+
+  // Touch / mouse controls:
+  //  1 finger (or mouse) drag → rotate 360°
+  //  2 fingers pinch          → zoom in / out
+  //  ctrl + wheel (trackpad pinch on desktop) → zoom
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
     const d = drag.current;
 
+    const pts = new Map<number, { x: number; y: number }>();
+    let pinchDist = 1;
+    let pinchZoom = 1;
+    const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+    const pinchNow = () => {
+      const [a, b] = Array.from(pts.values());
+      return Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    };
+
     const down = (e: PointerEvent) => {
-      d.dragging = true;
-      d.lastX = e.clientX;
-      d.lastY = e.clientY;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {}
       d.velocity = 0;
-      el.setPointerCapture(e.pointerId);
-      el.style.cursor = "grabbing";
+      if (pts.size === 1) {
+        d.dragging = true;
+        d.lastX = e.clientX;
+        d.lastY = e.clientY;
+        el.style.cursor = "grabbing";
+      } else if (pts.size === 2) {
+        d.dragging = false; // second finger → pinch instead of rotate
+        pinchDist = pinchNow();
+        pinchZoom = d.zoom;
+      }
     };
     const move = (e: PointerEvent) => {
+      const p = pts.get(e.pointerId);
+      if (!p) return;
+      p.x = e.clientX;
+      p.y = e.clientY;
+      if (pts.size >= 2) {
+        d.zoom = clampZoom((pinchZoom * pinchNow()) / pinchDist);
+        d.lastInteraction = performance.now();
+        return;
+      }
       if (!d.dragging) return;
       d.dx += e.clientX - d.lastX;
       d.dy += e.clientY - d.lastY;
@@ -310,26 +371,45 @@ export default function PhoneModel({ fill = false, model = "/models/apple-iphone
       d.lastY = e.clientY;
     };
     const up = (e: PointerEvent) => {
-      if (!d.dragging) return;
-      d.dragging = false;
-      d.lastInteraction = performance.now();
+      if (!pts.delete(e.pointerId)) return;
       if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
-      el.style.cursor = "grab";
+      d.lastInteraction = performance.now();
+      if (pts.size === 1) {
+        // one finger left after a pinch → carry on rotating with it (no jump)
+        const r = Array.from(pts.values())[0];
+        d.dragging = true;
+        d.lastX = r.x;
+        d.lastY = r.y;
+        d.dx = 0;
+        d.dy = 0;
+      } else if (pts.size === 0) {
+        d.dragging = false;
+        el.style.cursor = "grab";
+      }
+    };
+    const wheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return; // plain wheel keeps scrolling the page
+      e.preventDefault();
+      d.zoom = clampZoom(d.zoom * Math.exp(-e.deltaY * 0.01));
+      d.lastInteraction = performance.now();
     };
 
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
     el.addEventListener("pointercancel", up);
+    el.addEventListener("wheel", wheel, { passive: false });
     return () => {
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
       el.removeEventListener("pointercancel", up);
+      el.removeEventListener("wheel", wheel);
     };
   }, []);
 
   return (
+    <>
     <div
       ref={wrapRef}
       data-no-swipe
@@ -416,6 +496,28 @@ export default function PhoneModel({ fill = false, model = "/models/apple-iphone
         </div>
       )}
     </div>
+
+    {/* Zoom buttons (outside the drag area so taps are never mistaken for a rotate) */}
+    {fill && (
+      <div className="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1.5">
+        {[
+          { label: "Zoom in", onClick: () => zoomBy(1.3), icon: <Plus size={16} /> },
+          { label: "Zoom out", onClick: () => zoomBy(1 / 1.3), icon: <Minus size={16} /> },
+          { label: "Reset zoom", onClick: zoomReset, icon: <RotateCcw size={14} /> },
+        ].map((b) => (
+          <button
+            key={b.label}
+            type="button"
+            aria-label={b.label}
+            onClick={b.onClick}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 active:scale-90 backdrop-blur-md border border-white/20 text-white/90 transition"
+          >
+            {b.icon}
+          </button>
+        ))}
+      </div>
+    )}
+    </>
   );
 }
 
