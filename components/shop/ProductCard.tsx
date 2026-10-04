@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart, Star, Zap } from "lucide-react";
+import { Heart, ShoppingCart, Zap } from "lucide-react";
 import { useState } from "react";
 
 export interface Product {
@@ -110,48 +110,27 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
         {/* Specs pills (optional) */}
         {product.specs && (
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <div className="flex items-center flex-nowrap gap-1.5 mt-2 overflow-hidden">
             {product.specs.screen && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 rounded-md px-2 py-0.5">
+              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1.5 py-0.5">
                 📱 {product.specs.screen}
               </span>
             )}
             {product.specs.ram && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 rounded-md px-2 py-0.5">
+              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1.5 py-0.5">
                 ⚙️ {product.specs.ram}
               </span>
             )}
             {product.specs.camera && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 rounded-md px-2 py-0.5">
+              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1.5 py-0.5">
                 📷 {product.specs.camera}
               </span>
             )}
           </div>
         )}
 
-        {/* Stars */}
-        <div className="flex items-center gap-1 mt-2.5">
-          <div className="flex gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                size={11}
-                className={
-                  i < Math.floor(product.rating)
-                    ? "fill-sun-500 text-sun-500"
-                    : "fill-gray-200 text-gray-200"
-                }
-              />
-            ))}
-          </div>
-          <span className="text-gray-400 text-[11px] leading-none">
-            {product.rating}&nbsp;
-            <span className="text-gray-300">({product.reviewCount.toLocaleString()})</span>
-          </span>
-        </div>
-
         {/* Price row */}
-        <div className="flex items-baseline gap-2 mt-2.5">
+        <div className="flex items-baseline gap-2 mt-3">
           <span className="text-gray-900 font-extrabold text-[17px] tracking-tight">
             ৳{product.price.toLocaleString("en-BD")}
           </span>
