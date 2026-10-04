@@ -1,8 +1,17 @@
+import Image from "next/image";
 import Link from "next/link";
 import Image from "next/image";
 import { Facebook, Instagram, Youtube, Music } from "lucide-react";
 
-const quickLinks = ["Home", "Shop", "Apple", "Samsung", "About", "Contact"];
+
+const quickLinks = [
+  { label: "Home", href: "/" },
+  { label: "Shop", href: "/products" },
+  { label: "Apple", href: "/products?category=apple" },
+  { label: "Samsung", href: "/products?category=samsung" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
 const categories = ["Apple", "Samsung", "Google", "OnePlus", "Accessories"];
 const customerService = [
   { label: "Help Center", href: "/help" },
@@ -13,121 +22,106 @@ const customerService = [
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* Brand */}
+    <footer className="bg-[#0f172a] text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-10">
+
+          {/* ── Brand ── */}
           <div className="col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">PA</span>
+            <Link href="/" className="flex items-center gap-3 mb-5 group">
+              <div className="transition-transform duration-300 group-hover:scale-105">
+                <div className="relative w-14 h-14 flex-shrink-0"><Image src="/logo/pure-apple-logo.png" alt="Pure Apple" fill className="object-contain" sizes="56px" /></div>
               </div>
-              <span className="text-gray-900 font-bold text-lg">Pure Apple</span>
-            </div>
-            <p className="text-gray-400 text-xs leading-relaxed mb-5 max-w-[160px]">
-              Better Tech, Brighter Tomorrow.
+              <div className="leading-none">
+                <span className="block text-[15px] font-extrabold tracking-tight text-white">
+                  Pure <span className="text-orange-400">Apple</span>
+                </span>
+                <span className="block text-[9px] font-medium tracking-widest text-gray-400 uppercase mt-1">
+                  Mobile &amp; Gadget Shop
+                </span>
+              </div>
+            </Link>
+
+            <p className="text-gray-400 text-xs leading-relaxed mb-5 max-w-[180px]">
+              Better Tech, Brighter Tomorrow. Your trusted source for premium smartphones &amp; gadgets.
             </p>
-            <div className="flex gap-3">
-              <a href="#" className="w-8 h-8 rounded-full bg-gray-100 hover:bg-blue-100 hover:text-blue-600 text-gray-500 flex items-center justify-center transition-colors">
-                <Facebook size={14} />
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-gray-100 hover:bg-pink-100 hover:text-pink-600 text-gray-500 flex items-center justify-center transition-colors">
-                <Instagram size={14} />
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-600 text-gray-500 flex items-center justify-center transition-colors">
-                <Youtube size={14} />
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors">
-                <Music size={14} />
-              </a>
+
+            <div className="flex gap-2.5">
+              {[
+                { icon: <Facebook size={14} />, hover: "hover:bg-blue-600" },
+                { icon: <Instagram size={14} />, hover: "hover:bg-pink-600" },
+                { icon: <Youtube size={14} />, hover: "hover:bg-red-600" },
+                { icon: <Music size={14} />, hover: "hover:bg-gray-600" },
+              ].map((s, i) => (
+                <a key={i} href="#" className={`w-8 h-8 rounded-full bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all duration-200 ${s.hover}`}>
+                  {s.icon}
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* ── Quick Links ── */}
           <div>
-            <h4 className="text-gray-900 font-semibold text-sm mb-4">Quick Links</h4>
+            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">Quick Links</h4>
             <ul className="space-y-2.5">
               {quickLinks.map((link) => (
-                <li key={link}>
-                  <Link
-                    href={`/${link.toLowerCase()}`}
-                    className="text-gray-400 text-xs hover:text-blue-600 transition-colors"
-                  >
-                    {link}
-                  </Link>
+                <li key={link.label}>
+                  <Link href={link.href} className="text-gray-400 text-xs hover:text-orange-400 transition-colors">{link.label}</Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* ── Categories ── */}
           <div>
-            <h4 className="text-gray-900 font-semibold text-sm mb-4">Categories</h4>
+            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">Categories</h4>
             <ul className="space-y-2.5">
               {categories.map((cat) => (
                 <li key={cat}>
-                  <Link
-                    href={`/products?category=${cat.toLowerCase()}`}
-                    className="text-gray-400 text-xs hover:text-blue-600 transition-colors"
-                  >
-                    {cat}
-                  </Link>
+                  <Link href={`/products?category=${cat.toLowerCase()}`} className="text-gray-400 text-xs hover:text-orange-400 transition-colors">{cat}</Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Customer Service */}
+          {/* ── Customer Service ── */}
           <div>
-            <h4 className="text-gray-900 font-semibold text-sm mb-4">Customer Service</h4>
+            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">Customer Service</h4>
             <ul className="space-y-2.5">
               {customerService.map((item) => (
                 <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="text-gray-400 text-xs hover:text-blue-600 transition-colors"
-                  >
-                    {item.label}
-                  </Link>
+                  <Link href={item.href} className="text-gray-400 text-xs hover:text-orange-400 transition-colors">{item.label}</Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Payment Methods */}
+          {/* ── Payment & Contact ── */}
           <div>
-            <h4 className="text-gray-900 font-semibold text-sm mb-4">Payment Methods</h4>
-            <div className="flex flex-wrap gap-2">
-              {/* Add your payment method logos */}
+            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">Payment Methods</h4>
+            <div className="flex flex-wrap gap-2 mb-6">
               {["visa", "mastercard", "paypal", "applepay"].map((pm) => (
-                <div
-                  key={pm}
-                  className="relative w-10 h-6 rounded border border-gray-200 bg-gray-50 overflow-hidden"
-                >
-                  <Image
-                    src={`/images/payment/${pm}.png`}
-                    alt={pm}
-                    fill
-                    className="object-contain p-0.5"
-                  />
+                <div key={pm} className="relative w-10 h-6 rounded border border-white/10 bg-white/5 overflow-hidden">
+                  <Image src={`/images/payment/${pm}.png`} alt={pm} fill className="object-contain p-0.5" />
                 </div>
               ))}
+            </div>
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+              <p className="text-[10px] text-gray-400 leading-relaxed">
+                📍 Narayanganj, Dhaka, Bangladesh<br />
+                📞 +880 1XXX-XXXXXX<br />
+                ✉️ info@pureapple.com.bd
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-gray-100 mt-10 pt-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-gray-400 text-xs">
-            © 2025 Pure Apple. All rights reserved.
-          </p>
+        {/* ── Bottom Bar ── */}
+        <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-gray-500 text-xs">© 2025 Pure Apple. All rights reserved.</p>
           <div className="flex gap-4">
-            <Link href="/privacy" className="text-gray-400 text-xs hover:text-blue-600 transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="text-gray-400 text-xs hover:text-blue-600 transition-colors">
-              Terms & Conditions
-            </Link>
+            <Link href="/privacy" className="text-gray-500 text-xs hover:text-orange-400 transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="text-gray-500 text-xs hover:text-orange-400 transition-colors">Terms &amp; Conditions</Link>
           </div>
         </div>
       </div>

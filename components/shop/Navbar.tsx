@@ -1,16 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
-import {
-  Search,
-  Heart,
-  ShoppingCart,
-  User,
-  ChevronDown,
-  Menu,
-  X,
-} from "lucide-react";
+import { Search, Heart, ShoppingCart, User, ChevronDown, Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -21,26 +14,32 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">PA</span>
+          {/* ── Logo ── */}
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0 group">
+            <div className="relative w-10 h-10 transition-transform duration-300 group-hover:scale-110">
+              <Image
+                src="/logo/pure-apple-logo.png"
+                alt="Pure Apple"
+                fill
+                className="object-contain"
+                sizes="40px"
+                priority
+              />
             </div>
-            <span className="text-gray-900 font-bold text-lg tracking-tight">
-              Pure Apple
-            </span>
+            <div className="leading-none">
+              <span className="block text-[14px] font-extrabold tracking-tight text-gray-900">
+                Pure <span className="text-orange-500">Apple</span>
+              </span>
+              <span className="block text-[9px] font-medium tracking-widest text-gray-400 uppercase">
+                Mobile &amp; Gadget Shop
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop Nav */}
+          {/* ── Desktop Nav ── */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/"
-              className="text-blue-600 font-medium text-sm border-b-2 border-blue-600 pb-0.5"
-            >
-              Home
-            </Link>
+            <Link href="/" className="text-blue-600 font-medium text-sm border-b-2 border-blue-600 pb-0.5">Home</Link>
 
-            {/* Shop Dropdown */}
             <div className="relative">
               <button
                 onMouseEnter={() => setShopOpen(true)}
@@ -68,7 +67,7 @@ export default function Navbar() {
             <Link href="/about" className="text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">About</Link>
           </nav>
 
-          {/* Right Icons */}
+          {/* ── Right Icons ── */}
           <div className="flex items-center gap-2 md:gap-3">
             <Link href="/products" aria-label="Search" className="flex items-center justify-center w-10 h-10 md:w-auto md:h-auto rounded-full md:rounded-lg bg-gray-100 md:bg-transparent text-gray-700 md:text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
               <Search size={18} />
@@ -78,15 +77,11 @@ export default function Navbar() {
             </button>
             <Link href="/cart" className="relative flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-gray-100 md:bg-transparent text-gray-700 md:text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
               <ShoppingCart size={18} />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                0
-              </span>
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">0</span>
             </Link>
             <Link href="/login" className="hidden md:block p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
               <User size={18} />
             </Link>
-
-            {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-700 active:scale-95 transition-transform"
@@ -97,16 +92,16 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
+      {/* ── Mobile Menu ── */}
+      <div className={`md:hidden bg-white border-t border-gray-100 overflow-hidden transition-all duration-300 ${mobileOpen ? "max-h-64 py-4" : "max-h-0"}`}>
+        <div className="px-4 space-y-3">
           <Link href="/" className="block text-blue-600 font-medium text-sm">Home</Link>
           <Link href="/products" className="block text-gray-600 text-sm">Shop</Link>
           <Link href="/products?view=categories" className="block text-gray-600 text-sm">Categories</Link>
           <Link href="/products?deals=true" className="block text-gray-600 text-sm">Deals</Link>
           <Link href="/about" className="block text-gray-600 text-sm">About</Link>
         </div>
-      )}
+      </div>
     </header>
   );
 }

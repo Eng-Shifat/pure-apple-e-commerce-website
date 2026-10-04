@@ -1,55 +1,147 @@
 import Link from "next/link";
 import Image from "next/image";
 
-// Add your brand logos to /public/images/brands/
 const brands = [
-  { name: "Apple", logo: "/images/brands/apple.png", slug: "apple" },
-  { name: "Samsung", logo: "/images/brands/samsung.png", slug: "samsung" },
-  { name: "Google", logo: "/images/brands/google.png", slug: "google" },
-  { name: "OnePlus", logo: "/images/brands/oneplus.png", slug: "oneplus" },
-  { name: "Xiaomi", logo: "/images/brands/xiaomi.png", slug: "xiaomi" },
-  { name: "realme", logo: "/images/brands/realme.png", slug: "realme" },
+  {
+    name: "Apple",
+    logo: "/images/brands/apple-logo.png",
+    slug: "apple",
+    // Square logo — normal box
+    logoW: "w-10 h-10",
+    card: "from-[#f5f5f7] to-[#e8e8ed]",
+    border: "border-[#d1d1d6] hover:border-[#86868b]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]",
+    labelHover: "group-hover:text-[#1d1d1f]",
+  },
+  {
+    name: "Samsung",
+    logo: "/images/brands/samsung-logo.png",
+    slug: "samsung",
+    // Wide wordmark — tall box with full width
+    logoW: "w-20 h-8",
+    card: "from-[#eef4ff] to-[#dbeafe]",
+    border: "border-[#bfdbfe] hover:border-[#3b82f6]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(37,99,235,0.15)]",
+    labelHover: "group-hover:text-[#1d4ed8]",
+  },
+  {
+    name: "Google",
+    logo: "/images/brands/google-logo.png",
+    slug: "google",
+    logoW: "w-11 h-11",
+    card: "from-[#fff8f0] to-[#fef3c7]",
+    border: "border-[#fed7aa] hover:border-[#f97316]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(234,88,12,0.12)]",
+    labelHover: "group-hover:text-[#ea4335]",
+  },
+  {
+    name: "OnePlus",
+    logo: "/images/brands/oneplus-logo.png",
+    slug: "oneplus",
+    logoW: "w-11 h-11",
+    card: "from-[#fff1f2] to-[#ffe4e6]",
+    border: "border-[#fecdd3] hover:border-[#f87171]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(220,38,38,0.13)]",
+    labelHover: "group-hover:text-[#dc2626]",
+  },
+  {
+    name: "Xiaomi",
+    logo: "/images/brands/Xiaomi-logo.png",
+    slug: "xiaomi",
+    logoW: "w-11 h-11",
+    card: "from-[#fff7ed] to-[#ffedd5]",
+    border: "border-[#fed7aa] hover:border-[#fb923c]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(234,88,12,0.13)]",
+    labelHover: "group-hover:text-[#ea580c]",
+  },
+  {
+    name: "realme",
+    logo: "/images/brands/realme-logo.png",
+    slug: "realme",
+    // Wide badge logo
+    logoW: "w-20 h-8",
+    card: "from-[#fffbeb] to-[#fef08a]",
+    border: "border-[#fde68a] hover:border-[#f59e0b]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(217,119,6,0.15)]",
+    labelHover: "group-hover:text-[#b45309]",
+  },
 ];
 
 export default function ShopByBrand() {
   return (
-    <section className="bg-white py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative bg-white py-10 overflow-hidden">
+
+      {/* Dot pattern */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, #94a3b8 1px, transparent 0)",
+          backgroundSize: "24px 24px",
+          opacity: 0.06,
+        }}
+      />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         {/* Header */}
         <div className="flex items-end justify-between mb-7">
           <div>
-            <h2 className="text-gray-900 text-2xl font-bold">Shop by Brand</h2>
+            <p className="text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase mb-1">
+              Official Partners
+            </p>
+            <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+              Shop by Brand
+            </h2>
           </div>
           <Link
             href="/products"
-            className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1"
+            className="group flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
           >
-            View All →
+            View All
+            <span className="transition-transform group-hover:translate-x-0.5">→</span>
           </Link>
         </div>
 
-        {/* Brand Grid */}
+        {/* Cards */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {brands.map((brand) => (
             <Link
               key={brand.name}
               href={`/products?category=${brand.slug}`}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all group"
+              className={`
+                group relative flex flex-col items-center justify-center gap-3
+                py-5 px-3 rounded-2xl border bg-gradient-to-b
+                ${brand.card} ${brand.border} ${brand.shadow}
+                transition-all duration-300 hover:-translate-y-1 overflow-hidden
+              `}
             >
-              <div className="relative w-10 h-10">
+              {/* Shine */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.7) 0%, transparent 50%)" }}
+              />
+
+              {/* Logo */}
+              <div className={`relative ${brand.logoW} transition-transform duration-300 group-hover:scale-110`}>
                 <Image
                   src={brand.logo}
                   alt={brand.name}
                   fill
-                  className="object-contain group-hover:scale-110 transition-transform"
+                  className="object-contain"
+                  sizes="80px"
                 />
               </div>
-              <span className="text-gray-600 text-xs font-medium group-hover:text-blue-600 transition-colors">
+
+              {/* Label */}
+              <span className={`text-[11px] font-semibold tracking-wide text-gray-400 transition-colors duration-200 ${brand.labelHover}`}>
                 {brand.name}
               </span>
             </Link>
           ))}
         </div>
+
       </div>
     </section>
   );
