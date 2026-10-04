@@ -91,7 +91,7 @@ export default function PhoneModel() {
 
           <PresentationControls
             global
-            snap={{ mass: 2, tension: 300 }}
+            snap
             zoom={1}
             rotation={[0.05, 0, 0]}
             polar={[-Math.PI / 8, Math.PI / 8]}
