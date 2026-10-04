@@ -8,27 +8,36 @@ function getSupabase() {
 }
 
 // GET /api/products/[id]
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("products")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json({ product: data });
 }
 
-// PUT /api/products/[id] — update
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+// PUT /api/products/[id]
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   const supabase = getSupabase();
   const body = await req.json();
 
   const updatePayload: Record<string, unknown> = {};
   const allowed = [
-    "name","variant","price","original_price","rating","review_count",
-    "image","slug","badge","badge_color","spec_screen","spec_ram","spec_camera","is_featured",
+    "name", "variant", "price", "original_price", "rating", "review_count",
+    "image", "slug", "badge", "badge_color",
+    "spec_screen", "spec_ram", "spec_camera", "is_featured",
   ];
   for (const key of allowed) {
     if (body[key] !== undefined) updatePayload[key] = body[key];
@@ -38,7 +47,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const { data, error } = await supabase
     .from("products")
     .update(updatePayload)
-    .eq("id", params.id)
+    .eq("id", id)
     .select()
     .single();
 
@@ -47,9 +56,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE /api/products/[id]
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   const supabase = getSupabase();
-  const { error } = await supabase.from("products").delete().eq("id", params.id);
+  const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ message: "Deleted successfully" });
 }
