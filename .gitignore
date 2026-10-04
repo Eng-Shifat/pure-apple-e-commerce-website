@@ -5,3 +5,8 @@ dist
 .vercel
 .DS_Store
 *.log
+
+# Next.js
+.next
+out
+build
