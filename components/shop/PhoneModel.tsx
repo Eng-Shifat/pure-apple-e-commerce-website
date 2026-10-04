@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -18,8 +18,11 @@ type DragState = {
 const AUTO_SPEED = 0.006; // right to left
 const RESUME_DELAY = 1500; // ms after release before auto-rotate resumes
 
-function IPhone({ drag, ...props }: any) {
+function IPhone({ drag, scale = 1, ...props }: any) {
   const { scene } = useGLTF("/models/iphone.glb");
+  // Slightly larger on the shorter mobile canvases so the phones fill the space
+  const { size } = useThree();
+  const fit = size.height >= 450 ? 1 : 1.2;
   const ref = useRef<THREE.Group>(null);
 
   // Kill all glare on the phones:
@@ -88,7 +91,7 @@ function IPhone({ drag, ...props }: any) {
   });
 
   return (
-    <group ref={ref} {...props}>
+    <group ref={ref} scale={scale * fit} {...props}>
       <primitive object={scene} />
     </group>
   );
@@ -175,7 +178,8 @@ export default function PhoneModel() {
   return (
     <div
       ref={wrapRef}
-      className="relative w-80 h-[440px] lg:w-[420px] lg:h-[500px] select-none"
+      data-no-swipe
+      className="relative w-full max-w-[420px] h-[270px] sm:h-[360px] lg:w-[420px] lg:h-[500px] select-none"
       style={{ cursor: "grab", touchAction: "pan-y" }}
     >
       <Suspense
@@ -213,6 +217,7 @@ export default function PhoneModel() {
             intensity={1.2}
             color="#88aaff"
           />
+
 
           <Environment preset="studio" />
 

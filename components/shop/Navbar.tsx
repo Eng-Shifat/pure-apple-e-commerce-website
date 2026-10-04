@@ -17,7 +17,7 @@ export default function Navbar() {
   const [shopOpen, setShopOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white md:border-b md:border-gray-100 md:shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
@@ -69,27 +69,27 @@ export default function Navbar() {
           </nav>
 
           {/* Right Icons */}
-          <div className="flex items-center gap-3">
-            <button className="hidden md:flex p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Link href="/products" aria-label="Search" className="flex items-center justify-center w-10 h-10 md:w-auto md:h-auto rounded-full md:rounded-lg bg-gray-100 md:bg-transparent text-gray-700 md:text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
               <Search size={18} />
-            </button>
-            <button className="p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors">
+            </Link>
+            <button className="hidden md:block p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors">
               <Heart size={18} />
             </button>
-            <Link href="/cart" className="relative p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+            <Link href="/cart" className="relative flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-gray-100 md:bg-transparent text-gray-700 md:text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
               <ShoppingCart size={18} />
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                 0
               </span>
             </Link>
-            <Link href="/login" className="p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+            <Link href="/login" className="hidden md:block p-2 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
               <User size={18} />
             </Link>
 
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-700 active:scale-95 transition-transform"
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>

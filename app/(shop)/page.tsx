@@ -1,5 +1,6 @@
 import HeroSlider from "@/components/shop/HeroSlider";
-import TrustBadges from "@/components/shop/TrustBadges";
+import MobileCategoryStrip from "@/components/shop/MobileCategoryStrip";
+import MobileCategories from "@/components/shop/MobileCategories";
 import PopularProducts from "@/components/shop/PopularProducts";
 import PromoBanner from "@/components/shop/PromoBanner";
 import ShopByBrand from "@/components/shop/ShopByBrand";
@@ -15,8 +16,11 @@ export const metadata = {
 export default function HomePage() {
   return (
     <main>
-      <HeroSlider />
-      <TrustBadges />
+      <div className="bg-gray-50 pb-1 md:bg-transparent md:pb-0">
+        <MobileCategoryStrip />
+        <HeroSlider />
+      </div>
+      <MobileCategories />
       <PopularProducts />
       <PromoBanner />
       <ShopByBrand />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Truck, RotateCcw, ShieldCheck } from "lucide-react";
 
@@ -65,9 +65,26 @@ export default function HeroSlider() {
 
   const slide = slides[current];
 
+  // Touch swipe to change slides (ignored on the 3D phone, which has its own drag)
+  const touchStart = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = (e.target as HTMLElement).closest("[data-no-swipe]")
+      ? null
+      : e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current;
+    touchStart.current = null;
+    if (Math.abs(dx) < 50) return;
+    goTo(dx < 0 ? (current + 1) % slides.length : (current - 1 + slides.length) % slides.length);
+  };
+
   return (
     <section
-      className="relative overflow-hidden"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      className="relative overflow-hidden mx-4 mt-3 rounded-3xl shadow-sm md:mx-0 md:mt-0 md:rounded-none md:shadow-none"
       style={{
         background: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 40%, #dbeafe 70%, #ede9fe 100%)",
       }}
@@ -81,36 +98,38 @@ export default function HeroSlider() {
         style={{ background: "radial-gradient(circle, #a5b4fc 0%, transparent 70%)" }} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative flex items-center min-h-[440px] pt-6 pb-4">
+        <div className="relative flex flex-col items-center lg:flex-row lg:items-center lg:min-h-[440px] pt-6 pb-12 lg:pt-6 lg:pb-4">
 
           {/* ── LEFT: Text ─────────────────────── */}
-          <div className="flex-1 z-10 max-w-xs lg:max-w-sm pointer-events-none [&>*]:pointer-events-auto">
+          <div className="contents lg:block lg:flex-1 lg:z-10 lg:max-w-sm lg:pointer-events-none lg:[&>*]:pointer-events-auto">
+            <div className="order-1 flex flex-col items-center text-center lg:items-start lg:text-left">
             <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">
               <span className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
               {slide.eyebrow}
             </div>
 
-            <h1 className="text-gray-900 text-4xl lg:text-[52px] font-black leading-[1.1] mb-4 whitespace-pre-line tracking-tight">
+            <h1 className="text-gray-900 text-[34px] sm:text-5xl lg:text-[52px] font-black leading-[1.1] mb-3 lg:mb-4 whitespace-pre-line tracking-tight">
               {slide.title}
             </h1>
 
-            <p className="text-gray-500 text-sm leading-relaxed mb-8 max-w-[250px]">
+            <p className="text-gray-500 text-sm leading-relaxed mb-2 lg:mb-8 max-w-[300px] lg:max-w-[250px]">
               {slide.description}
             </p>
+            </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="order-3 grid grid-cols-2 gap-3 w-full max-w-sm mt-1 lg:mt-0 lg:flex lg:items-center lg:w-auto lg:max-w-none">
               <Link href="/products"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm px-6 py-3.5 rounded-full transition-all shadow-lg shadow-blue-200">
+                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm px-4 lg:px-6 py-3.5 rounded-full transition-all shadow-lg shadow-blue-200">
                 SHOP NOW →
               </Link>
               <Link href="/products?deals=true"
-                className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm px-6 py-3.5 rounded-full border border-gray-200 transition-all shadow-sm">
+                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm px-4 lg:px-6 py-3.5 rounded-full border border-gray-200 transition-all shadow-sm">
                 EXPLORE DEALS
               </Link>
             </div>
 
             {/* Trust badges */}
-            <div className="trust-row flex items-center gap-2.5 mt-5 flex-wrap lg:flex-nowrap lg:w-[440px]">
+            <div className="trust-row order-4 grid grid-cols-3 gap-2 w-full max-w-sm mt-5 sm:flex sm:justify-center sm:gap-2.5 sm:max-w-none lg:justify-start lg:w-[440px]">
               {[
                 { icon: Truck, title: "Free Shipping", sub: "On orders over $50" },
                 { icon: RotateCcw, title: "Easy Returns", sub: "30-day policy" },
@@ -122,9 +141,9 @@ export default function HeroSlider() {
                     <span className="trust-icon">
                       <Icon size={14} strokeWidth={2.2} />
                     </span>
-                    <span className="flex flex-col leading-tight text-left">
+                    <span className="flex flex-col items-center sm:items-start leading-tight text-center sm:text-left">
                       <span className="text-gray-800 text-[11px] font-semibold whitespace-nowrap">{b.title}</span>
-                      <span className="text-gray-400 text-[10px] whitespace-nowrap">{b.sub}</span>
+                      <span className="hidden sm:block text-gray-400 text-[10px] whitespace-nowrap">{b.sub}</span>
                     </span>
                   </div>
                 );
@@ -133,14 +152,14 @@ export default function HeroSlider() {
           </div>
 
           {/* ── CENTER: 3D Phone ────────────────── */}
-          <div className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center justify-center">
+          <div className="order-2 relative w-full flex items-center justify-center -my-2 lg:my-0 lg:w-auto lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:z-20">
             {/* Center glow */}
             <div className="absolute pointer-events-none w-64 h-64 rounded-full blur-3xl"
               style={{ background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)" }} />
 
             <Suspense
               fallback={
-                <div className="w-80 h-[440px] flex items-center justify-center">
+                <div className="w-full h-[270px] sm:h-[360px] lg:w-[420px] lg:h-[500px] flex items-center justify-center">
                   <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
                 </div>
               }
@@ -150,7 +169,7 @@ export default function HeroSlider() {
           </div>
 
           {/* ── RIGHT: Product Card ─────────────── */}
-          <div className="flex-1 flex justify-end z-10 pointer-events-none">
+          <div className="hidden lg:flex flex-1 justify-end z-10 pointer-events-none">
             <div className="pointer-events-auto bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl shadow-blue-100 p-5 w-44 lg:w-52 border border-white">
               <span className="inline-block bg-blue-50 text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-full mb-3">
                 {slide.cardBadge}
@@ -170,11 +189,11 @@ export default function HeroSlider() {
 
       {/* Prev / Next */}
       <button onClick={() => goTo((current - 1 + slides.length) % slides.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-gray-500 hover:text-blue-600 flex items-center justify-center transition-colors z-20 border border-white">
+        className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-gray-500 hover:text-blue-600 justify-center transition-colors z-20 border border-white">
         <ChevronLeft size={16} />
       </button>
       <button onClick={() => goTo((current + 1) % slides.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-gray-500 hover:text-blue-600 flex items-center justify-center transition-colors z-20 border border-white">
+        className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-gray-500 hover:text-blue-600 justify-center transition-colors z-20 border border-white">
         <ChevronRight size={16} />
       </button>
 
@@ -250,6 +269,15 @@ export default function HeroSlider() {
           transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .trust-chip:hover .trust-icon { transform: rotate(-12deg) scale(1.12); }
+        @media (max-width: 639px) {
+          .trust-chip {
+            flex-direction: column;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 4px;
+            border-radius: 18px;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
           .trust-chip, .trust-chip::after, .trust-icon { animation: none; opacity: 1; }
         }

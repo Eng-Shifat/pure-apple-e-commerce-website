@@ -52,18 +52,18 @@ export default function PopularProducts() {
     <section className="bg-white py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="flex items-end justify-between mb-7">
+        <div className="flex items-center sm:items-end justify-between gap-3 mb-7">
           <div>
-            <h2 className="text-gray-900 text-2xl font-bold">
+            <h2 className="text-gray-900 text-[19px] sm:text-2xl font-extrabold sm:font-bold tracking-tight">
               Popular Smartphones
             </h2>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="hidden sm:block text-gray-400 text-sm mt-1">
               Discover the most loved devices by our customers.
             </p>
           </div>
           <Link
             href="/products"
-            className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1"
+            className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1 shrink-0"
           >
             View All →
           </Link>
