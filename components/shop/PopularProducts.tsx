@@ -90,7 +90,7 @@ export default function PopularProducts() {
   }, []);
 
   return (
-    <section className="bg-white pt-8 pb-8 md:pb-14">
+    <section className="bg-white pt-5 pb-5 md:pt-8 md:pb-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}

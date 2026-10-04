@@ -15,17 +15,17 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* ── Logo (apple + leaf only, no circle) ── */}
-          <Link href="/" aria-label="Pure Apple – Home" className="group flex items-center gap-3.5 flex-shrink-0">
+          <Link href="/" aria-label="Pure Apple – Home" className="group flex items-center gap-2.5 sm:gap-3.5 flex-shrink-0 min-w-0">
             <ShineLogo
               height={54}
               priority
               className="transition-transform duration-500 ease-out group-hover:scale-105"
             />
             {/* 3-colour divider (green · orange · yellow) */}
-            <span aria-hidden="true" className="hidden sm:block h-8 w-[2px] rounded-full bg-gradient-to-b from-leaf-500 via-brand-500 to-sun-500" />
-            <span className="hidden sm:flex flex-col leading-none">
-              <span className="text-[9px] font-semibold tracking-[0.28em] text-gray-600 uppercase">Mobile &amp;</span>
-              <span className="mt-1.5 text-[11px] font-bold tracking-[0.2em] text-gray-800 uppercase">
+            <span aria-hidden="true" className="hidden min-[360px]:block h-7 sm:h-8 w-[2px] rounded-full bg-gradient-to-b from-leaf-500 via-brand-500 to-sun-500" />
+            <span className="hidden min-[360px]:flex flex-col leading-none">
+              <span className="text-[8px] sm:text-[9px] font-semibold tracking-[0.22em] sm:tracking-[0.28em] text-gray-600 uppercase">Mobile &amp;</span>
+              <span className="mt-1 sm:mt-1.5 text-[10px] sm:text-[11px] font-bold tracking-[0.14em] sm:tracking-[0.2em] text-gray-800 uppercase whitespace-nowrap">
                 Gadget <span className="text-brand-500">Shop</span>
               </span>
             </span>

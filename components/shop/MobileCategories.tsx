@@ -25,7 +25,7 @@ const categories = [
 /** Icon grid "Shop by Category" – mobile only. */
 export default function MobileCategories() {
   return (
-    <section className="md:hidden bg-gray-50 px-4 pt-6 pb-6">
+    <section className="md:hidden bg-gray-50 px-4 pt-6 pb-3">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-[19px] font-extrabold tracking-tight text-gray-900">
           Shop by Category

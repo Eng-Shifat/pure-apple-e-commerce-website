@@ -69,7 +69,7 @@ const brands = [
 
 export default function ShopByBrand() {
   return (
-    <section className="relative bg-white py-10 overflow-hidden">
+    <section className="relative bg-white pt-5 pb-6 md:py-10 overflow-hidden">
 
       {/* Dot pattern */}
       <div
@@ -85,7 +85,7 @@ export default function ShopByBrand() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="flex items-end justify-between mb-7">
+        <div className="flex items-end justify-between mb-5 sm:mb-7">
           <div>
             <p className="text-[11px] font-bold tracking-[0.14em] text-brand-600 uppercase mb-1">
               Official Partners
@@ -104,7 +104,7 @@ export default function ShopByBrand() {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
           {brands.map((brand) => (
             <Link
               key={brand.name}

@@ -237,10 +237,10 @@ export default function HeroSlider() {
               </div>
               <Link
                 href={slide.cardHref}
-                className="inline-flex items-center justify-center gap-1.5 shrink-0 h-11 px-5 rounded-full bg-gradient-to-b from-brand-400 to-brand-500 text-white text-[13px] font-semibold tracking-wide shadow-[0_6px_18px_rgba(251,87,36,0.45),inset_0_1px_0_rgba(255,255,255,0.35)] transition active:scale-95 hover:brightness-110 sm:h-auto sm:px-4 sm:py-3 sm:rounded-xl sm:bg-none sm:bg-brand-500 sm:hover:bg-brand-400 sm:hover:brightness-100 sm:text-xs sm:tracking-normal sm:shadow-lg sm:shadow-brand-500/30"
+                className="inline-flex items-center justify-center gap-1.5 shrink-0 h-9 px-4 rounded-full bg-gradient-to-b from-brand-400 to-brand-500 text-white text-xs font-semibold tracking-wide shadow-[0_4px_14px_rgba(251,87,36,0.4),inset_0_1px_0_rgba(255,255,255,0.35)] transition active:scale-95 hover:brightness-110 sm:h-auto sm:px-4 sm:py-3 sm:rounded-xl sm:bg-none sm:bg-brand-500 sm:hover:bg-brand-400 sm:hover:brightness-100 sm:text-xs sm:tracking-normal sm:shadow-lg sm:shadow-brand-500/30"
               >
                 BUY NOW
-                <ArrowRight size={15} strokeWidth={2.5} className="sm:hidden" />
+                <ArrowRight size={13} strokeWidth={2.5} className="sm:hidden" />
                 <span className="hidden sm:inline">→</span>
               </Link>
             </div>
