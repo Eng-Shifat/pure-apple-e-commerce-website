@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import ShineLogo from "./ShineLogo";
 import { useState } from "react";
 import { Search, Heart, ShoppingCart, User, ChevronDown, Menu, X } from "lucide-react";
 
@@ -16,13 +16,10 @@ export default function Navbar() {
 
           {/* ── Logo (apple + leaf only, no circle) ── */}
           <Link href="/" aria-label="Pure Apple – Home" className="flex items-center gap-3 flex-shrink-0 group">
-            <Image
-              src="/logo/pure-apple-logo.svg"
-              alt="Pure Apple"
-              width={47}
+            <ShineLogo
               height={48}
               priority
-              className="h-12 w-auto transition-transform duration-300 group-hover:scale-105"
+              className="transition-transform duration-300 group-hover:scale-105"
             />
             <span className="hidden sm:block border-l border-gray-200 pl-3 text-[9px] font-medium tracking-widest text-gray-400 uppercase leading-tight">
               Mobile &amp;<br />Gadget Shop
