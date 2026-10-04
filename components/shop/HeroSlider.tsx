@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense, lazy } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Truck, RotateCcw, ShieldCheck } from "lucide-react";
 
-const PhoneModel = lazy(() => import("./PhoneModel"));
+import PhoneModelLazy from "./PhoneModelLazy";
 
 const slides = [
   {
@@ -157,15 +157,7 @@ export default function HeroSlider() {
             <div className="absolute pointer-events-none w-64 h-64 rounded-full blur-3xl"
               style={{ background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)" }} />
 
-            <Suspense
-              fallback={
-                <div className="w-full h-[270px] sm:h-[360px] lg:w-[420px] lg:h-[500px] flex items-center justify-center">
-                  <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-                </div>
-              }
-            >
-              <PhoneModel />
-            </Suspense>
+            <PhoneModelLazy />
           </div>
 
           {/* ── RIGHT: Product Card ─────────────── */}

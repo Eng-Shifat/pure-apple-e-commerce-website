@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
@@ -51,6 +51,18 @@ function IPhone({ drag, scale = 1, ...props }: any) {
         if (name === "screen glass" || name === "setka") {
           m.visible = false;
           return m;
+        }
+        // The camera glass uses "transmission", which makes three.js re-render
+        // the whole scene every frame. A plain see-through glass looks the
+        // same here and is far cheaper.
+        if (name === "camera glass") {
+          const glass = (m as THREE.MeshPhysicalMaterial).clone();
+          glass.transmission = 0;
+          glass.thickness = 0;
+          glass.transparent = true;
+          glass.opacity = 0.25;
+          glass.depthWrite = false;
+          return glass;
         }
         if (name === "screen") {
           if (!swap.has(m)) {
@@ -168,6 +180,17 @@ export default function PhoneModel() {
     lastInteraction: 0,
   });
   const wrapRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(true);
+  const [shown, setShown] = useState(false);
+
+  // Stop rendering the 3D scene while it is scrolled out of view
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { rootMargin: "80px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -214,7 +237,10 @@ export default function PhoneModel() {
       ref={wrapRef}
       data-no-swipe
       className="relative w-full max-w-[420px] h-[270px] sm:h-[360px] lg:w-[420px] lg:h-[500px] select-none"
-      style={{ cursor: "grab", touchAction: "pan-y" }}
+      style={{
+        cursor: "grab",
+        touchAction: "pan-y",
+      }}
     >
       <Suspense
         fallback={
@@ -225,19 +251,18 @@ export default function PhoneModel() {
       >
         <Canvas
           camera={{ position: [0, 0, 4.2], fov: 38 }}
-          style={{ background: "transparent" }}
-          gl={{ alpha: true, antialias: true }}
-          onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
-          shadows
+          style={{ background: "transparent", opacity: shown ? 1 : 0, transition: "opacity 0.6s ease" }}
+          dpr={[1, 1.5]}
+          frameloop={inView ? "always" : "never"}
+          gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+          onCreated={({ gl }) => {
+            gl.setClearColor(0x000000, 0);
+            setShown(true);
+          }}
         >
           {/* Lighting setup — premium studio feel */}
           <ambientLight intensity={0.4} />
-          <directionalLight
-            position={[4, 6, 4]}
-            intensity={1.8}
-            castShadow
-            shadow-mapSize={[2048, 2048]}
-          />
+          <directionalLight position={[4, 6, 4]} intensity={1.8} />
           <directionalLight position={[-4, 2, -3]} intensity={0.5} color="#6699ff" />
           <pointLight position={[0, 4, 3]} intensity={1} color="#ffffff" />
           <pointLight position={[2, -2, 2]} intensity={0.4} color="#4466ff" />
@@ -253,7 +278,7 @@ export default function PhoneModel() {
           />
 
 
-          <Environment preset="studio" />
+          <Environment files="/models/studio.hdr" />
 
           <IPhone drag={drag} scale={11.5} position={[0, 0.1, 0]} />
 
@@ -265,6 +290,7 @@ export default function PhoneModel() {
             scale={4}
             blur={2.5}
             far={2.5}
+            resolution={256}
             color="#1133cc"
           />
         </Canvas>
