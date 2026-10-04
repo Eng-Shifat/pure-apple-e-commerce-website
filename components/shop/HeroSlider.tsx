@@ -86,14 +86,14 @@ export default function HeroSlider() {
       onTouchEnd={onTouchEnd}
       className="relative overflow-hidden mx-4 mt-3 rounded-3xl shadow-sm md:mx-0 md:mt-0 md:rounded-none md:shadow-none"
       style={{
-        background: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 40%, #dbeafe 70%, #ede9fe 100%)",
+        background: "linear-gradient(135deg, #FFF6EE 0%, #FFEEDD 35%, #FFF8DC 68%, #EEF9EC 100%)",
       }}
     >
       {/* Decorative blobs */}
       <div className="absolute -top-20 right-1/3 w-[500px] h-[500px] rounded-full opacity-40 pointer-events-none"
-        style={{ background: "radial-gradient(circle, #bfdbfe 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(circle, #FFD2B3 0%, transparent 70%)" }} />
       <div className="absolute -bottom-20 left-1/4 w-80 h-80 rounded-full opacity-30 pointer-events-none"
-        style={{ background: "radial-gradient(circle, #c7d2fe 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(circle, #CDEBCB 0%, transparent 70%)" }} />
       <div className="absolute top-10 right-10 w-40 h-40 rounded-full opacity-20 pointer-events-none"
         style={{ background: "radial-gradient(circle, #a5b4fc 0%, transparent 70%)" }} />
 
@@ -103,8 +103,8 @@ export default function HeroSlider() {
           {/* ── LEFT: Text ─────────────────────── */}
           <div className="contents lg:block lg:flex-1 lg:z-10 lg:max-w-sm lg:pointer-events-none lg:[&>*]:pointer-events-auto">
             <div className="order-1 flex flex-col items-center text-center lg:items-start lg:text-left">
-            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-[11px] font-medium px-3 py-1 rounded-full mb-4">
-              <span className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
+            <div className="inline-flex items-center gap-2 bg-brand-100 text-brand-700 text-[11px] font-medium px-3 py-1 rounded-full mb-4">
+              <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse" />
               {slide.eyebrow}
             </div>
 
@@ -119,7 +119,7 @@ export default function HeroSlider() {
 
             <div className="order-3 grid grid-cols-2 gap-3 w-full max-w-sm mt-1 lg:mt-0 lg:flex lg:items-center lg:w-auto lg:max-w-none">
               <Link href="/products"
-                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs px-4 lg:px-5 py-3 rounded-full transition-all shadow-lg shadow-blue-200">
+                className="inline-flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-semibold text-xs px-4 lg:px-5 py-3 rounded-full transition-all shadow-lg shadow-brand-200">
                 SHOP NOW →
               </Link>
               <Link href="/products?deals=true"
@@ -155,15 +155,15 @@ export default function HeroSlider() {
           <div className="order-2 relative w-full flex items-center justify-center -my-2 lg:my-0 lg:w-auto lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:z-20">
             {/* Center glow */}
             <div className="absolute pointer-events-none w-64 h-64 rounded-full blur-3xl"
-              style={{ background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)" }} />
+              style={{ background: "radial-gradient(circle, rgba(251,87,36,0.16) 0%, rgba(252,193,11,0.06) 45%, transparent 70%)" }} />
 
             <PhoneModelLazy />
           </div>
 
           {/* ── RIGHT: Product Card ─────────────── */}
           <div className="hidden lg:flex flex-1 justify-end z-10 pointer-events-none">
-            <div className="pointer-events-auto rounded-2xl p-5 w-44 lg:w-52 bg-white/25 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(37,99,235,0.15),inset_0_1px_0_rgba(255,255,255,0.7)]">
-              <span className="inline-block bg-blue-50 text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-full mb-3">
+            <div className="pointer-events-auto rounded-2xl p-5 w-44 lg:w-52 bg-white/25 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(251,87,36,0.15),inset_0_1px_0_rgba(255,255,255,0.7)]">
+              <span className="inline-block bg-brand-50 text-brand-600 text-[10px] font-bold px-2.5 py-1 rounded-full mb-3">
                 {slide.cardBadge}
               </span>
               <h3 className="text-gray-900 font-bold text-base leading-snug mb-1">{slide.cardName}</h3>
@@ -171,7 +171,7 @@ export default function HeroSlider() {
               <p className="text-gray-400 text-[10px] mb-0.5">{slide.cardPriceLabel}</p>
               <p className="text-gray-900 font-black text-2xl mb-4">{slide.cardPrice}</p>
               <Link href={slide.cardHref}
-                className="block w-full text-center bg-gray-900 hover:bg-blue-600 text-white font-semibold text-xs py-3 rounded-xl transition-colors">
+                className="block w-full text-center bg-gray-900 hover:bg-brand-500 text-white font-semibold text-xs py-3 rounded-xl transition-colors">
                 BUY NOW →
               </Link>
             </div>
@@ -181,11 +181,11 @@ export default function HeroSlider() {
 
       {/* Prev / Next */}
       <button onClick={() => goTo((current - 1 + slides.length) % slides.length)}
-        className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-gray-500 hover:text-blue-600 justify-center transition-colors z-20 border border-white">
+        className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-gray-500 hover:text-brand-600 justify-center transition-colors z-20 border border-white">
         <ChevronLeft size={16} />
       </button>
       <button onClick={() => goTo((current + 1) % slides.length)}
-        className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-gray-500 hover:text-blue-600 justify-center transition-colors z-20 border border-white">
+        className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-gray-500 hover:text-brand-600 justify-center transition-colors z-20 border border-white">
         <ChevronRight size={16} />
       </button>
 
@@ -193,7 +193,7 @@ export default function HeroSlider() {
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
         {slides.map((_, i) => (
           <button key={i} onClick={() => goTo(i)}
-            className={`rounded-full transition-all ${i === current ? "w-6 h-2 bg-blue-600" : "w-2 h-2 bg-blue-300"}`} />
+            className={`rounded-full transition-all ${i === current ? "w-6 h-2 bg-brand-500" : "w-2 h-2 bg-brand-200"}`} />
         ))}
       </div>
 
@@ -207,9 +207,13 @@ export default function HeroSlider() {
           100%    { transform: translateX(260%) skewX(-20deg); }
         }
         @keyframes iconPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35); }
-          50%      { box-shadow: 0 0 0 5px rgba(37, 99, 235, 0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(var(--c), 0.35); }
+          50%      { box-shadow: 0 0 0 5px rgba(var(--c), 0); }
         }
+        .trust-chip { --c: 251, 87, 36; --c1: #FF7D45; --c2: #FB5724; }
+        .trust-chip:nth-child(1) { --c: 79, 174, 83;  --c1: #6BBF6F; --c2: #4FAE53; }
+        .trust-chip:nth-child(2) { --c: 251, 87, 36;  --c1: #FF7D45; --c2: #FB5724; }
+        .trust-chip:nth-child(3) { --c: 245, 166, 0;  --c1: #FDCB2E; --c2: #F5A300; }
         .trust-chip {
           position: relative;
           overflow: hidden;
@@ -222,7 +226,7 @@ export default function HeroSlider() {
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
           border: 1px solid rgba(255, 255, 255, 0.9);
-          box-shadow: 0 4px 14px -6px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          box-shadow: 0 4px 14px -6px rgba(var(--c), 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.8);
           cursor: default;
           opacity: 0;
           animation: chipIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -246,7 +250,7 @@ export default function HeroSlider() {
         .trust-chip:hover {
           transform: translateY(-3px);
           background: rgba(255, 255, 255, 0.95);
-          box-shadow: 0 12px 24px -8px rgba(37, 99, 235, 0.4), inset 0 1px 0 #fff;
+          box-shadow: 0 12px 24px -8px rgba(var(--c), 0.5), inset 0 1px 0 #fff;
         }
         .trust-icon {
           display: inline-flex;
@@ -256,7 +260,7 @@ export default function HeroSlider() {
           height: 24px;
           border-radius: 9999px;
           color: #fff;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          background: linear-gradient(135deg, var(--c1), var(--c2));
           animation: iconPulse 2.8s ease-in-out infinite;
           transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
         }

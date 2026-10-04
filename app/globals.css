@@ -28,14 +28,23 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #fff7f1;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #ffb48c;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #fb5724;
+}
+
+/* ─── Brand touches (logo colours) ─────────────────── */
+::selection {
+  background: #fb5724;
+  color: #ffffff;
+}
+html {
+  accent-color: #fb5724;
 }
 
 /* ─── Utilities ─────────────────────────────────────── */

@@ -19,10 +19,10 @@ const brands = [
     slug: "samsung",
     // Wide wordmark — tall box with full width
     logoW: "w-20 h-8",
-    card: "from-[#eef4ff] to-[#dbeafe]",
-    border: "border-[#bfdbfe] hover:border-[#3b82f6]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(37,99,235,0.15)]",
-    labelHover: "group-hover:text-[#1d4ed8]",
+    card: "from-[#f2faf2] to-[#ddf2de]",
+    border: "border-[#bde5bf] hover:border-[#4FAE53]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(79,174,83,0.18)]",
+    labelHover: "group-hover:text-[#327536]",
   },
   {
     name: "Google",
@@ -30,19 +30,19 @@ const brands = [
     slug: "google",
     logoW: "w-11 h-11",
     card: "from-[#fff8f0] to-[#fef3c7]",
-    border: "border-[#fed7aa] hover:border-[#f97316]",
+    border: "border-[#fed7aa] hover:border-[#FB5724]",
     shadow: "hover:shadow-[0_12px_32px_rgba(234,88,12,0.12)]",
-    labelHover: "group-hover:text-[#ea4335]",
+    labelHover: "group-hover:text-[#FB5724]",
   },
   {
     name: "OnePlus",
     logo: "/images/brands/oneplus-logo.png",
     slug: "oneplus",
     logoW: "w-11 h-11",
-    card: "from-[#fff1f2] to-[#ffe4e6]",
-    border: "border-[#fecdd3] hover:border-[#f87171]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(220,38,38,0.13)]",
-    labelHover: "group-hover:text-[#dc2626]",
+    card: "from-[#f6fbf0] to-[#e4f3d4]",
+    border: "border-[#cfe8b8] hover:border-[#6BBF6F]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(79,174,83,0.16)]",
+    labelHover: "group-hover:text-[#3E9142]",
   },
   {
     name: "Xiaomi",
@@ -50,9 +50,9 @@ const brands = [
     slug: "xiaomi",
     logoW: "w-11 h-11",
     card: "from-[#fff7ed] to-[#ffedd5]",
-    border: "border-[#fed7aa] hover:border-[#fb923c]",
+    border: "border-[#fed7aa] hover:border-[#FB5724]",
     shadow: "hover:shadow-[0_12px_32px_rgba(234,88,12,0.13)]",
-    labelHover: "group-hover:text-[#ea580c]",
+    labelHover: "group-hover:text-[#E8470F]",
   },
   {
     name: "realme",
@@ -61,9 +61,9 @@ const brands = [
     // Wide badge logo
     logoW: "w-20 h-8",
     card: "from-[#fffbeb] to-[#fef08a]",
-    border: "border-[#fde68a] hover:border-[#f59e0b]",
+    border: "border-[#fde68a] hover:border-[#FCC10B]",
     shadow: "hover:shadow-[0_12px_32px_rgba(217,119,6,0.15)]",
-    labelHover: "group-hover:text-[#b45309]",
+    labelHover: "group-hover:text-[#A87A05]",
   },
 ];
 
@@ -87,7 +87,7 @@ export default function ShopByBrand() {
         {/* Header */}
         <div className="flex items-end justify-between mb-7">
           <div>
-            <p className="text-[11px] font-bold tracking-[0.14em] text-blue-600 uppercase mb-1">
+            <p className="text-[11px] font-bold tracking-[0.14em] text-brand-600 uppercase mb-1">
               Official Partners
             </p>
             <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
@@ -96,7 +96,7 @@ export default function ShopByBrand() {
           </div>
           <Link
             href="/products"
-            className="group flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+            className="group flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors"
           >
             View All
             <span className="transition-transform group-hover:translate-x-0.5">→</span>

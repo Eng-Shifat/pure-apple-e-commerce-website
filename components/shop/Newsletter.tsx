@@ -20,7 +20,7 @@ export default function Newsletter() {
     <section
       className="relative overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, #0A1628 0%, #1a3a6b 100%)",
+        background: "linear-gradient(135deg, #0E2318 0%, #1E5A33 100%)",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
@@ -30,12 +30,12 @@ export default function Newsletter() {
             <h2 className="text-white text-2xl lg:text-3xl font-bold mb-2">
               Stay Connected
             </h2>
-            <p className="text-blue-200 text-sm">
+            <p className="text-leaf-100/80 text-sm">
               Get the latest updates, offers and new arrivals.
             </p>
 
             {submitted ? (
-              <p className="mt-6 text-green-400 font-medium text-sm">
+              <p className="mt-6 text-leaf-300 font-medium text-sm">
                 ✓ You're subscribed! Check your inbox.
               </p>
             ) : (
@@ -46,11 +46,11 @@ export default function Newsletter() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Your email address"
                   required
-                  className="flex-1 bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-blue-400 transition-colors"
+                  className="flex-1 bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-sun-400 transition-colors"
                 />
                 <button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl transition-colors flex items-center"
+                  className="bg-brand-500 hover:bg-brand-400 text-white px-4 py-3 rounded-xl transition-colors flex items-center"
                 >
                   <ArrowRight size={18} />
                 </button>

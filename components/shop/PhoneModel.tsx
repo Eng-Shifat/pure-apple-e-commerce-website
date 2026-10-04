@@ -148,18 +148,18 @@ function Stand() {
     <group position={[0, -2.1, 0]}>
       <mesh position={[0, 0.15, 0]}>
         <cylinderGeometry args={[0.04, 0.05, 0.3, 32]} />
-        <meshStandardMaterial color="#8896b0" metalness={0.95} roughness={0.1} />
+        <meshStandardMaterial color="#9aa0a6" metalness={0.95} roughness={0.1} />
       </mesh>
       <mesh position={[0, 0, 0]}>
         <cylinderGeometry args={[0.5, 0.55, 0.06, 64]} />
-        <meshStandardMaterial color="#a0b0cc" metalness={0.95} roughness={0.1} />
+        <meshStandardMaterial color="#c3c7cb" metalness={0.95} roughness={0.1} />
       </mesh>
       {/* Blue glow ring */}
       <mesh position={[0, -0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.42, 0.6, 64]} />
         <meshStandardMaterial
-          color="#3366ff"
-          emissive="#2255ff"
+          color="#FB5724"
+          emissive="#FB5724"
           emissiveIntensity={1.2}
           transparent
           opacity={0.5}
@@ -245,7 +245,7 @@ export default function PhoneModel() {
       <Suspense
         fallback={
           <div className="w-full h-full flex items-center justify-center">
-            <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
           </div>
         }
       >
@@ -263,10 +263,10 @@ export default function PhoneModel() {
           {/* Lighting setup — premium studio feel */}
           <ambientLight intensity={0.4} />
           <directionalLight position={[4, 6, 4]} intensity={1.8} />
-          <directionalLight position={[-4, 2, -3]} intensity={0.5} color="#6699ff" />
+          <directionalLight position={[-4, 2, -3]} intensity={0.5} color="#FFC48A" />
           <pointLight position={[0, 4, 3]} intensity={1} color="#ffffff" />
-          <pointLight position={[2, -2, 2]} intensity={0.4} color="#4466ff" />
-          <pointLight position={[-2, -1, -2]} intensity={0.3} color="#aabbff" />
+          <pointLight position={[2, -2, 2]} intensity={0.4} color="#FFB27A" />
+          <pointLight position={[-2, -1, -2]} intensity={0.3} color="#FFE3A8" />
 
           {/* Rim light for premium edge highlight */}
           <spotLight
@@ -274,7 +274,7 @@ export default function PhoneModel() {
             angle={0.4}
             penumbra={1}
             intensity={1.2}
-            color="#88aaff"
+            color="#FFD08A"
           />
 
 
@@ -291,7 +291,7 @@ export default function PhoneModel() {
             blur={2.5}
             far={2.5}
             resolution={256}
-            color="#1133cc"
+            color="#C2410C"
           />
         </Canvas>
       </Suspense>

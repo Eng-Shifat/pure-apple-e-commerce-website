@@ -13,7 +13,7 @@ const popularProducts: Product[] = [
     image: "/images/products/iphone16pro.png",
     slug: "iphone-16-pro",
     badge: "Best Seller",
-    badgeColor: "#2563EB",
+    badgeColor: "#4FAE53",
   },
   {
     id: "2",
@@ -63,7 +63,7 @@ export default function PopularProducts() {
           </div>
           <Link
             href="/products"
-            className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1 shrink-0"
+            className="text-brand-600 text-sm font-medium hover:underline flex items-center gap-1 shrink-0"
           >
             View All →
           </Link>

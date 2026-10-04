@@ -19,7 +19,7 @@ export default function MobileCategoryStrip({ active = 0 }: { active?: number })
     <div className="md:hidden px-4 pt-3">
       <div
         ref={ref}
-        className="flex items-center gap-0.5 overflow-x-auto rounded-full bg-gradient-to-r from-[#0A1628] to-[#10213d] p-1 pr-4 ring-1 ring-white/5 shadow-lg shadow-slate-900/15 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,#000_88%,transparent_100%)]"
+        className="flex items-center gap-0.5 overflow-x-auto rounded-full bg-gradient-to-r from-[#0E2318] to-[#163D27] p-1 pr-4 ring-1 ring-white/5 shadow-lg shadow-slate-900/15 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,#000_88%,transparent_100%)]"
       >
         {tabs.map((t, i) => (
           <Link
@@ -27,8 +27,8 @@ export default function MobileCategoryStrip({ active = 0 }: { active?: number })
             href={t.href}
             className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-[7px] text-[12px] font-semibold tracking-wide transition-all duration-300 active:scale-95 ${
               i === active
-                ? "bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-md shadow-blue-900/40"
-                : "text-slate-300/90 hover:text-white"
+                ? "bg-gradient-to-b from-brand-400 to-brand-500 text-white shadow-md shadow-brand-900/30"
+                : "text-white/70 hover:text-white"
             }`}
           >
             {t.label}

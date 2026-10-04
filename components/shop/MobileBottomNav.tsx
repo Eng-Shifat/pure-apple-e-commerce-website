@@ -30,11 +30,11 @@ export default function MobileBottomNav() {
               <Link
                 href={it.href}
                 className={`relative flex flex-col items-center gap-1 pt-2.5 pb-2 text-[11px] font-medium transition-colors duration-300 active:scale-95 ${
-                  active ? "text-blue-600" : "text-gray-500"
+                  active ? "text-brand-600" : "text-gray-500"
                 }`}
               >
                 <span
-                  className={`absolute top-0 h-[3px] rounded-b-full bg-blue-600 transition-all duration-300 ${
+                  className={`absolute top-0 h-[3px] rounded-b-full bg-brand-500 transition-all duration-300 ${
                     active ? "w-8 opacity-100" : "w-0 opacity-0"
                   }`}
                 />

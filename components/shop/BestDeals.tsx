@@ -14,7 +14,7 @@ const dealProducts: Product[] = [
     image: "/images/products/iphone15.png",
     slug: "iphone-15",
     badge: "15%",
-    badgeColor: "#EF4444",
+    badgeColor: "#FB5724",
   },
   {
     id: "6",
@@ -27,7 +27,7 @@ const dealProducts: Product[] = [
     image: "/images/products/galaxy-s23.png",
     slug: "samsung-galaxy-s23",
     badge: "20%",
-    badgeColor: "#EF4444",
+    badgeColor: "#FB5724",
   },
   {
     id: "7",
@@ -40,7 +40,7 @@ const dealProducts: Product[] = [
     image: "/images/products/pixel8.png",
     slug: "google-pixel-8",
     badge: "10%",
-    badgeColor: "#EF4444",
+    badgeColor: "#FB5724",
   },
   {
     id: "8",
@@ -53,7 +53,7 @@ const dealProducts: Product[] = [
     image: "/images/products/oneplus-nord3.png",
     slug: "oneplus-nord-3",
     badge: "12%",
-    badgeColor: "#EF4444",
+    badgeColor: "#FB5724",
   },
 ];
 
@@ -71,7 +71,7 @@ export default function BestDeals() {
           </div>
           <Link
             href="/products?deals=true"
-            className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1"
+            className="text-brand-600 text-sm font-medium hover:underline flex items-center gap-1"
           >
             View All →
           </Link>

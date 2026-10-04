@@ -31,14 +31,14 @@ export default function ProductCard({ product }: ProductCardProps) {
     : null;
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-200 overflow-hidden">
+    <div className="group bg-white rounded-2xl border border-gray-100 hover:border-brand-200 hover:shadow-lg transition-all duration-200 overflow-hidden">
       {/* Image Container */}
       <div className="relative bg-gray-50 p-4 aspect-square flex items-center justify-center">
         {/* Badge */}
         {product.badge && (
           <span
             className="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10"
-            style={{ backgroundColor: product.badgeColor ?? "#2563EB" }}
+            style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
           >
             {product.badge}
           </span>
@@ -51,7 +51,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         >
           <Heart
             size={14}
-            className={wished ? "fill-red-500 text-red-500" : "text-gray-400"}
+            className={wished ? "fill-brand-500 text-brand-500" : "text-gray-400"}
           />
         </button>
 
@@ -69,7 +69,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Info */}
       <div className="p-4">
         <Link href={`/products/${product.slug}`}>
-          <h3 className="text-gray-900 font-semibold text-sm leading-snug hover:text-blue-600 transition-colors">
+          <h3 className="text-gray-900 font-semibold text-sm leading-snug hover:text-brand-600 transition-colors">
             {product.name}
           </h3>
         </Link>
@@ -84,7 +84,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 size={11}
                 className={
                   i < Math.floor(product.rating)
-                    ? "fill-amber-400 text-amber-400"
+                    ? "fill-sun-500 text-sun-500"
                     : "text-gray-200 fill-gray-200"
                 }
               />
@@ -108,7 +108,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Add to Cart */}
-        <button className="mt-3 w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all">
+        <button className="mt-3 w-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all">
           <ShoppingCart size={13} />
           Add to Cart
         </button>

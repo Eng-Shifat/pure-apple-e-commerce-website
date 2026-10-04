@@ -28,7 +28,7 @@ const customerService = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0f172a] text-white">
+    <footer className="bg-dark-hero text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-10">
 
@@ -60,15 +60,15 @@ export default function Footer() {
               {[
                 {
                   icon: <Facebook size={14} />,
-                  hover: "hover:bg-blue-600",
+                  hover: "hover:bg-brand-500",
                 },
                 {
                   icon: <Instagram size={14} />,
-                  hover: "hover:bg-pink-600",
+                  hover: "hover:bg-brand-500",
                 },
                 {
                   icon: <Youtube size={14} />,
-                  hover: "hover:bg-red-600",
+                  hover: "hover:bg-brand-500",
                 },
                 {
                   icon: <Music size={14} />,
@@ -97,7 +97,7 @@ export default function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-gray-400 text-xs hover:text-orange-400 transition-colors"
+                    className="text-gray-400 text-xs hover:text-sun-400 transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -117,7 +117,7 @@ export default function Footer() {
                 <li key={cat}>
                   <Link
                     href={`/products?category=${cat.toLowerCase()}`}
-                    className="text-gray-400 text-xs hover:text-orange-400 transition-colors"
+                    className="text-gray-400 text-xs hover:text-sun-400 transition-colors"
                   >
                     {cat}
                   </Link>
@@ -137,7 +137,7 @@ export default function Footer() {
                 <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="text-gray-400 text-xs hover:text-orange-400 transition-colors"
+                    className="text-gray-400 text-xs hover:text-sun-400 transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -189,14 +189,14 @@ export default function Footer() {
           <div className="flex gap-4">
             <Link
               href="/privacy"
-              className="text-gray-500 text-xs hover:text-orange-400 transition-colors"
+              className="text-gray-500 text-xs hover:text-sun-400 transition-colors"
             >
               Privacy Policy
             </Link>
 
             <Link
               href="/terms"
-              className="text-gray-500 text-xs hover:text-orange-400 transition-colors"
+              className="text-gray-500 text-xs hover:text-sun-400 transition-colors"
             >
               Terms &amp; Conditions
             </Link>

@@ -32,7 +32,7 @@ export default function MobileCategories() {
         </h2>
         <Link
           href="/products"
-          className="flex items-center gap-1 text-[13px] font-semibold text-blue-600"
+          className="flex items-center gap-1 text-[13px] font-semibold text-brand-600"
         >
           View All <ArrowRight size={14} />
         </Link>
@@ -45,9 +45,9 @@ export default function MobileCategories() {
             <Link
               key={c.name}
               href={c.href}
-              className="group flex flex-col items-center gap-2 rounded-2xl border border-blue-100/70 bg-white px-1 py-3.5 shadow-sm transition-all duration-300 active:scale-95"
+              className="group flex flex-col items-center gap-2 rounded-2xl border border-brand-100/70 bg-white px-1 py-3.5 shadow-sm transition-all duration-300 active:scale-95"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-colors group-active:bg-blue-600 group-active:text-white">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-active:bg-brand-500 group-active:text-white">
                 <Icon size={22} strokeWidth={1.8} />
               </span>
               <span className="text-[11px] font-semibold leading-tight text-gray-800">
