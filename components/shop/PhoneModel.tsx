@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
@@ -30,41 +30,113 @@ const POSE = {
   back: { x: -0.026, y: 0.004, z: -0.014, yaw: Math.PI - 0.36 },
 };
 
-function IPhone({ drag, scale = 1, ...props }: any) {
-  const { scene } = useGLTF("/models/iphone.glb");
-  // Slightly larger on the shorter mobile canvases so the phones fill the space
-  const { size } = useThree();
-  const fit = size.height >= 450 ? 1 : 1.2;
-  const ref = useRef<THREE.Group>(null);
+// If a model file is missing/broken, show nothing in the 3D area instead of
+// crashing the whole page. Resets automatically when the slide (model) changes.
+class ModelBoundary extends Component<{ children: ReactNode; url: string; onFail?: () => void }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.warn("[PhoneModel] could not load", this.props.url, error);
+    this.props.onFail?.();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
-  // Kill all glare on the phones:
-  //  - "Screen glass" (transmission layer) and "Setka" (glare overlay PNG) are hidden
-  //  - the display ("Screen") becomes an unlit material, so lights / environment
-  //    can never wash the wallpaper out with white reflections
+// Checks the file exists BEFORE three.js tries to load it, so a wrong file name /
+// wrong folder shows a clear console message instead of a red error screen.
+const existsCache = new Map<string, boolean>();
+function useModelExists(url: string) {
+  const [ok, setOk] = useState<boolean | undefined>(existsCache.get(url));
+  useEffect(() => {
+    if (existsCache.has(url)) {
+      setOk(existsCache.get(url));
+      return;
+    }
+    let cancelled = false;
+    setOk(undefined);
+    fetch(url, { method: "HEAD" })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .then((good) => {
+        existsCache.set(url, good);
+        if (!good) console.warn(`[PhoneModel] 3D file not found: ${url} — put the .glb inside public/models/ with exactly this name.`);
+        if (!cancelled) setOk(good);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+  return ok;
+}
+
+// ── Model registry ────────────────────────────────────────────
+// Add a new model: drop the .glb in public/models/ and (optionally) list it here.
+//  - fit:  true  → the model is centred and auto-scaled to fit the panel (recommended)
+//          false → use the fixed `scale` below (the old two-phone model)
+//  - auto: "spin" = keeps turning 360°, "sway" = gently swings left/right
+//  - pose: true → arranges the old front/back phone pair (only for iphone.glb)
+type ModelCfg = { fit: boolean; scale?: number; auto: "spin" | "sway"; pose?: boolean };
+const MODELS: Record<string, ModelCfg> = {
+  "/models/iphone.glb": { fit: false, scale: 11.5, auto: "spin", pose: true },
+  "/models/apple-iphone-duo.glb": { fit: true, auto: "sway" },
+};
+const DEFAULT_CFG: ModelCfg = { fit: true, auto: "sway" };
+const cfgOf = (url: string) => MODELS[url] ?? DEFAULT_CFG;
+
+function IPhone({ drag, url }: { drag: any; url: string }) {
+  const { scene } = useGLTF(url);
+  const cfg = cfgOf(url);
+  const { size } = useThree();
+  const ref = useRef<THREE.Group>(null); // drag / auto rotation
+  const intro = useRef<THREE.Group>(null); // pop-in when the slide changes
+  const t = useRef(0);
+
+  // size of the canvas decides how big the model may be
+  const aspect = size.width / Math.max(size.height, 1);
+  const visH = 2 * 4.2 * Math.tan(THREE.MathUtils.degToRad(38 / 2)); // visible height at z=0
+  const visW = visH * aspect;
+
+  // measure the model once (cached on the scene so re-visits don't re-measure)
+  const box = useMemo(() => {
+    if (!scene.userData._box) {
+      scene.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(scene);
+      scene.userData._box = { center: bb.getCenter(new THREE.Vector3()), size: bb.getSize(new THREE.Vector3()) };
+    }
+    return scene.userData._box as { center: THREE.Vector3; size: THREE.Vector3 };
+  }, [scene]);
+
+  let fitScale: number;
+  if (cfg.fit) {
+    fitScale = Math.min((visW * 0.84) / box.size.x, (visH * 0.74) / box.size.y);
+  } else {
+    // legacy: fixed scale, slightly larger on short canvases and smaller on narrow ones
+    const base = size.height >= 450 ? 1 : 1.05;
+    fitScale = (cfg.scale ?? 1) * base * THREE.MathUtils.clamp(aspect / 0.8, 0.7, 1);
+  }
+  const offset = cfg.fit ? box.center.clone().multiplyScalar(-fitScale) : new THREE.Vector3(0, 0.1, 0);
+
+  // Kill glare + expensive materials (works for any model, matched by material name):
+  //  - glass overlays on the screen are hidden
+  //  - the display becomes an unlit material so lights can never wash the wallpaper out
+  //  - any "transmission" glass (forces a full extra render pass) becomes plain see-through glass
   useEffect(() => {
     const swap = new Map<THREE.Material, THREE.Material>();
+    const norm = (n: string) => n.toLowerCase().replace(/\u0441/g, "c").trim(); // Cyrillic "с" → latin "c"
     scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (!mesh.isMesh) return;
       const apply = (m: THREE.Material) => {
-        const name = (m.name || "").toLowerCase().trim();
-        if (name === "screen glass" || name === "setka") {
+        const name = norm(m.name || "");
+        if (name === "screen glass" || name === "glass screen" || name === "setka") {
           m.visible = false;
           return m;
         }
-        // The camera glass uses "transmission", which makes three.js re-render
-        // the whole scene every frame. A plain see-through glass looks the
-        // same here and is far cheaper.
-        if (name === "camera glass") {
-          const glass = (m as THREE.MeshPhysicalMaterial).clone();
-          glass.transmission = 0;
-          glass.thickness = 0;
-          glass.transparent = true;
-          glass.opacity = 0.25;
-          glass.depthWrite = false;
-          return glass;
-        }
-        if (name === "screen") {
+        if (name.startsWith("screen")) {
           if (!swap.has(m)) {
             const src = m as THREE.MeshStandardMaterial;
             if (src.map) src.map.colorSpace = THREE.SRGBColorSpace;
@@ -80,6 +152,15 @@ function IPhone({ drag, scale = 1, ...props }: any) {
           }
           return swap.get(m)!;
         }
+        if ((m as THREE.MeshPhysicalMaterial).transmission > 0) {
+          const glass = (m as THREE.MeshPhysicalMaterial).clone();
+          glass.transmission = 0;
+          glass.thickness = 0;
+          glass.transparent = true;
+          glass.opacity = 0.25;
+          glass.depthWrite = false;
+          return glass;
+        }
         return m;
       };
       mesh.material = Array.isArray(mesh.material)
@@ -88,22 +169,30 @@ function IPhone({ drag, scale = 1, ...props }: any) {
     });
   }, [scene]);
 
-  // Arrange the two phones from the GLB into the showcase pose
+  // Old two-phone model only: arrange front/back phones into the showcase pose
   useEffect(() => {
+    if (!cfg.pose) return;
     const roots: THREE.Object3D[] = [];
     scene.traverse((o) => {
       if (o.children.length >= 10 && roots.length < 2) roots.push(o);
     });
     if (roots.length < 2) return;
-    // the phone that starts on the right is the front-view one
     const [front, back] = roots[0].position.x >= roots[1].position.x ? roots : [roots[1], roots[0]];
     front.position.set(POSE.front.x, POSE.front.y, POSE.front.z);
     front.rotation.set(0, POSE.front.yaw, 0);
     back.position.set(POSE.back.x, POSE.back.y, POSE.back.z);
     back.rotation.set(0, POSE.back.yaw, 0);
-  }, [scene]);
+  }, [scene, cfg.pose]);
 
   useFrame(({ clock }, delta) => {
+    // pop-in animation (runs every time a new model appears)
+    if (intro.current && t.current < 1) {
+      t.current = Math.min(1, t.current + delta / 0.85);
+      const e = 1 - Math.pow(1 - t.current, 3);
+      intro.current.scale.setScalar(0.72 + 0.28 * e);
+      intro.current.rotation.y = (1 - e) * -1.1;
+    }
+
     const g = ref.current;
     if (!g) return;
     const d: DragState = drag.current;
@@ -117,28 +206,27 @@ function IPhone({ drag, scale = 1, ...props }: any) {
       return;
     }
 
-    // inertia after release
     if (Math.abs(d.velocity) > 0.0005) {
       g.rotation.y += d.velocity;
       d.velocity *= 0.95;
     } else if (performance.now() - d.lastInteraction > RESUME_DELAY) {
-      if (AUTO_MODE === "spin") {
-        g.rotation.y += AUTO_SPEED * delta; // + = left-to-right
+      if (cfg.auto === "spin") {
+        g.rotation.y += AUTO_SPEED * delta;
       } else {
-        // wrap to [-PI, PI] then glide back to the swaying showcase pose
         g.rotation.y = THREE.MathUtils.euclideanModulo(g.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
         const target = Math.sin(clock.elapsedTime * SWAY_SPEED) * SWAY_AMOUNT;
         g.rotation.y += (target - g.rotation.y) * 0.05;
       }
     }
 
-    // ease tilt back to upright
     g.rotation.x *= 0.92;
   });
 
   return (
-    <group ref={ref} scale={scale * fit} {...props}>
-      <primitive object={scene} />
+    <group ref={intro} scale={0.72}>
+      <group ref={ref} scale={fitScale} position={offset}>
+        <primitive object={scene} />
+      </group>
     </group>
   );
 }
@@ -169,7 +257,7 @@ function Stand() {
   );
 }
 
-export default function PhoneModel() {
+export default function PhoneModel({ fill = false, model = "/models/apple-iphone-duo.glb" }: { fill?: boolean; model?: string }) {
   const drag = useRef<DragState>({
     dragging: false,
     lastX: 0,
@@ -180,10 +268,19 @@ export default function PhoneModel() {
     lastInteraction: 0,
   });
   const wrapRef = useRef<HTMLDivElement>(null);
+  const modelOk = useModelExists(model);
+  const [badFile, setBadFile] = useState<string | null>(null); // file exists but could not be read
   const [inView, setInView] = useState(true);
   const [shown, setShown] = useState(false);
 
   // Stop rendering the 3D scene while it is scrolled out of view
+  // Warm the cache for the other slides' models once the first one is on screen,
+  // so switching slides is instant without slowing the first load.
+  useEffect(() => {
+    const id = setTimeout(() => Object.keys(MODELS).forEach((u) => fetch(u, { priority: "low" } as RequestInit).catch(() => {})), 3500);
+    return () => clearTimeout(id);
+  }, []);
+
   useEffect(() => {
     const el = wrapRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
@@ -236,7 +333,11 @@ export default function PhoneModel() {
     <div
       ref={wrapRef}
       data-no-swipe
-      className="relative w-full max-w-[420px] h-[270px] sm:h-[360px] lg:w-[420px] lg:h-[500px] select-none"
+      className={
+        fill
+          ? "absolute inset-0 select-none"
+          : "relative w-full max-w-[420px] h-[270px] sm:h-[360px] lg:w-[420px] lg:h-[500px] select-none"
+      }
       style={{
         cursor: "grab",
         touchAction: "pan-y",
@@ -280,7 +381,13 @@ export default function PhoneModel() {
 
           <Environment files="/models/studio.hdr" />
 
-          <IPhone drag={drag} scale={11.5} position={[0, 0.1, 0]} />
+          {modelOk && (
+            <ModelBoundary key={model} url={model} onFail={() => setBadFile(model)}>
+              <Suspense fallback={null}>
+                <IPhone drag={drag} url={model} />
+              </Suspense>
+            </ModelBoundary>
+          )}
 
           <Stand />
 
@@ -295,8 +402,21 @@ export default function PhoneModel() {
           />
         </Canvas>
       </Suspense>
+
+      {/* Development helper: tells you why the 3D area is empty (never shown in production) */}
+      {process.env.NODE_ENV !== "production" && (modelOk === false || badFile === model) && (
+        <div className="absolute inset-x-4 top-1/3 text-center text-[11px] leading-relaxed text-white/60 pointer-events-none">
+          {modelOk === false ? "3D file not found:" : "3D file could not be read:"}
+          <br />
+          <span className="text-brand-300 font-mono break-all">{model}</span>
+          <br />
+          {modelOk === false
+            ? "Put it in public/models/ with exactly this name."
+            : "Open the browser console for details."}
+        </div>
+      )}
     </div>
   );
 }
 
-useGLTF.preload("/models/iphone.glb");
+// (other models are preloaded a few seconds after the first one is shown – see PhoneModel)

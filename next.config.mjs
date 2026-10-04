@@ -3,6 +3,7 @@ const nextConfig = {
   devIndicators: false,
   images: {
     remotePatterns: [],
+    qualities: [75, 90],
   },
 };
 

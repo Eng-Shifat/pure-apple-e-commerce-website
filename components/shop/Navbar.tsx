@@ -15,14 +15,19 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* ── Logo (apple + leaf only, no circle) ── */}
-          <Link href="/" aria-label="Pure Apple – Home" className="flex items-center gap-3 flex-shrink-0 group">
+          <Link href="/" aria-label="Pure Apple – Home" className="group flex items-center gap-3.5 flex-shrink-0">
             <ShineLogo
-              height={48}
+              height={54}
               priority
-              className="transition-transform duration-300 group-hover:scale-105"
+              className="transition-transform duration-500 ease-out group-hover:scale-105"
             />
-            <span className="hidden sm:block border-l border-gray-200 pl-3 text-[9px] font-medium tracking-widest text-gray-400 uppercase leading-tight">
-              Mobile &amp;<br />Gadget Shop
+            {/* 3-colour divider (green · orange · yellow) */}
+            <span aria-hidden="true" className="hidden sm:block h-8 w-[2px] rounded-full bg-gradient-to-b from-leaf-500 via-brand-500 to-sun-500" />
+            <span className="hidden sm:flex flex-col leading-none">
+              <span className="text-[9px] font-semibold tracking-[0.28em] text-gray-400 uppercase">Mobile &amp;</span>
+              <span className="mt-1.5 text-[11px] font-bold tracking-[0.2em] text-gray-800 uppercase">
+                Gadget <span className="text-brand-500">Shop</span>
+              </span>
             </span>
           </Link>
 

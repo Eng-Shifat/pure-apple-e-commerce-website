@@ -11,19 +11,18 @@ import { lazy, Suspense, useEffect, useState } from "react";
  */
 const PhoneModel = lazy(() => import("./PhoneModel"));
 
-const MODEL_URL = "/models/iphone.glb";
 const ENV_URL = "/models/studio.hdr";
 const SPLASH_EVENT = "pure-apple:splash-done";
 
-function Placeholder() {
+function Placeholder({ fill }: { fill?: boolean }) {
   return (
-    <div className="w-full h-[270px] sm:h-[360px] lg:w-[420px] lg:h-[500px] flex items-center justify-center">
+    <div className={fill ? "absolute inset-0 flex items-center justify-center" : "w-full h-[270px] sm:h-[360px] lg:w-[420px] lg:h-[500px] flex items-center justify-center"}>
       <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
     </div>
   );
 }
 
-export default function PhoneModelLazy() {
+export default function PhoneModelLazy({ fill = false, model }: { fill?: boolean; model: string }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export default function PhoneModelLazy() {
 
     // 1) Warm the network cache right away. This costs no main-thread time,
     //    so the files are already downloaded when the 3D scene starts.
-    fetch(MODEL_URL, { priority: "low" } as RequestInit).catch(() => {});
+    fetch(model, { priority: "low" } as RequestInit).catch(() => {});
     fetch(ENV_URL, { priority: "low" } as RequestInit).catch(() => {});
 
     // 2) Mount the 3D scene once the splash is gone and the browser is idle.
@@ -63,11 +62,11 @@ export default function PhoneModelLazy() {
     };
   }, []);
 
-  if (!ready) return <Placeholder />;
+  if (!ready) return <Placeholder fill={fill} />;
 
   return (
-    <Suspense fallback={<Placeholder />}>
-      <PhoneModel />
+    <Suspense fallback={<Placeholder fill={fill} />}>
+      <PhoneModel fill={fill} model={model} />
     </Suspense>
   );
 }
