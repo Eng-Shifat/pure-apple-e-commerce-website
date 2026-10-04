@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import Image from "next/image";
 import { Facebook, Instagram, Youtube, Music } from "lucide-react";
-
 
 const quickLinks = [
   { label: "Home", href: "/" },
@@ -12,7 +10,15 @@ const quickLinks = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
-const categories = ["Apple", "Samsung", "Google", "OnePlus", "Accessories"];
+
+const categories = [
+  "Apple",
+  "Samsung",
+  "Google",
+  "OnePlus",
+  "Accessories",
+];
+
 const customerService = [
   { label: "Help Center", href: "/help" },
   { label: "Shipping", href: "/shipping" },
@@ -28,14 +34,27 @@ export default function Footer() {
 
           {/* ── Brand ── */}
           <div className="col-span-2 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-3 mb-5 group">
+            <Link
+              href="/"
+              className="flex items-center gap-3 mb-5 group"
+            >
               <div className="transition-transform duration-300 group-hover:scale-105">
-                <div className="relative w-14 h-14 flex-shrink-0"><Image src="/logo/pure-apple-logo.png" alt="Pure Apple" fill className="object-contain" sizes="56px" /></div>
+                <div className="relative w-14 h-14 flex-shrink-0">
+                  <Image
+                    src="/logo/pure-apple-logo.png"
+                    alt="Pure Apple"
+                    fill
+                    className="object-contain"
+                    sizes="56px"
+                  />
+                </div>
               </div>
+
               <div className="leading-none">
                 <span className="block text-[15px] font-extrabold tracking-tight text-white">
                   Pure <span className="text-orange-400">Apple</span>
                 </span>
+
                 <span className="block text-[9px] font-medium tracking-widest text-gray-400 uppercase mt-1">
                   Mobile &amp; Gadget Shop
                 </span>
@@ -43,17 +62,34 @@ export default function Footer() {
             </Link>
 
             <p className="text-gray-400 text-xs leading-relaxed mb-5 max-w-[180px]">
-              Better Tech, Brighter Tomorrow. Your trusted source for premium smartphones &amp; gadgets.
+              Better Tech, Brighter Tomorrow. Your trusted source for premium
+              smartphones &amp; gadgets.
             </p>
 
             <div className="flex gap-2.5">
               {[
-                { icon: <Facebook size={14} />, hover: "hover:bg-blue-600" },
-                { icon: <Instagram size={14} />, hover: "hover:bg-pink-600" },
-                { icon: <Youtube size={14} />, hover: "hover:bg-red-600" },
-                { icon: <Music size={14} />, hover: "hover:bg-gray-600" },
+                {
+                  icon: <Facebook size={14} />,
+                  hover: "hover:bg-blue-600",
+                },
+                {
+                  icon: <Instagram size={14} />,
+                  hover: "hover:bg-pink-600",
+                },
+                {
+                  icon: <Youtube size={14} />,
+                  hover: "hover:bg-red-600",
+                },
+                {
+                  icon: <Music size={14} />,
+                  hover: "hover:bg-gray-600",
+                },
               ].map((s, i) => (
-                <a key={i} href="#" className={`w-8 h-8 rounded-full bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all duration-200 ${s.hover}`}>
+                <a
+                  key={i}
+                  href="#"
+                  className={`w-8 h-8 rounded-full bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all duration-200 ${s.hover}`}
+                >
                   {s.icon}
                 </a>
               ))}
@@ -62,11 +98,19 @@ export default function Footer() {
 
           {/* ── Quick Links ── */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">Quick Links</h4>
+            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">
+              Quick Links
+            </h4>
+
             <ul className="space-y-2.5">
               {quickLinks.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-gray-400 text-xs hover:text-orange-400 transition-colors">{link.label}</Link>
+                  <Link
+                    href={link.href}
+                    className="text-gray-400 text-xs hover:text-orange-400 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -74,11 +118,19 @@ export default function Footer() {
 
           {/* ── Categories ── */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">Categories</h4>
+            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">
+              Categories
+            </h4>
+
             <ul className="space-y-2.5">
               {categories.map((cat) => (
                 <li key={cat}>
-                  <Link href={`/products?category=${cat.toLowerCase()}`} className="text-gray-400 text-xs hover:text-orange-400 transition-colors">{cat}</Link>
+                  <Link
+                    href={`/products?category=${cat.toLowerCase()}`}
+                    className="text-gray-400 text-xs hover:text-orange-400 transition-colors"
+                  >
+                    {cat}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -86,11 +138,19 @@ export default function Footer() {
 
           {/* ── Customer Service ── */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">Customer Service</h4>
+            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">
+              Customer Service
+            </h4>
+
             <ul className="space-y-2.5">
               {customerService.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="text-gray-400 text-xs hover:text-orange-400 transition-colors">{item.label}</Link>
+                  <Link
+                    href={item.href}
+                    className="text-gray-400 text-xs hover:text-orange-400 transition-colors"
+                  >
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -98,18 +158,32 @@ export default function Footer() {
 
           {/* ── Payment & Contact ── */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">Payment Methods</h4>
+            <h4 className="text-white font-semibold text-sm mb-4 tracking-wide">
+              Payment Methods
+            </h4>
+
             <div className="flex flex-wrap gap-2 mb-6">
               {["visa", "mastercard", "paypal", "applepay"].map((pm) => (
-                <div key={pm} className="relative w-10 h-6 rounded border border-white/10 bg-white/5 overflow-hidden">
-                  <Image src={`/images/payment/${pm}.png`} alt={pm} fill className="object-contain p-0.5" />
+                <div
+                  key={pm}
+                  className="relative w-10 h-6 rounded border border-white/10 bg-white/5 overflow-hidden"
+                >
+                  <Image
+                    src={`/images/payment/${pm}.png`}
+                    alt={pm}
+                    fill
+                    className="object-contain p-0.5"
+                  />
                 </div>
               ))}
             </div>
+
             <div className="p-3 rounded-xl bg-white/5 border border-white/10">
               <p className="text-[10px] text-gray-400 leading-relaxed">
-                📍 Narayanganj, Dhaka, Bangladesh<br />
-                📞 +880 1XXX-XXXXXX<br />
+                📍 Narayanganj, Dhaka, Bangladesh
+                <br />
+                📞 +880 1XXX-XXXXXX
+                <br />
                 ✉️ info@pureapple.com.bd
               </p>
             </div>
@@ -118,10 +192,24 @@ export default function Footer() {
 
         {/* ── Bottom Bar ── */}
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-gray-500 text-xs">© 2025 Pure Apple. All rights reserved.</p>
+          <p className="text-gray-500 text-xs">
+            © 2025 Pure Apple. All rights reserved.
+          </p>
+
           <div className="flex gap-4">
-            <Link href="/privacy" className="text-gray-500 text-xs hover:text-orange-400 transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="text-gray-500 text-xs hover:text-orange-400 transition-colors">Terms &amp; Conditions</Link>
+            <Link
+              href="/privacy"
+              className="text-gray-500 text-xs hover:text-orange-400 transition-colors"
+            >
+              Privacy Policy
+            </Link>
+
+            <Link
+              href="/terms"
+              className="text-gray-500 text-xs hover:text-orange-400 transition-colors"
+            >
+              Terms &amp; Conditions
+            </Link>
           </div>
         </div>
       </div>
