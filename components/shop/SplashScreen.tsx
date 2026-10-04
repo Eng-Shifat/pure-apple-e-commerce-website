@@ -5,9 +5,8 @@ import { useEffect, useState } from "react";
 /* ─────────────────────────────────────────────────────────────
    Pure Apple – splash screen, animated LEFT → RIGHT
 
-   • A light bar sweeps across the logo from left to right.
    • The apple outline is wiped in left → right; the leaf, stem
-     and every letter pop in as the bar reaches them.
+     and every letter pop in from left to right.
    • The tagline is wiped in left → right too.
    • Finally the whole white panel slides off to the right.
 
@@ -26,11 +25,10 @@ const APPLE: Piece[] = [["M0 0 C14 -0.4 27.2 0.5 40.9 3.1 C41.8 3.2 42.6 3.4 43.
 
 const VIEWBOX = "80 91 2319 2368";
 
-// sweep timing (seconds) – the bar moves linearly from left to right,
-// each piece is timed to appear exactly when the bar reaches it.
-const T0 = 0.25;       // sweep start
-const SPAN = 1.9;      // sweep duration
-const OVER = 0.1;      // bar starts 10 % before the logo and ends 10 % after
+// timing (seconds) – pieces appear one after another from left to right
+const T0 = 0.25;       // start
+const SPAN = 1.9;      // total left → right duration
+const OVER = 0.1;
 const reach = (fx: number) => +(T0 + ((fx + OVER) / (1 + 2 * OVER)) * SPAN).toFixed(3);
 
 function Svg({ piece, fill, className = "", style }: {
@@ -44,7 +42,7 @@ function Svg({ piece, fill, className = "", style }: {
   );
 }
 
-/** pops in when the sweep reaches it */
+/** pops in at its left → right position */
 function Pop({ piece, fill, className = "pa-pop", lead = 0 }: {
   piece: Piece; fill: string; className?: string; lead?: number;
 }) {
@@ -118,8 +116,6 @@ export default function SplashScreen() {
             <Pop key={i} piece={p} fill={c} />
           ))}
 
-          {/* light bar travelling left → right */}
-          <div className="pa-sweep" />
         </div>
 
         <div className="pa-tagline-wipe">
@@ -172,7 +168,7 @@ export default function SplashScreen() {
         .pa-wipe-in { will-change: transform;
                       animation: pa-wipe-content 1s cubic-bezier(0.4, 0, 0.6, 1) both; }
 
-        /* letters / pieces pop in from the left as the bar reaches them */
+        /* letters / pieces pop in from the left */
         .pa-pop     { animation: pa-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
         .pa-grow-up { animation: pa-grow-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .pa-leaf {
@@ -181,14 +177,6 @@ export default function SplashScreen() {
             pa-sway 3.4s ease-in-out 2.6s infinite;
         }
 
-        /* the light bar */
-        .pa-sweep {
-          position: absolute; top: -6%; bottom: -6%; left: -12%; width: 12%;
-          background: linear-gradient(90deg,
-            rgba(252,193,11,0) 0%, rgba(252,193,11,0.55) 40%, rgba(251,87,36,0.6) 60%, rgba(251,87,36,0) 100%);
-          filter: blur(6px); pointer-events: none; will-change: transform, opacity;
-          animation: pa-sweep ${SPAN}s linear ${T0}s both;
-        }
 
         /* tagline: wiped in left → right */
         .pa-tagline-wipe { margin-top: 30px; overflow: hidden; will-change: transform;
@@ -225,12 +213,6 @@ export default function SplashScreen() {
           100% { transform: scale(1) rotate(0deg);  opacity: 1; }
         }
         @keyframes pa-sway { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(3deg); } }
-        @keyframes pa-sweep {
-          0%   { transform: translateX(0);       opacity: 0; }
-          8%   { opacity: 1; }
-          92%  { opacity: 1; }
-          100% { transform: translateX(1033%);   opacity: 0; }
-        }
         @keyframes pa-glow-in { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
         @keyframes pa-dot-float {
           0%   { opacity: 0;   transform: translateY(10px); }
