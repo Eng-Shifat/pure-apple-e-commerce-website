@@ -14,26 +14,19 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* ── Logo ── */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0 group">
-            <div className="relative w-10 h-10 transition-transform duration-300 group-hover:scale-110">
-              <Image
-                src="/logo/pure-apple-logo.png"
-                alt="Pure Apple"
-                fill
-                className="object-contain"
-                sizes="40px"
-                priority
-              />
-            </div>
-            <div className="leading-none">
-              <span className="block text-[14px] font-extrabold tracking-tight text-gray-900">
-                Pure <span className="text-orange-500">Apple</span>
-              </span>
-              <span className="block text-[9px] font-medium tracking-widest text-gray-400 uppercase">
-                Mobile &amp; Gadget Shop
-              </span>
-            </div>
+          {/* ── Logo (apple + leaf only, no circle) ── */}
+          <Link href="/" aria-label="Pure Apple – Home" className="flex items-center gap-3 flex-shrink-0 group">
+            <Image
+              src="/logo/pure-apple-logo.svg"
+              alt="Pure Apple"
+              width={47}
+              height={48}
+              priority
+              className="h-12 w-auto transition-transform duration-300 group-hover:scale-105"
+            />
+            <span className="hidden sm:block border-l border-gray-200 pl-3 text-[9px] font-medium tracking-widest text-gray-400 uppercase leading-tight">
+              Mobile &amp;<br />Gadget Shop
+            </span>
           </Link>
 
           {/* ── Desktop Nav ── */}

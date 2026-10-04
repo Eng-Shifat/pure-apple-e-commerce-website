@@ -38,27 +38,17 @@ export default function Footer() {
               href="/"
               className="flex items-center gap-3 mb-5 group"
             >
-              <div className="transition-transform duration-300 group-hover:scale-105">
-                <div className="relative w-14 h-14 flex-shrink-0">
-                  <Image
-                    src="/logo/pure-apple-logo.png"
-                    alt="Pure Apple"
-                    fill
-                    className="object-contain"
-                    sizes="56px"
-                  />
-                </div>
-              </div>
+              <Image
+                src="/logo/pure-apple-logo.svg"
+                alt="Pure Apple"
+                width={64}
+                height={65}
+                className="h-16 w-auto transition-transform duration-300 group-hover:scale-105"
+              />
 
-              <div className="leading-none">
-                <span className="block text-[15px] font-extrabold tracking-tight text-white">
-                  Pure <span className="text-orange-400">Apple</span>
-                </span>
-
-                <span className="block text-[9px] font-medium tracking-widest text-gray-400 uppercase mt-1">
-                  Mobile &amp; Gadget Shop
-                </span>
-              </div>
+              <span className="block border-l border-white/15 pl-3 text-[9px] font-medium tracking-widest text-gray-400 uppercase leading-tight">
+                Mobile &amp;<br />Gadget Shop
+              </span>
             </Link>
 
             <p className="text-gray-400 text-xs leading-relaxed mb-5 max-w-[180px]">
