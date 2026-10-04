@@ -103,27 +103,27 @@ export default function HeroSlider() {
           {/* ── LEFT: Text ─────────────────────── */}
           <div className="contents lg:block lg:flex-1 lg:z-10 lg:max-w-sm lg:pointer-events-none lg:[&>*]:pointer-events-auto">
             <div className="order-1 flex flex-col items-center text-center lg:items-start lg:text-left">
-            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-[11px] font-medium px-3 py-1 rounded-full mb-4">
               <span className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
               {slide.eyebrow}
             </div>
 
-            <h1 className="text-gray-900 text-[34px] sm:text-5xl lg:text-[52px] font-black leading-[1.1] mb-3 lg:mb-4 whitespace-pre-line tracking-tight">
+            <h1 className="text-gray-900 text-[30px] sm:text-4xl lg:text-[40px] font-bold leading-[1.15] mb-3 lg:mb-4 whitespace-pre-line tracking-tight">
               {slide.title}
             </h1>
 
-            <p className="text-gray-500 text-sm leading-relaxed mb-2 lg:mb-8 max-w-[300px] lg:max-w-[250px]">
+            <p className="text-gray-500 text-[13px] leading-relaxed mb-2 lg:mb-8 max-w-[300px] lg:max-w-[250px]">
               {slide.description}
             </p>
             </div>
 
             <div className="order-3 grid grid-cols-2 gap-3 w-full max-w-sm mt-1 lg:mt-0 lg:flex lg:items-center lg:w-auto lg:max-w-none">
               <Link href="/products"
-                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm px-4 lg:px-6 py-3.5 rounded-full transition-all shadow-lg shadow-blue-200">
+                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs px-4 lg:px-5 py-3 rounded-full transition-all shadow-lg shadow-blue-200">
                 SHOP NOW →
               </Link>
               <Link href="/products?deals=true"
-                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm px-4 lg:px-6 py-3.5 rounded-full border border-gray-200 transition-all shadow-sm">
+                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium text-xs px-4 lg:px-5 py-3 rounded-full border border-gray-200 transition-all shadow-sm">
                 EXPLORE DEALS
               </Link>
             </div>
@@ -139,11 +139,11 @@ export default function HeroSlider() {
                 return (
                   <div key={b.title} className="trust-chip" style={{ animationDelay: `${0.15 + i * 0.12}s` }}>
                     <span className="trust-icon">
-                      <Icon size={14} strokeWidth={2.2} />
+                      <Icon size={12} strokeWidth={1.8} />
                     </span>
                     <span className="flex flex-col items-center sm:items-start leading-tight text-center sm:text-left">
-                      <span className="text-gray-800 text-[11px] font-semibold whitespace-nowrap">{b.title}</span>
-                      <span className="hidden sm:block text-gray-400 text-[10px] whitespace-nowrap">{b.sub}</span>
+                      <span className="text-gray-800 text-[10px] font-medium whitespace-nowrap">{b.title}</span>
+                      <span className="hidden sm:block text-gray-400 text-[9px] whitespace-nowrap">{b.sub}</span>
                     </span>
                   </div>
                 );
@@ -170,7 +170,7 @@ export default function HeroSlider() {
 
           {/* ── RIGHT: Product Card ─────────────── */}
           <div className="hidden lg:flex flex-1 justify-end z-10 pointer-events-none">
-            <div className="pointer-events-auto bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl shadow-blue-100 p-5 w-44 lg:w-52 border border-white">
+            <div className="pointer-events-auto rounded-2xl p-5 w-44 lg:w-52 bg-white/25 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(37,99,235,0.15),inset_0_1px_0_rgba(255,255,255,0.7)]">
               <span className="inline-block bg-blue-50 text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-full mb-3">
                 {slide.cardBadge}
               </span>
@@ -223,8 +223,8 @@ export default function HeroSlider() {
           overflow: hidden;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          padding: 6px 14px 6px 6px;
+          gap: 6px;
+          padding: 5px 12px 5px 5px;
           border-radius: 9999px;
           background: rgba(255, 255, 255, 0.65);
           backdrop-filter: blur(10px);
@@ -260,8 +260,8 @@ export default function HeroSlider() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 28px;
-          height: 28px;
+          width: 24px;
+          height: 24px;
           border-radius: 9999px;
           color: #fff;
           background: linear-gradient(135deg, #3b82f6, #2563eb);

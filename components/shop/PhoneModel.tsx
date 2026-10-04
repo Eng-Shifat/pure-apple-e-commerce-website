@@ -15,8 +15,20 @@ type DragState = {
   lastInteraction: number;
 };
 
-const AUTO_SPEED = 0.006; // right to left
-const RESUME_DELAY = 1500; // ms after release before auto-rotate resumes
+// "sway": the pair gently swings around the showcase pose (recommended)
+// "spin": the pair keeps rotating left-to-right, a full 360° turn
+const AUTO_MODE: "sway" | "spin" = "spin";
+const AUTO_SPEED = 0.5; // rad/second, used by "spin" (~12.5 s per full turn)
+const SWAY_AMOUNT = 0.32; // radians each side, used by "sway"
+const SWAY_SPEED = 0.55;
+const RESUME_DELAY = 1500; // ms after release before auto motion resumes
+
+// Showcase pose: the back-view phone sits behind-left, the front-view phone
+// sits in front-right, both fanned outward and overlapping (like a product render).
+const POSE = {
+  front: { x: 0.026, y: 0, z: 0.014, yaw: 0.36 },
+  back: { x: -0.026, y: 0.004, z: -0.014, yaw: Math.PI - 0.36 },
+};
 
 function IPhone({ drag, scale = 1, ...props }: any) {
   const { scene } = useGLTF("/models/iphone.glb");
@@ -64,7 +76,22 @@ function IPhone({ drag, scale = 1, ...props }: any) {
     });
   }, [scene]);
 
-  useFrame(() => {
+  // Arrange the two phones from the GLB into the showcase pose
+  useEffect(() => {
+    const roots: THREE.Object3D[] = [];
+    scene.traverse((o) => {
+      if (o.children.length >= 10 && roots.length < 2) roots.push(o);
+    });
+    if (roots.length < 2) return;
+    // the phone that starts on the right is the front-view one
+    const [front, back] = roots[0].position.x >= roots[1].position.x ? roots : [roots[1], roots[0]];
+    front.position.set(POSE.front.x, POSE.front.y, POSE.front.z);
+    front.rotation.set(0, POSE.front.yaw, 0);
+    back.position.set(POSE.back.x, POSE.back.y, POSE.back.z);
+    back.rotation.set(0, POSE.back.yaw, 0);
+  }, [scene]);
+
+  useFrame(({ clock }, delta) => {
     const g = ref.current;
     if (!g) return;
     const d: DragState = drag.current;
@@ -83,7 +110,14 @@ function IPhone({ drag, scale = 1, ...props }: any) {
       g.rotation.y += d.velocity;
       d.velocity *= 0.95;
     } else if (performance.now() - d.lastInteraction > RESUME_DELAY) {
-      g.rotation.y -= AUTO_SPEED;
+      if (AUTO_MODE === "spin") {
+        g.rotation.y += AUTO_SPEED * delta; // + = left-to-right
+      } else {
+        // wrap to [-PI, PI] then glide back to the swaying showcase pose
+        g.rotation.y = THREE.MathUtils.euclideanModulo(g.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
+        const target = Math.sin(clock.elapsedTime * SWAY_SPEED) * SWAY_AMOUNT;
+        g.rotation.y += (target - g.rotation.y) * 0.05;
+      }
     }
 
     // ease tilt back to upright
