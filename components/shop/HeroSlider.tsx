@@ -18,7 +18,7 @@ const MODEL_B = "/models/iphone.glb";
 const slides = [
   {
     id: 1,
-    banner: "/images/hero/iphone17pro.png",
+    banner: "/images/hero/iphone17pro.webp",
     model: MODEL_A,
     cardBadge: "New Arrival",
     cardName: "iPhone 17 Pro",
@@ -28,7 +28,7 @@ const slides = [
   },
   {
     id: 2,
-    banner: "/images/hero/iphone16pro.png",
+    banner: "/images/hero/iphone16pro.webp",
     model: MODEL_B,
     cardBadge: "Best Seller",
     cardName: "iPhone 16 Pro",
