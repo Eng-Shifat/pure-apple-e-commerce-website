@@ -223,7 +223,7 @@ export default function HeroSlider() {
 
           {/* Row 1 – 3D phone (changes together with the left banner). Device only: no text / prices. */}
           <div
-            className="relative overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-[904/870] lg:aspect-auto"
+            className="relative overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-[4/3] lg:aspect-auto"
             style={{
               background: "linear-gradient(160deg, #0b1230 0%, #050814 60%, #1a0d08 100%)",
             }}
@@ -240,7 +240,7 @@ export default function HeroSlider() {
           {/* Row 2 – banner (image = public/images/hero/side-banner.webp) */}
           <Link
             href={SIDE_BANNER.href}
-            className="group relative block overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-[904/870] lg:aspect-auto"
+            className="group relative block overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-[4/3] lg:aspect-auto"
           >
             <Image
               src={SIDE_BANNER.src}
