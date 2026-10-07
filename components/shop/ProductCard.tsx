@@ -47,41 +47,48 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
     <div className="group bg-white rounded-2xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 overflow-hidden flex flex-col">
 
       {/* ── Image Zone ── */}
-      <div className="relative bg-[#F7F8FA] overflow-hidden" style={{ height: "220px" }}>
+      <div className="relative bg-[#F7F8FA] overflow-hidden" style={{ height: "200px" }}>
 
-        {/* Left badge */}
+        {/* Top-left: badge */}
         {product.badge && (
           <span
-            className="absolute top-3 left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-10 shadow-sm"
+            className="absolute top-2.5 left-2.5 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm"
             style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
           >
             {product.badge}
           </span>
         )}
 
-        {/* Discount badge */}
-        {discount && (
-          <span className="absolute top-3 right-10 bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full z-10 shadow-sm">
-            -{discount}%
-          </span>
-        )}
+        {/* Top-right: discount pill + wishlist stacked */}
+        <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5">
+          {/* Discount badge */}
+          {discount && (
+            <span className="bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm leading-none">
+              -{discount}%
+            </span>
+          )}
 
-        {/* Wishlist */}
-        <button
-          onClick={() => setWished((w) => !w)}
-          aria-label="Wishlist"
-          className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95"
-        >
-          <Heart
-            size={13}
-            className={wished ? "fill-red-500 text-red-500" : "text-gray-400"}
-          />
-        </button>
+          {/* Wishlist button — always visible, fills in on toggle */}
+          <button
+            onClick={() => setWished((w) => !w)}
+            aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
+            className={`w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-all duration-200 hover:scale-110 active:scale-95
+              ${wished
+                ? "bg-red-500 border-0"
+                : "bg-white border border-gray-200 hover:border-red-300"
+              }`}
+          >
+            <Heart
+              size={13}
+              className={wished ? "fill-white text-white" : "text-gray-400 group-hover:text-red-400 transition-colors"}
+            />
+          </button>
+        </div>
 
-        {/* Product Image — fixed container, image fills it with object-contain */}
+        {/* Product Image */}
         <Link
           href={`/products/${product.slug}`}
-          className="absolute inset-0 flex items-center justify-center p-6"
+          className="absolute inset-0 flex items-center justify-center p-5"
         >
           <div className="relative w-full h-full">
             <Image
@@ -96,72 +103,74 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       </div>
 
       {/* ── Info Zone ── */}
-      <div className="p-3 sm:p-4 flex flex-col flex-1">
+      <div className="px-3 pt-2.5 pb-3 flex flex-col flex-1">
 
         {/* Name */}
         <Link href={`/products/${product.slug}`}>
-          <h3 className="text-gray-900 font-bold text-[15px] leading-snug hover:text-brand-500 transition-colors line-clamp-1">
+          <h3 className="text-gray-900 font-bold text-[14px] leading-snug hover:text-brand-500 transition-colors line-clamp-1">
             {product.name}
           </h3>
         </Link>
 
         {/* Variant */}
-        <p className="text-gray-400 text-xs mt-0.5 truncate">{product.variant}</p>
+        <p className="text-gray-400 text-[11px] mt-0.5 truncate">{product.variant}</p>
 
-        {/* Specs pills (optional) */}
+        {/* Specs pills */}
         {product.specs && (
-          <div className="flex items-center flex-nowrap gap-1 sm:gap-1.5 mt-2 overflow-hidden">
+          <div className="flex items-center flex-nowrap gap-1 mt-1.5 overflow-hidden">
             {product.specs.screen && (
-              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1 sm:px-1.5 py-0.5">
-                <span className="hidden sm:inline">📱</span>{product.specs.screen}
+              <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
+                📱{product.specs.screen}
               </span>
             )}
             {product.specs.ram && (
-              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1 sm:px-1.5 py-0.5">
-                <span className="hidden sm:inline">⚙️</span>{product.specs.ram}
+              <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
+                ⚙️{product.specs.ram}
               </span>
             )}
             {product.specs.camera && (
-              <span className="inline-flex items-center gap-1 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded-md px-1 sm:px-1.5 py-0.5">
-                <span className="hidden sm:inline">📷</span>{product.specs.camera}
+              <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
+                📷{product.specs.camera}
               </span>
             )}
           </div>
         )}
 
         {/* Price row */}
-        <div className="flex items-baseline gap-2 mt-3">
-          <span className="text-gray-900 font-extrabold text-[17px] tracking-tight">
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-gray-900 font-extrabold text-[16px] tracking-tight">
             ৳{product.price.toLocaleString("en-BD")}
           </span>
           {product.originalPrice && (
-            <span className="text-gray-350 text-xs line-through text-gray-400">
+            <span className="text-[11px] line-through text-gray-400">
               ৳{product.originalPrice.toLocaleString("en-BD")}
+            </span>
+          )}
+          {discount && (
+            <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+              Save {discount}%
             </span>
           )}
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1 min-h-[8px]" />
-
         {/* Buttons */}
-        <div className="grid grid-cols-[3fr_2fr] sm:grid-cols-[1fr_auto] gap-1.5 sm:gap-2 mt-3">
+        <div className="grid grid-cols-[1fr_auto] gap-1.5 mt-2.5">
           <button
             onClick={handleAddToCart}
-            className={`min-w-0 h-9 flex items-center justify-center gap-1.5 whitespace-nowrap text-[11px] sm:text-xs font-semibold px-1 sm:px-3 rounded-xl transition-all duration-200 active:scale-95 shadow-sm
+            className={`h-8 flex items-center justify-center gap-1.5 whitespace-nowrap text-[11px] font-semibold px-3 rounded-lg transition-all duration-200 active:scale-95 shadow-sm
               ${added
-                ? "bg-leaf-500 text-white"
+                ? "bg-green-500 text-white"
                 : "bg-brand-500 hover:bg-brand-600 text-white hover:shadow-md"
               }`}
           >
-            <ShoppingCart size={13} className="hidden sm:block shrink-0" />
+            <ShoppingCart size={12} className="shrink-0" />
             {added ? "Added!" : "Add to Cart"}
           </button>
           <Link
             href={`/products/${product.slug}`}
-            className="min-w-0 h-9 flex items-center justify-center gap-1 whitespace-nowrap text-[11px] sm:text-xs font-semibold px-1 sm:px-3 rounded-xl border-2 border-brand-200 text-brand-500 hover:bg-brand-50 transition-all"
+            className="h-8 flex items-center justify-center gap-1 whitespace-nowrap text-[11px] font-semibold px-3 rounded-lg border-2 border-brand-200 text-brand-500 hover:bg-brand-50 transition-all"
           >
-            <Zap size={12} className="hidden sm:block shrink-0" />
+            <Zap size={11} className="shrink-0" />
             Buy
           </Link>
         </div>
