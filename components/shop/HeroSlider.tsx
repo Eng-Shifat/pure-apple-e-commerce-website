@@ -221,26 +221,33 @@ export default function HeroSlider() {
         {/* Mobile: 2-column grid side by side; Desktop: stacked 2 rows inside the right column */}
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-3 lg:grid-rows-2 min-w-0 lg:h-full">
 
-          {/* Row 1 – 3D phone (changes together with the left banner). Device only: no text / prices. */}
+          {/* Row 1 – 3D phone. bg matches the orange-green hero palette: dark base + warm glow */}
           <div
             className="relative overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
             style={{
-              background: "linear-gradient(160deg, #0b1230 0%, #050814 60%, #1a0d08 100%)",
+              /* Dark warm base — echoes the hero banner's deep shadow tones */
+              background: "linear-gradient(145deg, #0f1a0a 0%, #0c1208 45%, #1a0c04 100%)",
             }}
           >
+            {/* Ambient glow: orange bottom-right (brand), green top-left (hero accent) */}
             <div
-              className="absolute pointer-events-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 sm:w-52 sm:h-52 lg:w-60 lg:h-60 rounded-full blur-3xl"
-              style={{ background: "radial-gradient(circle, rgba(251,87,36,0.22) 0%, rgba(59,110,255,0.10) 45%, transparent 70%)" }}
+              className="absolute pointer-events-none bottom-0 right-0 w-3/4 h-3/4 rounded-full blur-3xl opacity-60"
+              style={{ background: "radial-gradient(circle at 80% 80%, rgba(249,115,22,0.35) 0%, transparent 65%)" }}
+            />
+            <div
+              className="absolute pointer-events-none top-0 left-0 w-1/2 h-1/2 rounded-full blur-2xl opacity-40"
+              style={{ background: "radial-gradient(circle at 20% 20%, rgba(34,197,94,0.25) 0%, transparent 70%)" }}
             />
             <div className="absolute inset-0" {...hold3d}>
               <PhoneModelLazy fill model={slide.model} />
             </div>
           </div>
 
-          {/* Row 2 – banner (image = public/images/hero/side-banner.webp) */}
+          {/* Row 2 – side banner: object-contain so the full image shows, bg matches card tone */}
           <Link
             href={SIDE_BANNER.href}
             className="group relative block overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
+            style={{ background: "#f8f4ef" }}
           >
             <Image
               src={SIDE_BANNER.src}
@@ -248,7 +255,7 @@ export default function HeroSlider() {
               fill
               quality={90}
               sizes="(min-width: 1280px) 360px, (min-width: 1024px) 30vw, 50vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-contain transition-transform duration-500 group-hover:scale-[1.03]"
             />
           </Link>
         </div>
