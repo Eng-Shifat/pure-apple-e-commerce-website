@@ -151,7 +151,7 @@ export default function HeroSlider() {
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-4 pb-1">
       {/* Hero = 2 columns on desktop: banner 70% (left) + right column 30% split in 2 rows:
           3D phone (top) and a second banner (bottom). Total height = the left banner's height.
-          Mobile/tablet: left banner, then 3D phone, then the second banner. */}
+          Mobile: left banner (full width, top) + 2-column grid below (3D phone | side banner). */}
       <div className="grid gap-3 lg:grid-cols-[7fr_3fr] lg:gap-4">
 
         {/* ═════════ LEFT (70%): banner card ═════════ */}
@@ -217,16 +217,19 @@ export default function HeroSlider() {
         </div>
         {/* ═════════ end LEFT ═════════ */}
 
-        {/* ═════════ RIGHT (30%): 2 rows → 3D phone (top) + banner (bottom) ═════════ */}
-        <div className="grid gap-3 lg:gap-4 lg:grid-rows-2 min-w-0">
+        {/* ═════════ RIGHT (30% on desktop): 2 rows → 3D phone (top) + banner (bottom) ═════════ */}
+        {/* Mobile: 2-column grid side by side; Desktop: stacked 2 rows inside the right column */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 lg:gap-4 lg:grid-rows-2 min-w-0 lg:h-full">
 
           {/* Row 1 – 3D phone (changes together with the left banner). Device only: no text / prices. */}
           <div
-            className="relative overflow-hidden rounded-3xl shadow-sm h-[260px] sm:h-[320px] lg:h-auto min-w-0"
-            style={{ background: "linear-gradient(160deg, #0b1230 0%, #050814 60%, #1a0d08 100%)" }}
+            className="relative overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-[904/870] lg:aspect-auto"
+            style={{
+              background: "linear-gradient(160deg, #0b1230 0%, #050814 60%, #1a0d08 100%)",
+            }}
           >
             <div
-              className="absolute pointer-events-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 lg:w-60 lg:h-60 rounded-full blur-3xl"
+              className="absolute pointer-events-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 sm:w-52 sm:h-52 lg:w-60 lg:h-60 rounded-full blur-3xl"
               style={{ background: "radial-gradient(circle, rgba(251,87,36,0.22) 0%, rgba(59,110,255,0.10) 45%, transparent 70%)" }}
             />
             <div className="absolute inset-0" {...hold3d}>
@@ -237,14 +240,14 @@ export default function HeroSlider() {
           {/* Row 2 – banner (image = public/images/hero/side-banner.webp) */}
           <Link
             href={SIDE_BANNER.href}
-            className="group relative block overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-video lg:aspect-auto"
+            className="group relative block overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-[904/870] lg:aspect-auto"
           >
             <Image
               src={SIDE_BANNER.src}
               alt={SIDE_BANNER.alt}
               fill
               quality={90}
-              sizes="(min-width: 1280px) 360px, (min-width: 1024px) 30vw, 100vw"
+              sizes="(min-width: 1280px) 360px, (min-width: 1024px) 30vw, 50vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>
