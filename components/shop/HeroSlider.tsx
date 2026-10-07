@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import PhoneModelLazy from "./PhoneModelLazy";
 
@@ -12,7 +12,8 @@ const MODEL_A = "/models/apple-iphone-duo.glb";
 const MODEL_B = "/models/iphone.glb";
 
 // ── Slides ─────────────────────────────────────────────────────
-// Each slide = one banner (left, 70%) + one 3D model + one product card (right, 30%).
+// Each slide = one banner (left, 70%) + one 3D model (right column, top row).
+// (cardBadge / cardPrice… are no longer shown in the 3D box – only cardName is used, for alt text & the page <h1>.)
 // Banners live in public/images/hero/ (size 1808 × 870 px works best).
 // To add a slide: copy one block, change the banner / model / card text.
 const slides = [
@@ -37,6 +38,14 @@ const slides = [
     cardHref: "/products/iphone-16-pro",
   },
 ];
+
+// Banner in the right column, under the 3D phone.
+// To change it: replace public/images/hero/side-banner.webp (16:9, e.g. 1200 × 675 px) and edit href/alt below.
+const SIDE_BANNER = {
+  src: "/images/hero/side-banner.webp",
+  href: "/products?deals=true",
+  alt: "Special offers – Pure Apple Mobile & Gadget Shop",
+};
 
 const AUTO_MS = 6000; // normal time between slides
 const RESUME_MS = 2000; // after the 3D phone is released / un-hovered: wait this long, then change slide
@@ -140,8 +149,9 @@ export default function HeroSlider() {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-4 pb-1">
-      {/* Hero = 2 columns on desktop: banner 70% (left) + 3D phone 30% (right).
-          Mobile/tablet: banner on top, 3D phone below. */}
+      {/* Hero = 2 columns on desktop: banner 70% (left) + right column 30% split in 2 rows:
+          3D phone (top) and a second banner (bottom). Total height = the left banner's height.
+          Mobile/tablet: left banner, then 3D phone, then the second banner. */}
       <div className="grid gap-3 lg:grid-cols-[7fr_3fr] lg:gap-4">
 
         {/* ═════════ LEFT (70%): banner card ═════════ */}
@@ -207,44 +217,37 @@ export default function HeroSlider() {
         </div>
         {/* ═════════ end LEFT ═════════ */}
 
-        {/* ═════════ RIGHT (30%): 3D phone + product card ═════════ */}
-        <div
-          className="relative overflow-hidden rounded-3xl shadow-sm h-[350px] sm:h-[480px] lg:h-auto min-w-0"
-          style={{ background: "linear-gradient(160deg, #0b1230 0%, #050814 60%, #1a0d08 100%)" }}
-        >
+        {/* ═════════ RIGHT (30%): 2 rows → 3D phone (top) + banner (bottom) ═════════ */}
+        <div className="grid gap-3 lg:gap-4 lg:grid-rows-2 min-w-0">
+
+          {/* Row 1 – 3D phone (changes together with the left banner). Device only: no text / prices. */}
           <div
-            className="absolute pointer-events-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-3xl"
-            style={{ background: "radial-gradient(circle, rgba(251,87,36,0.22) 0%, rgba(59,110,255,0.10) 45%, transparent 70%)" }}
-          />
-
-          {/* 3D phone sits above the product card (changes together with the banner) */}
-          <div className="absolute inset-x-0 top-0 bottom-[84px] sm:bottom-28" {...hold3d}>
-            <PhoneModelLazy fill model={slide.model} />
-          </div>
-
-          {/* ── Product card (changes with every slide) ── */}
-          <div className="absolute inset-x-3 bottom-3 sm:bottom-4 z-20">
-            <div className="relative grid grid-cols-[1fr_auto] items-center gap-3 rounded-[22px] sm:rounded-2xl py-3 pl-4 pr-3.5 sm:pr-2.5 sm:py-2.5 bg-gradient-to-br from-white/[0.16] to-white/[0.05] sm:bg-none sm:bg-white/10 backdrop-blur-2xl border border-white/[0.14] sm:border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.22)]">
-              <div className="min-w-0 flex flex-col items-start gap-1.5 sm:gap-0 sm:block">
-                <span className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-brand-300 sm:inline-block sm:bg-brand-500/20 sm:border sm:border-brand-400/30 sm:px-2 sm:py-0.5 sm:rounded-full sm:mb-1 sm:normal-case sm:tracking-normal">
-                  <span aria-hidden="true" className="sm:hidden w-1 h-1 rounded-full bg-brand-400 shadow-[0_0_6px_2px_rgba(251,87,36,0.6)]" />
-                  {slide.cardBadge}
-                </span>
-                <h3 className="text-white font-bold text-base sm:text-sm tracking-tight leading-tight line-clamp-2">{slide.cardName}</h3>
-                <p className="flex items-baseline gap-1.5 sm:block text-white/50 text-[11px] leading-none sm:leading-tight sm:mt-0.5">
-                  {slide.cardPriceLabel} <span className="text-white font-extrabold text-xl sm:text-base tracking-tight">{slide.cardPrice}</span>
-                </p>
-              </div>
-              <Link
-                href={slide.cardHref}
-                className="inline-flex items-center justify-center gap-1.5 shrink-0 h-9 px-4 rounded-full bg-gradient-to-b from-brand-400 to-brand-500 text-white text-xs font-semibold tracking-wide shadow-[0_4px_14px_rgba(251,87,36,0.4),inset_0_1px_0_rgba(255,255,255,0.35)] transition active:scale-95 hover:brightness-110 sm:h-auto sm:px-4 sm:py-3 sm:rounded-xl sm:bg-none sm:bg-brand-500 sm:hover:bg-brand-400 sm:hover:brightness-100 sm:text-xs sm:tracking-normal sm:shadow-lg sm:shadow-brand-500/30"
-              >
-                BUY NOW
-                <ArrowRight size={13} strokeWidth={2.5} className="sm:hidden" />
-                <span className="hidden sm:inline">→</span>
-              </Link>
+            className="relative overflow-hidden rounded-3xl shadow-sm h-[260px] sm:h-[320px] lg:h-auto min-w-0"
+            style={{ background: "linear-gradient(160deg, #0b1230 0%, #050814 60%, #1a0d08 100%)" }}
+          >
+            <div
+              className="absolute pointer-events-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 lg:w-60 lg:h-60 rounded-full blur-3xl"
+              style={{ background: "radial-gradient(circle, rgba(251,87,36,0.22) 0%, rgba(59,110,255,0.10) 45%, transparent 70%)" }}
+            />
+            <div className="absolute inset-0" {...hold3d}>
+              <PhoneModelLazy fill model={slide.model} />
             </div>
           </div>
+
+          {/* Row 2 – banner (image = public/images/hero/side-banner.webp) */}
+          <Link
+            href={SIDE_BANNER.href}
+            className="group relative block overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-video lg:aspect-auto"
+          >
+            <Image
+              src={SIDE_BANNER.src}
+              alt={SIDE_BANNER.alt}
+              fill
+              quality={90}
+              sizes="(min-width: 1280px) 360px, (min-width: 1024px) 30vw, 100vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </Link>
         </div>
         {/* ═════════ end RIGHT ═════════ */}
       </div>
