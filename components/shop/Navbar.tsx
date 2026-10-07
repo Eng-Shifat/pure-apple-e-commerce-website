@@ -72,44 +72,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* ── Desktop expanded search (replaces nav row) ── */}
-          {searchOpen && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (searchQuery.trim()) {
-                  window.location.href = `/products?q=${encodeURIComponent(searchQuery.trim())}`;
-                }
-              }}
-              className="hidden md:flex flex-1 items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-200"
-            >
-              <Search size={18} className="text-brand-500 shrink-0" />
-              <input
-                ref={searchRef}
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search iPhone, Samsung, Accessories…"
-                className="flex-1 bg-transparent text-[15px] text-gray-800 placeholder-gray-400 outline-none border-b-2 border-brand-400 pb-0.5"
-              />
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors"
-              >
-                <X size={18} />
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-full transition-colors shrink-0"
-              >
-                Search
-              </button>
-            </form>
-          )}
-
-          {/* ── Logo — hidden on desktop when search is open ── */}
-          <Link href="/" aria-label="Pure Apple – Home" className={`group flex items-center gap-2.5 sm:gap-3.5 flex-shrink-0 min-w-0 ${searchOpen ? "md:hidden" : ""}`}>
+          {/* ── Logo ── */}
+          <Link href="/" aria-label="Pure Apple – Home" className="group flex items-center gap-2.5 sm:gap-3.5 flex-shrink-0 min-w-0">
             <ShineLogo
               height={54}
               priority
@@ -125,8 +89,8 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* ── Desktop Nav — hidden when search is open ── */}
-          <nav className={`hidden items-center gap-6 ${searchOpen ? "" : "md:flex"}`}>
+          {/* ── Desktop Nav ── */}
+          <nav className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-brand-600 font-medium text-sm border-b-2 border-brand-500 pb-0.5">Home</Link>
 
             <div className="relative">
@@ -166,16 +130,28 @@ export default function Navbar() {
             >
               {searchOpen ? <X size={18} /> : <Search size={18} />}
             </button>
-            {/* Desktop search icon — hidden when expanded */}
-            {!searchOpen && (
-              <button
-                onClick={() => setSearchOpen(true)}
-                aria-label="Search"
-                className="hidden md:flex items-center justify-center p-2 rounded-lg text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors"
-              >
-                <Search size={18} />
+
+            {/* Desktop: always-visible search bar */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim()) {
+                  window.location.href = `/products?q=${encodeURIComponent(searchQuery.trim())}`;
+                }
+              }}
+              className="hidden md:flex items-center gap-2 w-64 lg:w-80 border border-gray-200 rounded-full px-4 py-2 bg-white/80 hover:border-brand-300 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100 transition-all"
+            >
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products…"
+                className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
+              />
+              <button type="submit" aria-label="Search" className="text-gray-400 hover:text-brand-500 transition-colors">
+                <Search size={16} />
               </button>
-            )}
+            </form>
             <button className="hidden md:block p-2 rounded-lg text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
               <Heart size={18} />
             </button>
