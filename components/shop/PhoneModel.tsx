@@ -497,9 +497,9 @@ export default function PhoneModel({ fill = false, model = "/models/apple-iphone
       )}
     </div>
 
-    {/* Zoom buttons (outside the drag area so taps are never mistaken for a rotate) */}
+    {/* Zoom buttons – desktop only (hidden on mobile so they don't clutter the small card) */}
     {fill && (
-      <div className="absolute top-2.5 right-2.5 lg:top-2 lg:right-2 z-10 flex flex-col gap-1.5 lg:gap-1">
+      <div className="hidden lg:flex absolute top-2 right-2 z-10 flex-col gap-1">
         {[
           { label: "Zoom in", onClick: () => zoomBy(1.3), icon: <Plus size={16} /> },
           { label: "Zoom out", onClick: () => zoomBy(1 / 1.3), icon: <Minus size={16} /> },
@@ -510,7 +510,7 @@ export default function PhoneModel({ fill = false, model = "/models/apple-iphone
             type="button"
             aria-label={b.label}
             onClick={b.onClick}
-            className="w-8 h-8 lg:w-7 lg:h-7 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 active:scale-90 backdrop-blur-md border border-white/20 text-white/90 transition"
+            className="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 active:scale-90 backdrop-blur-md border border-white/20 text-white/90 transition"
           >
             {b.icon}
           </button>
