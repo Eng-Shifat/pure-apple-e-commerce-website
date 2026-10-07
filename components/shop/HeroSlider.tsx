@@ -152,7 +152,7 @@ export default function HeroSlider() {
       {/* Hero = 2 columns on desktop: banner 70% (left) + right column 30% split in 2 rows:
           3D phone (top) and a second banner (bottom). Total height = the left banner's height.
           Mobile: left banner (full width, top) + 2-column grid below (3D phone | side banner). */}
-      <div className="grid gap-3 lg:grid-cols-[7fr_3fr] lg:gap-4">
+      <div className="grid gap-2 lg:grid-cols-[7fr_3fr] lg:gap-3">
 
         {/* ═════════ LEFT (70%): banner card ═════════ */}
         <div
@@ -219,11 +219,11 @@ export default function HeroSlider() {
 
         {/* ═════════ RIGHT (30% on desktop): 2 rows → 3D phone (top) + banner (bottom) ═════════ */}
         {/* Mobile: 2-column grid side by side; Desktop: stacked 2 rows inside the right column */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 lg:gap-4 lg:grid-rows-2 min-w-0 lg:h-full">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-3 lg:grid-rows-2 min-w-0 lg:h-full">
 
           {/* Row 1 – 3D phone (changes together with the left banner). Device only: no text / prices. */}
           <div
-            className="relative overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-[4/3] lg:aspect-auto"
+            className="relative overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
             style={{
               background: "linear-gradient(160deg, #0b1230 0%, #050814 60%, #1a0d08 100%)",
             }}
@@ -240,7 +240,7 @@ export default function HeroSlider() {
           {/* Row 2 – banner (image = public/images/hero/side-banner.webp) */}
           <Link
             href={SIDE_BANNER.href}
-            className="group relative block overflow-hidden rounded-3xl shadow-sm min-w-0 aspect-[4/3] lg:aspect-auto"
+            className="group relative block overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
           >
             <Image
               src={SIDE_BANNER.src}
