@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import ShineLogo from "./ShineLogo";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Search, Heart, ShoppingCart, User, ChevronDown, ChevronRight, Menu, X,
@@ -20,8 +20,25 @@ const mobileLinks = [
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
   const close = () => setMobileOpen(false);
+
+  // auto-focus input when search opens
+  useEffect(() => {
+    if (searchOpen) {
+      setTimeout(() => searchRef.current?.focus(), 50);
+    } else {
+      setSearchQuery("");
+    }
+  }, [searchOpen]);
+
+  // close search on route change
+  useEffect(() => {
+    setSearchOpen(false);
+  }, [pathname]);
 
   // only links without a query string can be matched by path alone
   const isActive = (href: string) =>
@@ -105,7 +122,15 @@ export default function Navbar() {
 
           {/* ── Right Icons ── */}
           <div className="flex items-center gap-2 md:gap-3">
-            <Link href="/products" aria-label="Search" className="flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-white/60 md:bg-transparent text-gray-700 md:text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
+            {/* Mobile: toggles the search overlay. Desktop: links to /products */}
+            <button
+              onClick={() => setSearchOpen((o) => !o)}
+              aria-label="Search"
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-white/60 text-gray-700 hover:text-brand-500 transition-colors"
+            >
+              {searchOpen ? <X size={18} /> : <Search size={18} />}
+            </button>
+            <Link href="/products" aria-label="Search" className="hidden md:flex items-center justify-center md:p-2 md:rounded-lg md:bg-transparent text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
               <Search size={18} />
             </Link>
             <button className="hidden md:block p-2 rounded-lg text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
@@ -132,6 +157,52 @@ export default function Navbar() {
       </div>
 
     </header>
+
+    {/* ── Mobile search overlay ── */}
+    <div
+      className={`md:hidden fixed left-0 right-0 z-40 transition-all duration-300 ease-out ${
+        searchOpen
+          ? "top-[64px] opacity-100 translate-y-0"
+          : "top-[64px] opacity-0 -translate-y-2 pointer-events-none"
+      }`}
+    >
+      <div className="mx-3 mt-1.5 rounded-2xl border border-white/60 bg-white/80 backdrop-blur-2xl shadow-[0_8px_32px_rgba(15,23,42,0.18)] overflow-hidden">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (searchQuery.trim()) {
+              window.location.href = `/products?q=${encodeURIComponent(searchQuery.trim())}`;
+            }
+          }}
+          className="flex items-center gap-2 px-4 py-3"
+        >
+          <Search size={18} className="text-brand-500 shrink-0" />
+          <input
+            ref={searchRef}
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="iPhone, Samsung, Accessories…"
+            className="flex-1 bg-transparent text-[15px] text-gray-800 placeholder-gray-400 outline-none"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X size={16} />
+            </button>
+          )}
+          <button
+            type="submit"
+            className="ml-1 px-4 py-1.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-full transition-colors"
+          >
+            Go
+          </button>
+        </form>
+      </div>
+    </div>
 
     {/* ── Mobile menu: glass panel (sits outside <header> so its blur sees the page behind it) ── */}
     <div className="md:hidden">
