@@ -225,18 +225,24 @@ export default function HeroSlider() {
           <div
             className="relative overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
             style={{
-              /* Dark warm base — echoes the hero banner's deep shadow tones */
-              background: "linear-gradient(145deg, #0f1a0a 0%, #0c1208 45%, #1a0c04 100%)",
+              background: "linear-gradient(145deg, #0d1f06 0%, #0a1503 40%, #1f0e02 100%)",
             }}
           >
-            {/* Ambient glow: orange bottom-right (brand), green top-left (hero accent) */}
+            {/* Strong orange glow — bottom right */}
             <div
-              className="absolute pointer-events-none bottom-0 right-0 w-3/4 h-3/4 rounded-full blur-3xl opacity-60"
-              style={{ background: "radial-gradient(circle at 80% 80%, rgba(249,115,22,0.35) 0%, transparent 65%)" }}
+              className="absolute pointer-events-none"
+              style={{
+                inset: 0,
+                background: "radial-gradient(ellipse at 85% 90%, rgba(249,115,22,0.55) 0%, rgba(234,88,12,0.25) 35%, transparent 65%)",
+              }}
             />
+            {/* Green glow — top left */}
             <div
-              className="absolute pointer-events-none top-0 left-0 w-1/2 h-1/2 rounded-full blur-2xl opacity-40"
-              style={{ background: "radial-gradient(circle at 20% 20%, rgba(34,197,94,0.25) 0%, transparent 70%)" }}
+              className="absolute pointer-events-none"
+              style={{
+                inset: 0,
+                background: "radial-gradient(ellipse at 15% 10%, rgba(34,197,94,0.45) 0%, rgba(22,163,74,0.20) 35%, transparent 60%)",
+              }}
             />
             <div className="absolute inset-0" {...hold3d}>
               <PhoneModelLazy fill model={slide.model} />
