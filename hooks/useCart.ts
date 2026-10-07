@@ -1,2 +1,1 @@
-// Cart hook
-export {};
+export { useCartStore as useCart } from "@/store/cartStore";

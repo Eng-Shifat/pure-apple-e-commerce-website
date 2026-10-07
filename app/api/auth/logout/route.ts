@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
+
 export async function POST() {
-  return NextResponse.json({ message: "Logout endpoint" });
+  const supabase = getSupabaseAdmin();
+  await supabase.auth.signOut();
+  return NextResponse.json({ message: "Logged out" });
 }
