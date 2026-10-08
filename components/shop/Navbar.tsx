@@ -11,6 +11,19 @@ import {
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
 
+const BRANDS = [
+  { label: "Apple",    href: "/products?category=apple"    },
+  { label: "Samsung",  href: "/products?category=samsung"  },
+  { label: "OnePlus",  href: "/products?category=oneplus"  },
+  { label: "Redmi",    href: "/products?category=redmi"    },
+  { label: "Realme",   href: "/products?category=realme"   },
+  { label: "Nothing",  href: "/products?category=nothing"  },
+  { label: "Motorola", href: "/products?category=motorola" },
+  { label: "Vivo",     href: "/products?category=vivo"     },
+  { label: "Honor",    href: "/products?category=honor"    },
+  { label: "iQOO",     href: "/products?category=iqoo"     },
+];
+
 const mobileLinks = [
   { label: "Home",       href: "/",                    icon: Home },
   { label: "Shop",       href: "/products",            icon: ShoppingBag },
@@ -20,10 +33,11 @@ const mobileLinks = [
 ];
 
 export default function Navbar() {
-  const [mobileOpen,  setMobileOpen]  = useState(false);
-  const [shopOpen,    setShopOpen]    = useState(false);
-  const [searchOpen,  setSearchOpen]  = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileOpen,   setMobileOpen]   = useState(false);
+  const [shopOpen,     setShopOpen]     = useState(false);
+  const [catOpen,      setCatOpen]      = useState(false);
+  const [searchOpen,   setSearchOpen]   = useState(false);
+  const [searchQuery,  setSearchQuery]  = useState("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const pathname  = usePathname();
@@ -31,7 +45,7 @@ export default function Navbar() {
   const close     = () => setMobileOpen(false);
 
   const cartCount = useCartStore((s) => s.count());
-  const user = useAuthStore(s => s.user);
+  const user   = useAuthStore(s => s.user);
   const logout = useAuthStore(s => s.logout);
 
   useEffect(() => {
@@ -86,6 +100,7 @@ export default function Navbar() {
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/" className={`text-sm font-medium transition-colors ${pathname === "/" ? "text-brand-600 border-b-2 border-brand-500 pb-0.5" : "text-gray-800 hover:text-brand-600"}`}>Home</Link>
 
+              {/* Shop dropdown */}
               <div className="relative">
                 <button
                   onMouseEnter={() => setShopOpen(true)}
@@ -98,31 +113,49 @@ export default function Navbar() {
                   <div
                     onMouseEnter={() => setShopOpen(true)}
                     onMouseLeave={() => setShopOpen(false)}
-                    className="absolute top-full left-0 mt-1 w-48 bg-white/80 backdrop-blur-xl rounded-xl shadow-lg border border-white/50 py-2 z-50"
+                    className="absolute top-full left-0 mt-1 w-48 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg border border-white/50 py-2 z-50"
                   >
-                    <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">All Products</Link>
-                    <Link href="/products?category=apple" className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">Apple</Link>
-                    <Link href="/products?category=samsung" className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">Samsung</Link>
-                    <Link href="/products?condition=pre-owned" className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">Pre-Owned</Link>
-                    <Link href="/products?deals=true" className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">Deals</Link>
+                    <Link href="/products?condition=brand-new" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 font-medium">🆕 Brand New</Link>
+                    <Link href="/products?condition=pre-owned" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 font-medium">♻️ Pre-Owned</Link>
                   </div>
                 )}
               </div>
 
-              <Link href="/products?view=categories" className="text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors">Categories</Link>
+              {/* Categories dropdown */}
+              <div className="relative">
+                <button
+                  onMouseEnter={() => setCatOpen(true)}
+                  onMouseLeave={() => setCatOpen(false)}
+                  className="flex items-center gap-1 text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors"
+                >
+                  Categories <ChevronDown size={14} />
+                </button>
+                {catOpen && (
+                  <div
+                    onMouseEnter={() => setCatOpen(true)}
+                    onMouseLeave={() => setCatOpen(false)}
+                    className="absolute top-full left-0 mt-1 w-48 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg border border-white/50 py-2 z-50"
+                  >
+                    {BRANDS.map((b) => (
+                      <Link key={b.label} href={b.href} className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">
+                        {b.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <Link href="/products?deals=true" className="text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors">Deals</Link>
               <Link href="/about" className="text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors">About</Link>
             </nav>
 
             {/* Right Icons */}
             <div className="flex items-center gap-2 md:gap-3">
-              {/* Mobile search toggle */}
               <button onClick={() => setSearchOpen(o => !o)} aria-label="Search"
                 className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-white/60 text-gray-700 hover:text-brand-500 transition-colors">
                 {searchOpen ? <X size={18} /> : <Search size={18} />}
               </button>
 
-              {/* Desktop search */}
               <form onSubmit={handleSearch}
                 className="hidden md:flex items-center gap-2 w-64 lg:w-80 border border-gray-200 rounded-full px-4 py-2 bg-white/80 hover:border-brand-300 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
                 <input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
@@ -131,12 +164,10 @@ export default function Navbar() {
                 <button type="submit" aria-label="Search" className="text-gray-400 hover:text-brand-500"><Search size={16} /></button>
               </form>
 
-              {/* Wishlist */}
               <Link href="/wishlist" className="hidden md:flex p-2 rounded-lg text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
                 <Heart size={18} />
               </Link>
 
-              {/* Cart */}
               <Link href="/cart"
                 className="relative flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-white/60 md:bg-transparent text-gray-700 md:text-gray-800 hover:text-brand-600 hover:bg-brand-50 transition-colors">
                 <ShoppingCart size={18} />
@@ -147,7 +178,6 @@ export default function Navbar() {
                 )}
               </Link>
 
-              {/* User / Auth */}
               <div className="hidden md:block relative">
                 {user ? (
                   <>
@@ -188,7 +218,6 @@ export default function Navbar() {
                 )}
               </div>
 
-              {/* Mobile hamburger */}
               <button onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Close menu" : "Open menu"}
                 className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-white/60 text-gray-800 active:scale-95 transition-transform">
                 {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -235,22 +264,23 @@ export default function Navbar() {
                 </li>
               );
             })}
-            {/* Auth row */}
-            <li>
-              {user ? (
+            {user ? (
+              <li>
                 <button onClick={() => { logout(); close(); }}
                   className="w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 hover:bg-white/50 transition-colors">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-red-500"><LogOut size={18} /></span>
                   <span className="text-[15px] font-semibold text-red-500">Sign Out</span>
                 </button>
-              ) : (
+              </li>
+            ) : (
+              <li>
                 <Link href="/login" onClick={close}
                   className="flex items-center gap-3 rounded-2xl px-3 py-2.5 hover:bg-white/50 transition-colors">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-gray-700"><User size={18} /></span>
                   <span className="text-[15px] font-semibold text-gray-800">Login / Register</span>
                 </Link>
-              )}
-            </li>
+              </li>
+            )}
           </ul>
         </nav>
       </div>
