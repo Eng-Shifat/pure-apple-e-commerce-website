@@ -38,8 +38,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <aside className="w-60 shrink-0 min-h-screen bg-white border-r border-gray-100 flex flex-col">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
+      <aside className="w-60 shrink-0 h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col overflow-y-auto">
         <div className="px-5 py-5 border-b border-gray-100">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-lg font-extrabold text-orange-500">Pure Apple</span>
@@ -78,7 +78,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
       </aside>
-      <main className="flex-1 min-w-0 overflow-auto">{children}</main>
+      <main className="flex-1 min-w-0 overflow-y-auto h-screen">{children}</main>
     </div>
   );
 }
