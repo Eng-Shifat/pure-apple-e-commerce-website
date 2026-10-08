@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Upload, Loader2, CheckCircle, X } from "lucide-react";
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 interface ProductFormProps {
   initialData?: {
@@ -96,7 +96,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     setError("");
 
     try {
-      const supabase = createClient();
       const ext = file.name.split(".").pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
