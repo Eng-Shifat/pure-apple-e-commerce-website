@@ -2,55 +2,75 @@
 
 import Link from "next/link";
 import ShineLogo from "./ShineLogo";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Search, Heart, ShoppingCart, User, ChevronDown, ChevronRight, Menu, X,
-  Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut,
-  Apple, Smartphone,
+  Search, Heart, ShoppingCart, User, ChevronDown, ChevronRight,
+  Menu, X, Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut, Star,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
 
-const CATEGORIES = [
-  {
-    group: "🍎 Apple",
-    items: [
-      { label: "All iPhones",    href: "/products?category=apple" },
-      { label: "Brand New",      href: "/products?category=apple&condition=brand-new" },
-      { label: "Pre-Owned",      href: "/products?category=apple&condition=pre-owned" },
-    ],
-  },
-  {
-    group: "🤖 Android",
-    items: [
-      { label: "Samsung",  href: "/products?category=samsung"  },
-      { label: "OnePlus",  href: "/products?category=oneplus"  },
-      { label: "Redmi",    href: "/products?category=redmi"    },
-      { label: "Realme",   href: "/products?category=realme"   },
-      { label: "Nothing",  href: "/products?category=nothing"  },
-      { label: "Motorola", href: "/products?category=motorola" },
-      { label: "Vivo",     href: "/products?category=vivo"     },
-      { label: "Honor",    href: "/products?category=honor"    },
-      { label: "iQOO",     href: "/products?category=iqoo"     },
-    ],
-  },
-];
+interface Product {
+  id: string; name: string; price: number; original_price?: number;
+  image: string; slug: string; badge?: string; badge_color?: string;
+  rating?: number; category?: string; condition?: string;
+}
 
-const SHOP_ITEMS = [
-  { label: "🆕 Brand New",  href: "/products?condition=brand-new" },
-  { label: "♻️ Pre-Owned",  href: "/products?condition=pre-owned" },
-  { label: "🔥 Hot Deals",  href: "/products?deals=true"          },
-  { label: "⭐ Featured",   href: "/products?featured=true"       },
+const BRAND_GROUPS = [
+  { key: "apple",    label: "Apple",    emoji: "🍎", color: "text-gray-800" },
+  { key: "samsung",  label: "Samsung",  emoji: "📱", color: "text-blue-600"  },
+  { key: "oneplus",  label: "OnePlus",  emoji: "📱", color: "text-red-600"   },
+  { key: "redmi",    label: "Redmi",    emoji: "📱", color: "text-orange-600"},
+  { key: "realme",   label: "Realme",   emoji: "📱", color: "text-yellow-600"},
+  { key: "nothing",  label: "Nothing",  emoji: "📱", color: "text-gray-700"  },
+  { key: "motorola", label: "Motorola", emoji: "📱", color: "text-blue-500"  },
+  { key: "vivo",     label: "Vivo",     emoji: "📱", color: "text-indigo-600"},
+  { key: "honor",    label: "Honor",    emoji: "📱", color: "text-red-700"   },
+  { key: "iqoo",     label: "iQOO",     emoji: "📱", color: "text-gray-900"  },
 ];
 
 const mobileLinks = [
-  { label: "Home",       href: "/",                    icon: Home       },
-  { label: "Shop",       href: "/products",            icon: ShoppingBag},
-  { label: "Categories", href: "/products?view=categories", icon: LayoutGrid },
-  { label: "Deals",      href: "/products?deals=true", icon: BadgePercent },
-  { label: "About",      href: "/about",               icon: Info       },
+  { label: "Home",       href: "/",                        icon: Home        },
+  { label: "Shop",       href: "/products",                icon: ShoppingBag },
+  { label: "Categories", href: "/products?view=categories",icon: LayoutGrid  },
+  { label: "Deals",      href: "/products?deals=true",     icon: BadgePercent},
+  { label: "About",      href: "/about",                   icon: Info        },
 ];
+
+// Mini product card shown in dropdown
+function MiniCard({ p }: { p: Product }) {
+  const disc = p.original_price && p.original_price > p.price
+    ? Math.round((1 - p.price / p.original_price) * 100) : 0;
+  return (
+    <Link href={`/products/${p.slug}`}
+      className="group flex flex-col gap-1.5 p-2 rounded-xl hover:bg-gray-50 transition-colors min-w-0">
+      <div className="relative w-full aspect-square rounded-lg bg-gray-100 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={p.image} alt={p.name} className="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-300" />
+        {disc > 0 && (
+          <span className="absolute top-1 right-1 text-[9px] font-bold text-white bg-red-500 px-1 py-0.5 rounded-full">-{disc}%</span>
+        )}
+        {p.badge && (
+          <span className="absolute top-1 left-1 text-[9px] font-bold text-white px-1 py-0.5 rounded-full" style={{ backgroundColor: p.badge_color ?? "#FB5724" }}>{p.badge}</span>
+        )}
+      </div>
+      <p className="text-[11px] font-semibold text-gray-800 leading-tight line-clamp-2">{p.name}</p>
+      <div className="flex items-center gap-1">
+        <span className="text-[12px] font-bold text-brand-600">৳{p.price.toLocaleString("en-BD")}</span>
+        {p.original_price && p.original_price > p.price && (
+          <span className="text-[9px] text-gray-400 line-through">৳{p.original_price.toLocaleString("en-BD")}</span>
+        )}
+      </div>
+      {p.rating && p.rating > 0 && (
+        <div className="flex items-center gap-0.5">
+          <Star size={9} className="fill-yellow-400 text-yellow-400" />
+          <span className="text-[9px] text-gray-500 font-medium">{p.rating}</span>
+        </div>
+      )}
+    </Link>
+  );
+}
 
 export default function Navbar() {
   const [mobileOpen,   setMobileOpen]   = useState(false);
@@ -60,34 +80,88 @@ export default function Navbar() {
   const [searchQuery,  setSearchQuery]  = useState("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const searchRef  = useRef<HTMLInputElement>(null);
+  // Hover state
+  const [shopHover,    setShopHover]    = useState(false);
+  const [catHover,     setCatHover]     = useState(false);
+  const [activeBrand,  setActiveBrand]  = useState("apple");
+
+  // Products cache
+  const [shopProducts,  setShopProducts]  = useState<Product[]>([]);
+  const [brandProducts, setBrandProducts] = useState<Record<string, Product[]>>({});
+  const [loadingProds,  setLoadingProds]  = useState(false);
+
+  const shopHoverTimer = useRef<ReturnType<typeof setTimeout>>();
+  const catHoverTimer  = useRef<ReturnType<typeof setTimeout>>();
   const shopRef    = useRef<HTMLDivElement>(null);
   const catRef     = useRef<HTMLDivElement>(null);
   const userRef    = useRef<HTMLDivElement>(null);
+  const searchRef  = useRef<HTMLInputElement>(null);
+  const pathname   = usePathname();
+  const router     = useRouter();
+  const close      = () => setMobileOpen(false);
+  const cartCount  = useCartStore(s => s.count());
+  const user       = useAuthStore(s => s.user);
+  const logout     = useAuthStore(s => s.logout);
 
-  const pathname = usePathname();
-  const router   = useRouter();
-  const close    = () => setMobileOpen(false);
+  // Fetch featured products for shop dropdown
+  const fetchShopProducts = useCallback(async () => {
+    if (shopProducts.length > 0) return;
+    setLoadingProds(true);
+    try {
+      const r = await fetch("/api/products?featured=true&available=true");
+      const d = await r.json();
+      setShopProducts((d.products ?? []).slice(0, 4));
+    } catch { /* ignore */ }
+    setLoadingProds(false);
+  }, [shopProducts.length]);
 
-  const cartCount = useCartStore((s) => s.count());
-  const user   = useAuthStore(s => s.user);
-  const logout = useAuthStore(s => s.logout);
+  // Fetch products for a brand
+  const fetchBrandProducts = useCallback(async (brand: string) => {
+    if (brandProducts[brand]) return;
+    try {
+      const r = await fetch(`/api/products?category=${brand}&available=true`);
+      const d = await r.json();
+      setBrandProducts(prev => ({ ...prev, [brand]: (d.products ?? []).slice(0, 4) }));
+    } catch { /* ignore */ }
+  }, [brandProducts]);
 
-  // Close all dropdowns when clicking outside
+  // Hover handlers with delay (prevents flicker)
+  function handleShopEnter() {
+    clearTimeout(shopHoverTimer.current);
+    setShopHover(true);
+    setCatHover(false);
+    fetchShopProducts();
+  }
+  function handleShopLeave() {
+    shopHoverTimer.current = setTimeout(() => setShopHover(false), 150);
+  }
+  function handleCatEnter() {
+    clearTimeout(catHoverTimer.current);
+    setCatHover(true);
+    setShopHover(false);
+    fetchBrandProducts(activeBrand);
+  }
+  function handleCatLeave() {
+    catHoverTimer.current = setTimeout(() => setCatHover(false), 150);
+  }
+  function handleBrandHover(brand: string) {
+    setActiveBrand(brand);
+    fetchBrandProducts(brand);
+  }
+
+  // Click outside to close click-based menus (user menu)
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (shopRef.current && !shopRef.current.contains(e.target as Node)) setShopOpen(false);
-      if (catRef.current  && !catRef.current.contains(e.target as Node))  setCatOpen(false);
+    function onClick(e: MouseEvent) {
       if (userRef.current && !userRef.current.contains(e.target as Node)) setUserMenuOpen(false);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  // Close on Escape
+  // Escape key
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") { setShopOpen(false); setCatOpen(false); setUserMenuOpen(false); setMobileOpen(false); }
+      if (e.key === "Escape") { setShopHover(false); setCatHover(false); setUserMenuOpen(false); setMobileOpen(false); }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -98,10 +172,9 @@ export default function Navbar() {
     else setSearchQuery("");
   }, [searchOpen]);
 
-  // Close everything on route change
   useEffect(() => {
     setSearchOpen(false); setMobileOpen(false);
-    setShopOpen(false); setCatOpen(false); setUserMenuOpen(false);
+    setShopHover(false); setCatHover(false); setUserMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -113,13 +186,15 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ""; mq.removeEventListener("change", onMq); };
   }, [mobileOpen]);
 
-  const isActive = (href: string) =>
-    !href.includes("?") && (href === "/" ? pathname === "/" : pathname.startsWith(href));
-
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (searchQuery.trim()) router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
   }
+
+  const isActive = (href: string) =>
+    !href.includes("?") && (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
+  const currentBrandProducts = brandProducts[activeBrand] ?? [];
 
   return (
     <>
@@ -143,77 +218,136 @@ export default function Navbar() {
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/" className={`text-sm font-medium transition-colors ${pathname === "/" ? "text-brand-600 border-b-2 border-brand-500 pb-0.5" : "text-gray-800 hover:text-brand-600"}`}>Home</Link>
 
-              {/* Shop dropdown */}
-              <div className="relative" ref={shopRef}>
-                <button
-                  onClick={() => { setShopOpen(o => !o); setCatOpen(false); }}
-                  className={`flex items-center gap-1 text-sm font-medium transition-colors ${shopOpen ? "text-brand-600" : "text-gray-800 hover:text-brand-600"}`}
-                >
-                  Shop
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${shopOpen ? "rotate-180" : ""}`} />
+              {/* ── Shop hover dropdown ── */}
+              <div className="relative" ref={shopRef}
+                onMouseEnter={handleShopEnter}
+                onMouseLeave={handleShopLeave}>
+                <button className={`flex items-center gap-1 text-sm font-medium transition-colors ${shopHover ? "text-brand-600" : "text-gray-800 hover:text-brand-600"}`}>
+                  Shop <ChevronDown size={14} className={`transition-transform duration-200 ${shopHover ? "rotate-180" : ""}`} />
                 </button>
 
-                {/* Shop dropdown panel */}
-                <div className={`absolute top-full left-0 mt-3 w-52 transition-all duration-200 origin-top-left ${shopOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}>
-                  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-gray-50">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Shop By Type</p>
+                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[480px] transition-all duration-200 origin-top ${shopHover ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}>
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-gray-50 bg-gray-50/50">
+                      <div className="flex gap-3">
+                        <Link href="/products?condition=brand-new"
+                          className="text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 px-3 py-1.5 rounded-full transition-colors">
+                          🆕 Brand New
+                        </Link>
+                        <Link href="/products?condition=pre-owned"
+                          className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors">
+                          ♻️ Pre-Owned
+                        </Link>
+                        <Link href="/products?deals=true"
+                          className="text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors">
+                          🔥 Hot Deals
+                        </Link>
+                      </div>
+                      <Link href="/products" className="text-xs font-semibold text-brand-500 hover:text-brand-600">View All →</Link>
                     </div>
-                    {SHOP_ITEMS.map(item => (
-                      <Link key={item.label} href={item.href}
-                        onClick={() => setShopOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 font-medium transition-colors">
-                        {item.label}
-                      </Link>
-                    ))}
+
+                    {/* Featured products */}
+                    <div className="p-4">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">✨ Featured Products</p>
+                      {loadingProds ? (
+                        <div className="grid grid-cols-4 gap-2">
+                          {[...Array(4)].map((_, i) => (
+                            <div key={i} className="animate-pulse">
+                              <div className="aspect-square bg-gray-100 rounded-lg mb-2" />
+                              <div className="h-2 bg-gray-100 rounded mb-1" />
+                              <div className="h-2 bg-gray-100 rounded w-2/3" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : shopProducts.length > 0 ? (
+                        <div className="grid grid-cols-4 gap-2">
+                          {shopProducts.map(p => <MiniCard key={p.id} p={p} />)}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 text-center py-4">No featured products yet.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Categories mega dropdown */}
-              <div className="relative" ref={catRef}>
-                <button
-                  onClick={() => { setCatOpen(o => !o); setShopOpen(false); }}
-                  className={`flex items-center gap-1 text-sm font-medium transition-colors ${catOpen ? "text-brand-600" : "text-gray-800 hover:text-brand-600"}`}
-                >
-                  Categories
-                  <ChevronDown size={14} className={`transition-transform duration-200 ${catOpen ? "rotate-180" : ""}`} />
+              {/* ── Categories hover mega dropdown ── */}
+              <div className="relative" ref={catRef}
+                onMouseEnter={handleCatEnter}
+                onMouseLeave={handleCatLeave}>
+                <button className={`flex items-center gap-1 text-sm font-medium transition-colors ${catHover ? "text-brand-600" : "text-gray-800 hover:text-brand-600"}`}>
+                  Categories <ChevronDown size={14} className={`transition-transform duration-200 ${catHover ? "rotate-180" : ""}`} />
                 </button>
 
-                {/* Mega dropdown panel */}
-                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[420px] transition-all duration-200 origin-top ${catOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}>
-                  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                    <div className="px-5 py-3 border-b border-gray-50 flex items-center justify-between">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Browse Categories</p>
-                      <Link href="/products" onClick={() => setCatOpen(false)}
-                        className="text-[11px] font-semibold text-brand-500 hover:text-brand-600">
-                        View All →
-                      </Link>
-                    </div>
-                    <div className="grid grid-cols-2 gap-0 divide-x divide-gray-50">
-                      {CATEGORIES.map(group => (
-                        <div key={group.group} className="py-3">
-                          <p className="px-4 pb-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">{group.group}</p>
-                          {group.items.map(item => (
-                            <Link key={item.label} href={item.href}
-                              onClick={() => setCatOpen(false)}
-                              className="flex items-center gap-2 mx-2 px-2 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors font-medium">
-                              {item.label}
-                            </Link>
-                          ))}
-                        </div>
+                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[600px] transition-all duration-200 origin-top ${catHover ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}>
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex">
+
+                    {/* Left: brand list */}
+                    <div className="w-40 bg-gray-50 border-r border-gray-100 py-3 shrink-0">
+                      <p className="px-4 pb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Brands</p>
+                      {BRAND_GROUPS.map(b => (
+                        <button key={b.key}
+                          onMouseEnter={() => handleBrandHover(b.key)}
+                          className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors text-left ${
+                            activeBrand === b.key
+                              ? "bg-white text-brand-600 border-r-2 border-brand-500"
+                              : "text-gray-700 hover:bg-white hover:text-brand-600"
+                          }`}>
+                          <span className="text-base">{b.emoji}</span>
+                          <span>{b.label}</span>
+                          {activeBrand === b.key && <ChevronRight size={12} className="ml-auto text-brand-400" />}
+                        </button>
                       ))}
                     </div>
-                    {/* Footer */}
-                    <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-100 flex gap-3">
-                      <Link href="/products?deals=true" onClick={() => setCatOpen(false)}
-                        className="flex-1 text-center text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 py-2 rounded-xl transition-colors">
-                        🔥 Hot Deals
-                      </Link>
-                      <Link href="/products?featured=true" onClick={() => setCatOpen(false)}
-                        className="flex-1 text-center text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 py-2 rounded-xl transition-colors">
-                        ⭐ Featured
-                      </Link>
+
+                    {/* Right: products for active brand */}
+                    <div className="flex-1 p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          {BRAND_GROUPS.find(b => b.key === activeBrand)?.label} Products
+                        </p>
+                        <Link href={`/products?category=${activeBrand}`}
+                          className="text-[11px] font-semibold text-brand-500 hover:text-brand-600">
+                          See all →
+                        </Link>
+                      </div>
+                      {!brandProducts[activeBrand] ? (
+                        <div className="grid grid-cols-4 gap-2">
+                          {[...Array(4)].map((_, i) => (
+                            <div key={i} className="animate-pulse">
+                              <div className="aspect-square bg-gray-100 rounded-lg mb-2" />
+                              <div className="h-2 bg-gray-100 rounded mb-1" />
+                              <div className="h-2 bg-gray-100 rounded w-2/3" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : currentBrandProducts.length > 0 ? (
+                        <div className="grid grid-cols-4 gap-2">
+                          {currentBrandProducts.map(p => <MiniCard key={p.id} p={p} />)}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-8 text-gray-300">
+                          <ShoppingBag size={28} />
+                          <p className="text-xs mt-2">No products found</p>
+                        </div>
+                      )}
+
+                      {/* Quick links */}
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-gray-50">
+                        <Link href={`/products?category=${activeBrand}&condition=brand-new`}
+                          className="flex-1 text-center text-[11px] font-semibold text-green-700 bg-green-50 hover:bg-green-100 py-1.5 rounded-lg transition-colors">
+                          🆕 Brand New
+                        </Link>
+                        <Link href={`/products?category=${activeBrand}&condition=pre-owned`}
+                          className="flex-1 text-center text-[11px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 py-1.5 rounded-lg transition-colors">
+                          ♻️ Pre-Owned
+                        </Link>
+                        <Link href={`/products?category=${activeBrand}&deals=true`}
+                          className="flex-1 text-center text-[11px] font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100 py-1.5 rounded-lg transition-colors">
+                          🔥 Deals
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -277,8 +411,7 @@ export default function Navbar() {
                         className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50">
                         📦 My Orders
                       </Link>
-                      <button
-                        onClick={() => { logout(); setUserMenuOpen(false); }}
+                      <button onClick={() => { logout(); setUserMenuOpen(false); }}
                         className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50">
                         <LogOut size={14} /> Sign Out
                       </button>
@@ -300,7 +433,7 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Mobile search overlay */}
+      {/* Mobile search */}
       <div className={`md:hidden fixed left-0 right-0 z-40 transition-all duration-300 ${searchOpen ? "top-[64px] opacity-100 translate-y-0" : "top-[64px] opacity-0 -translate-y-2 pointer-events-none"}`}>
         <div className="mx-3 mt-1.5 rounded-2xl border border-white/60 bg-white/90 backdrop-blur-2xl shadow-lg overflow-hidden">
           <form onSubmit={handleSearch} className="flex items-center gap-2 px-4 py-3">
