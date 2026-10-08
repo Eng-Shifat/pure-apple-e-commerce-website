@@ -9,7 +9,7 @@ import {
   Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/authStore";
 
 const mobileLinks = [
   { label: "Home",       href: "/",                    icon: Home },
@@ -31,7 +31,8 @@ export default function Navbar() {
   const close     = () => setMobileOpen(false);
 
   const cartCount = useCartStore((s) => s.count());
-  const { user, logout } = useAuth();
+  const user = useAuthStore(s => s.user);
+  const logout = useAuthStore(s => s.logout);
 
   useEffect(() => {
     if (searchOpen) setTimeout(() => searchRef.current?.focus(), 50);
