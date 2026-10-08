@@ -90,8 +90,8 @@ export default function Navbar() {
   const [brandProducts, setBrandProducts] = useState<Record<string, Product[]>>({});
   const [loadingProds,  setLoadingProds]  = useState(false);
 
-  const shopHoverTimer = useRef<ReturnType<typeof setTimeout>>();
-  const catHoverTimer  = useRef<ReturnType<typeof setTimeout>>();
+  const shopHoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const catHoverTimer  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const shopRef    = useRef<HTMLDivElement>(null);
   const catRef     = useRef<HTMLDivElement>(null);
   const userRef    = useRef<HTMLDivElement>(null);
