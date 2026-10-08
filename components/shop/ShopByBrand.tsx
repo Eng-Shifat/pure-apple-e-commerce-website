@@ -1,61 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 
-// Inline SVG logos for brands without image files
-function NothingLogo() {
-  return (
-    <svg viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <text x="4" y="30" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="28" fill="#111827" letterSpacing="-1">nothing</text>
-    </svg>
-  );
-}
-
-function MotorolaLogo() {
-  return (
-    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <circle cx="30" cy="30" r="28" fill="#0099E6"/>
-      <path d="M30 10 L30 50 M14 18 L30 30 L46 18 M14 42 L30 30 L46 42" stroke="white" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M20 30 Q30 15 40 30 Q30 45 20 30Z" fill="white" opacity="0.9"/>
-    </svg>
-  );
-}
-
-function VivoLogo() {
-  return (
-    <svg viewBox="0 0 100 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <path d="M4 6 L18 30 L32 6" stroke="#415FFF" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <rect x="38" y="6" width="5" height="24" rx="2.5" fill="#415FFF"/>
-      <path d="M50 6 L64 30 L78 6" stroke="#415FFF" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M84 18 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" stroke="#415FFF" strokeWidth="5" fill="none"/>
-    </svg>
-  );
-}
-
-function HonorLogo() {
-  return (
-    <svg viewBox="0 0 100 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <text x="2" y="28" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="26" fill="#CC0000" letterSpacing="1">HONOR</text>
-    </svg>
-  );
-}
-
-function IqooLogo() {
-  return (
-    <svg viewBox="0 0 90 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <rect x="2" y="8" width="6" height="20" rx="3" fill="#0B0B0B"/>
-      <circle cx="28" cy="18" r="10" stroke="#0B0B0B" strokeWidth="5" fill="none"/>
-      <circle cx="55" cy="18" r="10" stroke="#0B0B0B" strokeWidth="5" fill="none"/>
-      <path d="M63 26 L72 34" stroke="#0B0B0B" strokeWidth="5" strokeLinecap="round"/>
-      <circle cx="82" cy="18" r="6" stroke="#0B0B0B" strokeWidth="5" fill="none"/>
-    </svg>
-  );
-}
-
+// All brands use real logo files from /public/images/brands/
 const brands = [
   {
     name: "Apple",
     logo: "/images/brands/apple-logo.png",
-    svgLogo: null,
     slug: "apple",
     logoW: "w-10 h-10",
     card: "from-[#f5f5f7] to-[#e8e8ed]",
@@ -66,18 +16,16 @@ const brands = [
   {
     name: "Samsung",
     logo: "/images/brands/samsung-logo.png",
-    svgLogo: null,
     slug: "samsung",
     logoW: "w-20 h-8",
     card: "from-[#f2faf2] to-[#ddf2de]",
-    border: "border-[#bde5bf] hover:border-[#4FAE53]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(79,174,83,0.18)]",
-    labelHover: "group-hover:text-[#327536]",
+    border: "border-[#bde5bf] hover:border-[#1428A0]",
+    shadow: "hover:shadow-[0_12px_32px_rgba(20,40,160,0.15)]",
+    labelHover: "group-hover:text-[#1428A0]",
   },
   {
     name: "OnePlus",
     logo: "/images/brands/oneplus-logo.png",
-    svgLogo: null,
     slug: "oneplus",
     logoW: "w-11 h-11",
     card: "from-[#fff1f1] to-[#ffe4e4]",
@@ -88,7 +36,6 @@ const brands = [
   {
     name: "Redmi",
     logo: "/images/brands/Xiaomi-logo.png",
-    svgLogo: null,
     slug: "redmi",
     logoW: "w-11 h-11",
     card: "from-[#fff7ed] to-[#ffedd5]",
@@ -99,7 +46,6 @@ const brands = [
   {
     name: "Realme",
     logo: "/images/brands/realme-logo.png",
-    svgLogo: null,
     slug: "realme",
     logoW: "w-20 h-8",
     card: "from-[#fffbeb] to-[#fef08a]",
@@ -109,10 +55,9 @@ const brands = [
   },
   {
     name: "Nothing",
-    logo: null,
-    svgLogo: NothingLogo,
+    logo: "/images/brands/nothing.png",
     slug: "nothing",
-    logoW: "w-20 h-7",
+    logoW: "w-20 h-8",
     card: "from-[#f9fafb] to-[#f3f4f6]",
     border: "border-[#e5e7eb] hover:border-[#374151]",
     shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.15)]",
@@ -120,8 +65,7 @@ const brands = [
   },
   {
     name: "Motorola",
-    logo: null,
-    svgLogo: MotorolaLogo,
+    logo: "/images/brands/Motorolla.jpeg",
     slug: "motorola",
     logoW: "w-10 h-10",
     card: "from-[#f0f9ff] to-[#e0f2fe]",
@@ -131,8 +75,7 @@ const brands = [
   },
   {
     name: "Vivo",
-    logo: null,
-    svgLogo: VivoLogo,
+    logo: "/images/brands/vivo.png",
     slug: "vivo",
     logoW: "w-20 h-8",
     card: "from-[#eef1ff] to-[#dde3ff]",
@@ -142,10 +85,9 @@ const brands = [
   },
   {
     name: "Honor",
-    logo: null,
-    svgLogo: HonorLogo,
+    logo: "/images/brands/honor.svg",
     slug: "honor",
-    logoW: "w-20 h-7",
+    logoW: "w-20 h-8",
     card: "from-[#ecfdf5] to-[#d1fae5]",
     border: "border-[#a7f3d0] hover:border-[#CC0000]",
     shadow: "hover:shadow-[0_12px_32px_rgba(204,0,0,0.15)]",
@@ -153,10 +95,9 @@ const brands = [
   },
   {
     name: "iQOO",
-    logo: null,
-    svgLogo: IqooLogo,
+    logo: "/images/brands/iqoo.png",
     slug: "iqoo",
-    logoW: "w-20 h-7",
+    logoW: "w-20 h-8",
     card: "from-[#fafafa] to-[#f0f0f0]",
     border: "border-[#e0e0e0] hover:border-[#0B0B0B]",
     shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)]",
@@ -198,7 +139,6 @@ export default function ShopByBrand() {
 
         <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 sm:gap-3">
           {brands.map((brand) => {
-            const SvgLogo = brand.svgLogo;
             return (
               <Link
                 key={brand.name}
@@ -217,17 +157,13 @@ export default function ShopByBrand() {
                 />
 
                 <div className={`relative ${brand.logoW} transition-transform duration-300 group-hover:scale-110`}>
-                  {brand.logo ? (
-                    <Image
-                      src={brand.logo}
-                      alt={brand.name}
-                      fill
-                      className="object-contain"
-                      sizes="80px"
-                    />
-                  ) : SvgLogo ? (
-                    <SvgLogo />
-                  ) : null}
+                  <Image
+                    src={brand.logo}
+                    alt={brand.name}
+                    fill
+                    className="object-contain"
+                    sizes="80px"
+                  />
                 </div>
 
                 <span className={`text-[11px] font-semibold tracking-wide text-gray-400 transition-colors duration-200 ${brand.labelHover}`}>
