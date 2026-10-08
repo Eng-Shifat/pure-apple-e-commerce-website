@@ -2,7 +2,13 @@
 const nextConfig = {
   devIndicators: false,
   images: {
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "puaebozvrhhsoseywzuj.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
     qualities: [75, 90],
   },
 };
