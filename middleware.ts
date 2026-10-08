@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
-  // Check for Supabase auth cookie — any sb- prefixed cookie means logged in
+export function middleware(request: NextRequest) {
   const hasCookie = request.cookies.getAll().some(c => c.name.startsWith("sb-"));
 
   if (!hasCookie) {
