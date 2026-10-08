@@ -7,13 +7,13 @@ import { useAuthStore, DEMO_ADMIN } from "@/store/authStore";
 import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 
 export default function LoginPage() {
-  const router    = useRouter();
-  const login     = useAuthStore(s => s.login);
-  const [email,   setEmail]    = useState("");
-  const [password,setPassword] = useState("");
-  const [showPw,  setShowPw]   = useState(false);
-  const [error,   setError]    = useState("");
-  const [loading, setLoading]  = useState(false);
+  const router     = useRouter();
+  const login      = useAuthStore(s => s.login);
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw,   setShowPw]   = useState(false);
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
 
   function fillAdmin() {
     setEmail(DEMO_ADMIN.email);
@@ -24,9 +24,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    await new Promise(r => setTimeout(r, 500));
 
-    const result = login(email, password);
+    const result = await login(email, password);   // ← async/await
     setLoading(false);
 
     if (!result.ok) {
@@ -34,7 +33,6 @@ export default function LoginPage() {
       return;
     }
 
-    // result.role থেকে সরাসরি redirect — store.getState() এর উপর নির্ভর না করে
     if (result.role === "admin") {
       router.push("/admin");
     } else {
@@ -67,22 +65,30 @@ export default function LoginPage() {
 
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-7">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-xl mb-4">{error}</div>
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-xl mb-4">
+              {error}
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address</label>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+              <input
+                type="email" required value={email}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400" />
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Password</label>
               <div className="relative">
-                <input type={showPw ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
+                <input
+                  type={showPw ? "text" : "password"} required value={password}
+                  onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400" />
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
+                />
                 <button type="button" onClick={() => setShowPw(s => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
