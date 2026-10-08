@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  return createClient(url, key);
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 }
 
 // GET /api/products/[id]
@@ -15,11 +16,7 @@ export async function GET(
   const { id } = await params;
   const supabase = getSupabase();
   const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("id", id)
-    .single();
-
+    .from("products").select("*").eq("id", id).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json({ product: data });
 }
@@ -33,24 +30,21 @@ export async function PUT(
   const supabase = getSupabase();
   const body = await req.json();
 
-  const updatePayload: Record<string, unknown> = {};
   const allowed = [
     "name", "variant", "price", "original_price", "rating", "review_count",
     "image", "slug", "badge", "badge_color",
-    "spec_screen", "spec_ram", "spec_camera", "is_featured",
+    "spec_screen", "spec_ram", "spec_camera",
+    "is_featured", "category", "condition", "is_available", "stock",
   ];
+
+  const payload: Record<string, unknown> = {};
   for (const key of allowed) {
-    if (body[key] !== undefined) updatePayload[key] = body[key];
+    if (body[key] !== undefined) payload[key] = body[key];
   }
-  updatePayload.updated_at = new Date().toISOString();
+  payload.updated_at = new Date().toISOString();
 
   const { data, error } = await supabase
-    .from("products")
-    .update(updatePayload)
-    .eq("id", id)
-    .select()
-    .single();
-
+    .from("products").update(payload).eq("id", id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ product: data });
 }
@@ -64,5 +58,5 @@ export async function DELETE(
   const supabase = getSupabase();
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ message: "Deleted successfully" });
+  return NextResponse.json({ message: "Deleted" });
 }

@@ -14,7 +14,12 @@ export interface Product {
   spec_ram?: string;
   spec_camera?: string;
   is_featured?: boolean;
+  category?: string;
+  condition?: "brand-new" | "pre-owned";
+  is_available?: boolean;
+  stock?: number;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface CartItem {
