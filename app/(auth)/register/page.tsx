@@ -22,7 +22,7 @@ export default function RegisterPage() {
     if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
     setLoading(true);
     await new Promise(r => setTimeout(r, 600));
-    const result = login(email, password);
+    const result = await login(email, password);
     setLoading(false);
     if (!result.ok) { setError(result.error ?? "Registration failed"); return; }
     router.push("/");

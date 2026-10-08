@@ -16,7 +16,8 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function OrdersPage() {
-  const { user, loading: authLoading } = useAuth();
+  const user = useAuth(s => s.user);
+  const authLoading = !useAuth(s => s._hasHydrated);
   const [orders,  setOrders]  = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
