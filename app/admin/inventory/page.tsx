@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  RefreshCw, TrendingUp, Eye, EyeOff,
+  TrendingUp, Eye, EyeOff,
   Package, AlertTriangle, CheckCircle2, Pencil,
 } from "lucide-react";
 
@@ -30,21 +30,20 @@ export default function InventoryPage() {
   const [toggling,    setToggling]    = useState<string | null>(null);
   const [editStock,   setEditStock]   = useState<string | null>(null);
   const [stockInput,  setStockInput]  = useState("");
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+
 
   const load = useCallback(async () => {
     setLoading(true);
     const r = await fetch("/api/products");
     const d = await r.json();
     setProducts(d.products ?? []);
-    setLastRefresh(new Date());
+
     setLoading(false);
   }, []);
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 10000);
-    return () => clearInterval(interval);
+
   }, [load]);
 
   async function toggleAvailable(p: Product) {
@@ -99,12 +98,7 @@ export default function InventoryPage() {
             Realtime stock & availability management
           </p>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-gray-500 hover:text-brand-500 hover:bg-brand-50 text-sm font-semibold transition-all"
-        >
-          <RefreshCw size={14} /> Refresh
-        </button>
+
       </div>
 
       {/* Stats */}
@@ -135,9 +129,7 @@ export default function InventoryPage() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 mb-3">
-        Last updated: {lastRefresh.toLocaleTimeString("en-BD")} · Auto-refreshes every 10s
-      </p>
+
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

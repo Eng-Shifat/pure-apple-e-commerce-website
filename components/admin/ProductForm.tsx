@@ -75,6 +75,9 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   const [success,   setSuccess]   = useState(false);
   const [error,     setError]     = useState("");
   const [uploading, setUploading] = useState(false);
+  const [imageSize, setImageSize] = useState<number | null>(null);
+  const [imageSizeError, setImageSizeError] = useState("");
+  const [localPreview, setLocalPreview] = useState<string>("");
 
   const [form, setForm] = useState({
     name:           initialData.name           ?? "",
@@ -105,6 +108,16 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   }
 
   async function handleImageUpload(file: File) {
+    setImageSizeError("");
+    setImageSize(file.size);
+    if (file.size > 100 * 1024) {
+      setImageSizeError(`File is ${(file.size / 1024).toFixed(1)} KB — maximum allowed size is 100 KB. Please compress or resize the image.`);
+      setLocalPreview("");
+      return;
+    }
+    // Show instant local preview via blob URL
+    const blobUrl = URL.createObjectURL(file);
+    setLocalPreview(blobUrl);
     setUploading(true);
     setError("");
     try {
@@ -222,25 +235,61 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       {/* Product Image */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Product Image</h2>
-        <div className="flex items-center gap-3">
-          <label className={`cursor-pointer flex items-center gap-2 border-2 border-dashed rounded-xl px-4 py-3 text-sm transition ${uploading ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand-300 text-brand-600 hover:bg-brand-50"}`}>
-            {uploading ? <><Loader2 size={15} className="animate-spin"/> Uploading…</> : <><Upload size={15}/> Upload from device</>}
-            <input type="file" accept="image/*" disabled={uploading} className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file); }}/>
-          </label>
-          <span className="text-xs text-gray-400">or paste URL below</span>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Image URL *</label>
-          <div className="flex gap-2 items-center">
-            <input required value={form.image} onChange={(e) => set("image", e.target.value)} placeholder="https://… or /images/products/iPhone16.webp" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-300"/>
-            {form.image && <button type="button" onClick={() => set("image", "")} className="text-gray-400 hover:text-red-400"><X size={16}/></button>}
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Left: Upload controls */}
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className={`cursor-pointer flex items-center gap-2 border-2 border-dashed rounded-xl px-4 py-3 text-sm transition ${uploading ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand-300 text-brand-600 hover:bg-brand-50"}`}>
+                {uploading ? <><Loader2 size={15} className="animate-spin"/> Uploading…</> : <><Upload size={15}/> Upload from device</>}
+                <input type="file" accept="image/*" disabled={uploading} className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file); }}/>
+              </label>
+              <span className="text-xs text-gray-400">or paste URL below</span>
+              <span className="text-[11px] font-semibold text-orange-500 bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg">Max 100 KB</span>
+            </div>
+
+            {/* Size error */}
+            {imageSizeError && (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-xl">
+                <X size={13} className="shrink-0"/>
+                {imageSizeError}
+              </div>
+            )}
+
+            {/* Size OK badge (after successful upload) */}
+            {imageSize !== null && imageSize <= 100 * 1024 && !imageSizeError && (
+              <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-2 rounded-xl">
+                <CheckCircle size={13} className="shrink-0"/>
+                Image size: {(imageSize / 1024).toFixed(1)} KB ✓
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Image URL *</label>
+              <div className="flex gap-2 items-center">
+                <input required value={form.image} onChange={(e) => set("image", e.target.value)} placeholder="https://… or /images/products/iPhone16.webp" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+                {form.image && <button type="button" onClick={() => { set("image", ""); setImageSize(null); setImageSizeError(""); setLocalPreview(""); }} className="text-gray-400 hover:text-red-400"><X size={16}/></button>}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Preview */}
+          <div className="flex flex-col items-center gap-2 shrink-0">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
+            <div className="relative w-36 h-36 rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center">
+              {(localPreview || previewSrc) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={localPreview || previewSrc!} alt="preview" className="w-full h-full object-contain p-2"/>
+              ) : (
+                <span className="text-3xl text-gray-200">🖼</span>
+              )}
+            </div>
+            {imageSize !== null && (
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${imageSize > 100 * 1024 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+                {(imageSize / 1024).toFixed(1)} KB {imageSize > 100 * 1024 ? "✗" : "✓"}
+              </span>
+            )}
           </div>
         </div>
-        {previewSrc && (
-          <div className="relative w-28 h-28 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden mt-2">
-            <Image src={previewSrc} alt="preview" fill className="object-contain p-2" unoptimized={isAbsoluteUrl(previewSrc)}/>
-          </div>
-        )}
       </section>
 
       {/* Pricing */}

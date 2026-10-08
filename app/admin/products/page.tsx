@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Plus, Pencil, Trash2, Search, Star, Package,
-  Eye, EyeOff, TrendingUp, RefreshCw,
+  Eye, EyeOff, TrendingUp, Loader2,
 } from "lucide-react";
 
 interface Product {
@@ -39,28 +38,24 @@ const CAT_LABELS: Record<string, string> = {
 };
 
 export default function AdminProductsPage() {
-  const [products,  setProducts]  = useState<Product[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [search,    setSearch]    = useState("");
-  const [catFilter, setCatFilter] = useState("all");
-  const [deleting,  setDeleting]  = useState<string | null>(null);
-  const [toggling,  setToggling]  = useState<string | null>(null);
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [products,    setProducts]    = useState<Product[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [search,      setSearch]      = useState("");
+  const [catFilter,   setCatFilter]   = useState("all");
+  const [deleting,    setDeleting]    = useState<string | null>(null);
+  const [toggling,    setToggling]    = useState<string | null>(null);
+
 
   const load = useCallback(async () => {
     setLoading(true);
     const r = await fetch("/api/products");
     const d = await r.json();
     setProducts(d.products ?? []);
-    setLastRefresh(new Date());
     setLoading(false);
   }, []);
 
   useEffect(() => {
     load();
-    // Realtime polling every 10 seconds
-    const interval = setInterval(load, 10000);
-    return () => clearInterval(interval);
   }, [load]);
 
   async function handleDelete(id: string, name: string) {
@@ -121,13 +116,6 @@ export default function AdminProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={load}
-            title="Refresh"
-            className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-colors"
-          >
-            <RefreshCw size={15} />
-          </button>
           <Link
             href="/admin/products/new"
             className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95"
@@ -137,13 +125,13 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Stats cards */}
+      {/* Stats */}
       <div className="grid grid-cols-4 gap-3 mb-5">
         {[
-          { label: "Total",       value: products.length,  color: "bg-gray-50  text-gray-700"  },
-          { label: "Available",   value: available,        color: "bg-green-50 text-green-700" },
-          { label: "Unavailable", value: unavailable,      color: "bg-red-50   text-red-700"   },
-          { label: "Hot Deals",   value: hotDeals,         color: "bg-orange-50 text-orange-700"},
+          { label: "Total",       value: products.length, color: "bg-gray-50   text-gray-700"   },
+          { label: "Available",   value: available,       color: "bg-green-50  text-green-700"  },
+          { label: "Unavailable", value: unavailable,     color: "bg-red-50    text-red-700"    },
+          { label: "Hot Deals",   value: hotDeals,        color: "bg-orange-50 text-orange-700" },
         ].map(s => (
           <div key={s.label} className={`rounded-2xl p-4 ${s.color} border border-white/60`}>
             <p className="text-2xl font-extrabold">{s.value}</p>
@@ -152,7 +140,7 @@ export default function AdminProductsPage() {
         ))}
       </div>
 
-      {/* Search + Category filter */}
+      {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1 max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -180,149 +168,161 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Last refresh */}
-      <p className="text-[11px] text-gray-400 mb-3">
-        Last updated: {lastRefresh.toLocaleTimeString("en-BD")} · Auto-refreshes every 10s
-      </p>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-        {loading ? (
-          <div className="p-10 text-center text-gray-400 text-sm">Loading…</div>
-        ) : filtered.length === 0 ? (
-          <div className="p-10 text-center">
-            <Package size={36} className="mx-auto text-gray-200 mb-3" />
-            <p className="text-gray-400 text-sm">No products found.</p>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Product</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden md:table-cell">Category</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Price</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden lg:table-cell">Rating</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden lg:table-cell">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden xl:table-cell">Hot Deal</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.map((p) => {
-                const isAvailable = p.is_available !== false;
-                const isHot = p.badge === "Hot Deal";
-                return (
-                  <tr key={p.id} className={`hover:bg-gray-50/60 transition-colors ${!isAvailable ? "opacity-50" : ""}`}>
 
-                    {/* Product */}
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-lg bg-gray-100 shrink-0 overflow-hidden">
-                          <Image src={p.image} alt={p.name} fill className="object-contain p-1" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 leading-tight line-clamp-1">{p.name}</p>
-                          <p className="text-[11px] text-gray-400">{p.variant}</p>
-                          {p.badge && (
-                            <span
-                              className="inline-block text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full mt-0.5"
-                              style={{ backgroundColor: p.badge_color ?? "#FB5724" }}
-                            >
-                              {p.badge}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
+      {/* Product Cards Grid */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20 gap-2 text-gray-400 text-sm">
+          <Loader2 size={18} className="animate-spin" /> Loading products…
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-20 text-center">
+          <Package size={40} className="mx-auto text-gray-200 mb-3" />
+          <p className="text-gray-400 text-sm">No products found.</p>
+          <Link href="/admin/products/new" className="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold text-brand-500 hover:underline">
+            <Plus size={14} /> Add your first product
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {filtered.map((p) => {
+            const isAvailable = p.is_available !== false;
+            const isHot       = p.badge === "Hot Deal";
+            const discount    = p.original_price && p.original_price > p.price
+              ? Math.round((1 - p.price / p.original_price) * 100)
+              : 0;
+            const isActioning = toggling === p.id || deleting === p.id;
 
-                    {/* Category */}
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-xs font-semibold capitalize bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                        {p.category || "—"}
+            return (
+              <div
+                key={p.id}
+                className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-md ${!isAvailable ? "opacity-60" : ""}`}
+              >
+                {/* Image */}
+                <div className="relative bg-gray-50 h-40 flex items-center justify-center overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="h-full w-full object-contain p-3"
+                    onError={(e) => { (e.target as HTMLImageElement).src = ""; }}
+                  />
+
+                  {/* Badge */}
+                  {p.badge && (
+                    <span
+                      className="absolute top-2 left-2 text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: p.badge_color ?? "#FB5724" }}
+                    >
+                      {p.badge}
+                    </span>
+                  )}
+
+                  {/* Discount */}
+                  {discount > 0 && (
+                    <span className="absolute top-2 right-2 text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full">
+                      -{discount}%
+                    </span>
+                  )}
+
+                  {/* Featured star */}
+                  {p.is_featured && (
+                    <span className="absolute bottom-2 right-2 text-yellow-400 text-sm">⭐</span>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="p-3 flex flex-col flex-1 gap-1">
+                  <p className="font-bold text-gray-900 text-sm leading-tight line-clamp-2">{p.name}</p>
+                  {p.variant && <p className="text-[11px] text-gray-400 line-clamp-1">{p.variant}</p>}
+
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-xs font-semibold capitalize bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">
+                      {p.category || "—"}
+                    </span>
+                    <span className={`text-[10px] font-semibold ${p.condition === "pre-owned" ? "text-amber-500" : "text-green-600"}`}>
+                      {p.condition === "pre-owned" ? "♻️ Pre-Owned" : "🆕 New"}
+                    </span>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mt-1">
+                    <span className="text-base font-extrabold text-gray-900">
+                      ৳{p.price.toLocaleString("en-BD")}
+                    </span>
+                    {p.original_price && p.original_price > p.price && (
+                      <span className="ml-1.5 text-[11px] text-gray-400 line-through">
+                        ৳{p.original_price.toLocaleString("en-BD")}
                       </span>
-                      <span className={`block text-[10px] mt-0.5 ${p.condition === "pre-owned" ? "text-amber-600" : "text-green-600"}`}>
-                        {p.condition === "pre-owned" ? "♻️ Pre-Owned" : "🆕 Brand New"}
-                      </span>
-                    </td>
+                    )}
+                  </div>
 
-                    {/* Price */}
-                    <td className="px-4 py-3">
-                      <span className="font-bold text-gray-900">৳{p.price.toLocaleString("en-BD")}</span>
-                      {p.original_price && (
-                        <span className="block text-[11px] text-gray-400 line-through">৳{p.original_price.toLocaleString("en-BD")}</span>
-                      )}
-                    </td>
+                  {/* Rating */}
+                  {p.rating > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Star size={11} className="fill-yellow-400 text-yellow-400" />
+                      <span className="text-[11px] font-medium text-gray-600">{p.rating}</span>
+                      <span className="text-[10px] text-gray-400">({p.review_count?.toLocaleString()})</span>
+                    </div>
+                  )}
 
-                    {/* Rating */}
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <div className="flex items-center gap-1">
-                        <Star size={12} className="fill-yellow-400 text-yellow-400" />
-                        <span className="text-gray-700 font-medium">{p.rating}</span>
-                        <span className="text-gray-400 text-[11px]">({p.review_count?.toLocaleString()})</span>
-                      </div>
-                    </td>
+                  {/* Toggle buttons */}
+                  <div className="flex gap-1.5 mt-2 flex-wrap">
+                    <button
+                      onClick={() => toggleAvailable(p)}
+                      disabled={isActioning}
+                      title={isAvailable ? "Hide from store" : "Show in store"}
+                      className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full transition-all disabled:opacity-40 ${
+                        isAvailable
+                          ? "bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-600"
+                          : "bg-red-100 text-red-600 hover:bg-green-100 hover:text-green-700"
+                      }`}
+                    >
+                      {isAvailable ? <Eye size={10} /> : <EyeOff size={10} />}
+                      {isAvailable ? "Live" : "Hidden"}
+                    </button>
 
-                    {/* Available toggle */}
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <button
-                        onClick={() => toggleAvailable(p)}
-                        disabled={toggling === p.id}
-                        title={isAvailable ? "Click to hide" : "Click to show"}
-                        className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full transition-all disabled:opacity-50 ${
-                          isAvailable
-                            ? "bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-600"
-                            : "bg-red-100 text-red-600 hover:bg-green-100 hover:text-green-700"
-                        }`}
-                      >
-                        {isAvailable ? <Eye size={11} /> : <EyeOff size={11} />}
-                        {isAvailable ? "Available" : "Hidden"}
-                      </button>
-                    </td>
+                    <button
+                      onClick={() => toggleHotDeal(p)}
+                      disabled={isActioning}
+                      title={isHot ? "Remove Hot Deal" : "Mark as Hot Deal"}
+                      className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full transition-all disabled:opacity-40 ${
+                        isHot
+                          ? "bg-orange-100 text-orange-700 hover:bg-gray-100 hover:text-gray-500"
+                          : "bg-gray-100 text-gray-400 hover:bg-orange-100 hover:text-orange-600"
+                      }`}
+                    >
+                      <TrendingUp size={10} />
+                      {isHot ? "Hot 🔥" : "Hot Deal"}
+                    </button>
+                  </div>
 
-                    {/* Hot Deal toggle */}
-                    <td className="px-4 py-3 hidden xl:table-cell">
-                      <button
-                        onClick={() => toggleHotDeal(p)}
-                        disabled={toggling === p.id}
-                        title={isHot ? "Remove from Hot Deals" : "Add to Hot Deals"}
-                        className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full transition-all disabled:opacity-50 ${
-                          isHot
-                            ? "bg-orange-100 text-orange-700 hover:bg-gray-100 hover:text-gray-500"
-                            : "bg-gray-100 text-gray-400 hover:bg-orange-100 hover:text-orange-600"
-                        }`}
-                      >
-                        <TrendingUp size={11} />
-                        {isHot ? "Hot 🔥" : "Add"}
-                      </button>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/admin/products/${p.id}/edit`}
-                          className="p-2 rounded-lg hover:bg-brand-50 text-gray-400 hover:text-brand-500 transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil size={14} />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(p.id, p.name)}
-                          disabled={deleting === p.id}
-                          className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-40"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                  {/* Edit / Delete */}
+                  <div className="flex gap-2 mt-2 pt-2 border-t border-gray-100">
+                    <Link
+                      href={`/admin/products/${p.id}/edit`}
+                      className="flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 py-1.5 rounded-lg transition-colors"
+                    >
+                      <Pencil size={11} /> Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(p.id, p.name)}
+                      disabled={deleting === p.id}
+                      className="flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold text-red-500 bg-red-50 hover:bg-red-100 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+                    >
+                      {deleting === p.id
+                        ? <Loader2 size={11} className="animate-spin" />
+                        : <Trash2 size={11} />
+                      }
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
