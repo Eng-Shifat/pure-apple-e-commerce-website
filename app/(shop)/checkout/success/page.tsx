@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Package, ArrowRight } from "lucide-react";
 
-export default function SuccessPage() {
+function SuccessContent() {
   const params  = useSearchParams();
   const orderId = params.get("order_id");
 
@@ -16,13 +17,17 @@ export default function SuccessPage() {
         </div>
         <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Order Placed Successfully!</h1>
         <p className="text-gray-400 text-sm mb-1">Thank you for shopping with Pure Apple.</p>
-        {orderId && <p className="text-xs text-gray-300 font-mono mb-6">Order ID: #{orderId.slice(0, 8).toUpperCase()}</p>}
+        {orderId && (
+          <p className="text-xs text-gray-300 font-mono mb-6">
+            Order ID: #{orderId.slice(0, 8).toUpperCase()}
+          </p>
+        )}
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 text-left space-y-3 mb-6">
           {[
             { icon: "📦", title: "Order Confirmed",  desc: "We have received your order and it is being processed." },
             { icon: "🚚", title: "Delivery",          desc: "Your order will be delivered within 2–5 business days." },
-            { icon: "📞", title: "We'll Call You",    desc: "Our team will contact you to confirm the order before dispatch." },
+            { icon: "📞", title: "We'll Call You",    desc: "Our team will contact you to confirm before dispatch." },
           ].map(({ icon, title, desc }) => (
             <div key={title} className="flex items-start gap-3">
               <span className="text-xl mt-0.5">{icon}</span>
@@ -36,7 +41,7 @@ export default function SuccessPage() {
 
         <div className="flex flex-col sm:flex-row gap-3">
           {orderId && (
-            <Link href={`/orders`}
+            <Link href="/orders"
               className="flex-1 flex items-center justify-center gap-2 h-11 border-2 border-brand-200 text-brand-500 font-semibold text-sm rounded-xl hover:bg-brand-50 transition-colors">
               <Package size={16} /> Track Order
             </Link>
@@ -48,5 +53,17 @@ export default function SuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }
