@@ -7,29 +7,49 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Search, Heart, ShoppingCart, User, ChevronDown, ChevronRight, Menu, X,
   Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut,
+  Apple, Smartphone,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
 
-const BRANDS = [
-  { label: "Apple",    href: "/products?category=apple"    },
-  { label: "Samsung",  href: "/products?category=samsung"  },
-  { label: "OnePlus",  href: "/products?category=oneplus"  },
-  { label: "Redmi",    href: "/products?category=redmi"    },
-  { label: "Realme",   href: "/products?category=realme"   },
-  { label: "Nothing",  href: "/products?category=nothing"  },
-  { label: "Motorola", href: "/products?category=motorola" },
-  { label: "Vivo",     href: "/products?category=vivo"     },
-  { label: "Honor",    href: "/products?category=honor"    },
-  { label: "iQOO",     href: "/products?category=iqoo"     },
+const CATEGORIES = [
+  {
+    group: "🍎 Apple",
+    items: [
+      { label: "All iPhones",    href: "/products?category=apple" },
+      { label: "Brand New",      href: "/products?category=apple&condition=brand-new" },
+      { label: "Pre-Owned",      href: "/products?category=apple&condition=pre-owned" },
+    ],
+  },
+  {
+    group: "🤖 Android",
+    items: [
+      { label: "Samsung",  href: "/products?category=samsung"  },
+      { label: "OnePlus",  href: "/products?category=oneplus"  },
+      { label: "Redmi",    href: "/products?category=redmi"    },
+      { label: "Realme",   href: "/products?category=realme"   },
+      { label: "Nothing",  href: "/products?category=nothing"  },
+      { label: "Motorola", href: "/products?category=motorola" },
+      { label: "Vivo",     href: "/products?category=vivo"     },
+      { label: "Honor",    href: "/products?category=honor"    },
+      { label: "iQOO",     href: "/products?category=iqoo"     },
+    ],
+  },
+];
+
+const SHOP_ITEMS = [
+  { label: "🆕 Brand New",  href: "/products?condition=brand-new" },
+  { label: "♻️ Pre-Owned",  href: "/products?condition=pre-owned" },
+  { label: "🔥 Hot Deals",  href: "/products?deals=true"          },
+  { label: "⭐ Featured",   href: "/products?featured=true"       },
 ];
 
 const mobileLinks = [
-  { label: "Home",       href: "/",                    icon: Home },
-  { label: "Shop",       href: "/products",            icon: ShoppingBag },
+  { label: "Home",       href: "/",                    icon: Home       },
+  { label: "Shop",       href: "/products",            icon: ShoppingBag},
   { label: "Categories", href: "/products?view=categories", icon: LayoutGrid },
   { label: "Deals",      href: "/products?deals=true", icon: BadgePercent },
-  { label: "About",      href: "/about",               icon: Info },
+  { label: "About",      href: "/about",               icon: Info       },
 ];
 
 export default function Navbar() {
@@ -39,35 +59,58 @@ export default function Navbar() {
   const [searchOpen,   setSearchOpen]   = useState(false);
   const [searchQuery,  setSearchQuery]  = useState("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const pathname  = usePathname();
-  const router    = useRouter();
-  const close     = () => setMobileOpen(false);
+
+  const searchRef  = useRef<HTMLInputElement>(null);
+  const shopRef    = useRef<HTMLDivElement>(null);
+  const catRef     = useRef<HTMLDivElement>(null);
+  const userRef    = useRef<HTMLDivElement>(null);
+
+  const pathname = usePathname();
+  const router   = useRouter();
+  const close    = () => setMobileOpen(false);
 
   const cartCount = useCartStore((s) => s.count());
   const user   = useAuthStore(s => s.user);
   const logout = useAuthStore(s => s.logout);
+
+  // Close all dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (shopRef.current && !shopRef.current.contains(e.target as Node)) setShopOpen(false);
+      if (catRef.current  && !catRef.current.contains(e.target as Node))  setCatOpen(false);
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") { setShopOpen(false); setCatOpen(false); setUserMenuOpen(false); setMobileOpen(false); }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     if (searchOpen) setTimeout(() => searchRef.current?.focus(), 50);
     else setSearchQuery("");
   }, [searchOpen]);
 
-  useEffect(() => { setSearchOpen(false); setMobileOpen(false); }, [pathname]);
+  // Close everything on route change
+  useEffect(() => {
+    setSearchOpen(false); setMobileOpen(false);
+    setShopOpen(false); setCatOpen(false); setUserMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!mobileOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
     const mq = window.matchMedia("(min-width: 768px)");
     const onMq = () => mq.matches && setMobileOpen(false);
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
     mq.addEventListener("change", onMq);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-      mq.removeEventListener("change", onMq);
-    };
+    return () => { document.body.style.overflow = ""; mq.removeEventListener("change", onMq); };
   }, [mobileOpen]);
 
   const isActive = (href: string) =>
@@ -101,48 +144,79 @@ export default function Navbar() {
               <Link href="/" className={`text-sm font-medium transition-colors ${pathname === "/" ? "text-brand-600 border-b-2 border-brand-500 pb-0.5" : "text-gray-800 hover:text-brand-600"}`}>Home</Link>
 
               {/* Shop dropdown */}
-              <div className="relative">
+              <div className="relative" ref={shopRef}>
                 <button
-                  onMouseEnter={() => setShopOpen(true)}
-                  onMouseLeave={() => setShopOpen(false)}
-                  className="flex items-center gap-1 text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors"
+                  onClick={() => { setShopOpen(o => !o); setCatOpen(false); }}
+                  className={`flex items-center gap-1 text-sm font-medium transition-colors ${shopOpen ? "text-brand-600" : "text-gray-800 hover:text-brand-600"}`}
                 >
-                  Shop <ChevronDown size={14} />
+                  Shop
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${shopOpen ? "rotate-180" : ""}`} />
                 </button>
-                {shopOpen && (
-                  <div
-                    onMouseEnter={() => setShopOpen(true)}
-                    onMouseLeave={() => setShopOpen(false)}
-                    className="absolute top-full left-0 mt-1 w-48 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg border border-white/50 py-2 z-50"
-                  >
-                    <Link href="/products?condition=brand-new" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 font-medium">🆕 Brand New</Link>
-                    <Link href="/products?condition=pre-owned" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 font-medium">♻️ Pre-Owned</Link>
-                  </div>
-                )}
-              </div>
 
-              {/* Categories dropdown */}
-              <div className="relative">
-                <button
-                  onMouseEnter={() => setCatOpen(true)}
-                  onMouseLeave={() => setCatOpen(false)}
-                  className="flex items-center gap-1 text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors"
-                >
-                  Categories <ChevronDown size={14} />
-                </button>
-                {catOpen && (
-                  <div
-                    onMouseEnter={() => setCatOpen(true)}
-                    onMouseLeave={() => setCatOpen(false)}
-                    className="absolute top-full left-0 mt-1 w-48 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg border border-white/50 py-2 z-50"
-                  >
-                    {BRANDS.map((b) => (
-                      <Link key={b.label} href={b.href} className="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">
-                        {b.label}
+                {/* Shop dropdown panel */}
+                <div className={`absolute top-full left-0 mt-3 w-52 transition-all duration-200 origin-top-left ${shopOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}>
+                  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-50">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Shop By Type</p>
+                    </div>
+                    {SHOP_ITEMS.map(item => (
+                      <Link key={item.label} href={item.href}
+                        onClick={() => setShopOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 font-medium transition-colors">
+                        {item.label}
                       </Link>
                     ))}
                   </div>
-                )}
+                </div>
+              </div>
+
+              {/* Categories mega dropdown */}
+              <div className="relative" ref={catRef}>
+                <button
+                  onClick={() => { setCatOpen(o => !o); setShopOpen(false); }}
+                  className={`flex items-center gap-1 text-sm font-medium transition-colors ${catOpen ? "text-brand-600" : "text-gray-800 hover:text-brand-600"}`}
+                >
+                  Categories
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${catOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {/* Mega dropdown panel */}
+                <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[420px] transition-all duration-200 origin-top ${catOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}>
+                  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                    <div className="px-5 py-3 border-b border-gray-50 flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Browse Categories</p>
+                      <Link href="/products" onClick={() => setCatOpen(false)}
+                        className="text-[11px] font-semibold text-brand-500 hover:text-brand-600">
+                        View All →
+                      </Link>
+                    </div>
+                    <div className="grid grid-cols-2 gap-0 divide-x divide-gray-50">
+                      {CATEGORIES.map(group => (
+                        <div key={group.group} className="py-3">
+                          <p className="px-4 pb-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">{group.group}</p>
+                          {group.items.map(item => (
+                            <Link key={item.label} href={item.href}
+                              onClick={() => setCatOpen(false)}
+                              className="flex items-center gap-2 mx-2 px-2 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors font-medium">
+                              {item.label}
+                            </Link>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                    {/* Footer */}
+                    <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-100 flex gap-3">
+                      <Link href="/products?deals=true" onClick={() => setCatOpen(false)}
+                        className="flex-1 text-center text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 py-2 rounded-xl transition-colors">
+                        🔥 Hot Deals
+                      </Link>
+                      <Link href="/products?featured=true" onClick={() => setCatOpen(false)}
+                        className="flex-1 text-center text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 py-2 rounded-xl transition-colors">
+                        ⭐ Featured
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <Link href="/products?deals=true" className="text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors">Deals</Link>
@@ -178,7 +252,8 @@ export default function Navbar() {
                 )}
               </Link>
 
-              <div className="hidden md:block relative">
+              {/* User menu */}
+              <div className="hidden md:block relative" ref={userRef}>
                 {user ? (
                   <>
                     <button onClick={() => setUserMenuOpen(o => !o)}
@@ -187,29 +262,27 @@ export default function Navbar() {
                         {user.name?.[0]?.toUpperCase() ?? user.email[0].toUpperCase()}
                       </div>
                     </button>
-                    {userMenuOpen && (
-                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                        <div className="px-4 py-2 border-b border-gray-50">
-                          <p className="text-sm font-semibold text-gray-800 truncate">{user.name ?? "User"}</p>
-                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                        </div>
-                        {user.role === "admin" && (
-                          <Link href="/admin" onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">
-                            Admin Panel
-                          </Link>
-                        )}
-                        <Link href="/orders" onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-brand-50">
-                          My Orders
-                        </Link>
-                        <button
-                          onClick={() => { logout(); setUserMenuOpen(false); }}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50">
-                          <LogOut size={14} /> Sign Out
-                        </button>
+                    <div className={`absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 transition-all duration-200 origin-top-right ${userMenuOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}>
+                      <div className="px-4 py-2.5 border-b border-gray-50">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{user.name ?? "User"}</p>
+                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
                       </div>
-                    )}
+                      {user.role === "admin" && (
+                        <Link href="/admin" onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600">
+                          ⚙️ Admin Panel
+                        </Link>
+                      )}
+                      <Link href="/orders" onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50">
+                        📦 My Orders
+                      </Link>
+                      <button
+                        onClick={() => { logout(); setUserMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50">
+                        <LogOut size={14} /> Sign Out
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <Link href="/login" className="p-2 rounded-lg text-gray-800 hover:text-brand-600 hover:bg-brand-50 transition-colors flex">
@@ -244,8 +317,7 @@ export default function Navbar() {
       <div className="md:hidden">
         <div aria-hidden onClick={close}
           className={`fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-[2px] transition-opacity duration-300 ${mobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} />
-        <nav id="mobile-menu"
-          className={`fixed left-3 right-3 top-[72px] z-50 origin-top rounded-3xl border border-white/60 bg-white/60 p-2 backdrop-blur-2xl shadow-[0_24px_60px_rgba(15,23,42,0.22)] transition-all duration-300 ${mobileOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-3 scale-95 pointer-events-none invisible"}`}>
+        <nav className={`fixed left-3 right-3 top-[72px] z-50 origin-top rounded-3xl border border-white/60 bg-white/60 p-2 backdrop-blur-2xl shadow-[0_24px_60px_rgba(15,23,42,0.22)] transition-all duration-300 ${mobileOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-3 scale-95 pointer-events-none invisible"}`}>
           <ul className="space-y-1">
             {mobileLinks.map((l, i) => {
               const Icon = l.icon;
