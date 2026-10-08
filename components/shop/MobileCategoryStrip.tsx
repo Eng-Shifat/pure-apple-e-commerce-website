@@ -5,13 +5,18 @@ import { useRef } from "react";
 
 const tabs = [
   { label: "Hottest in the Market", href: "/products?deals=true" },
-  { label: "iPhone", href: "/products?category=apple" },
-  { label: "Android", href: "/products?category=android" },
-  { label: "Charger", href: "/products?category=charger" },
-  { label: "Accessories", href: "/products?category=accessories" },
+  { label: "Apple", href: "/products?category=apple" },
+  { label: "Samsung", href: "/products?category=samsung" },
+  { label: "OnePlus", href: "/products?category=oneplus" },
+  { label: "Redmi", href: "/products?category=redmi" },
+  { label: "Realme", href: "/products?category=realme" },
+  { label: "Nothing", href: "/products?category=nothing" },
+  { label: "Motorola", href: "/products?category=motorola" },
+  { label: "Vivo", href: "/products?category=vivo" },
+  { label: "Honor", href: "/products?category=honor" },
+  { label: "iQOO", href: "/products?category=iqoo" },
 ];
 
-/** Dark pill tab strip shown under the header on mobile only. */
 export default function MobileCategoryStrip({ active = 0 }: { active?: number }) {
   const ref = useRef<HTMLDivElement>(null);
 
