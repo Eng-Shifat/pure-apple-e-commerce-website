@@ -33,7 +33,7 @@ export default function CartPage() {
             {lines.map(({ product, quantity }) => (
               <div key={product.id} className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-4">
                 <Link href={`/products/${product.slug}`} className="relative w-20 h-20 shrink-0 bg-gray-50 rounded-xl overflow-hidden">
-                  <Image src={product.image} alt={product.name} fill className="object-contain p-1" />
+                  <Image src={/^(\/|https?:\/\/)/.test(product.image) ? product.image : "/logo/pure-apple-logo.png"} alt={product.name} fill className="object-contain p-1" />
                 </Link>
 
                 <div className="flex-1 min-w-0">

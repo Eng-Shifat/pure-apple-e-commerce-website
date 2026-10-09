@@ -141,6 +141,10 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!safeImageSrc(form.image)) {
+      setError("Invalid image URL. Use the Upload button, an https:// link, or a /images/... path (not a file:/// or C:\\ path from your computer).");
+      return;
+    }
     setSaving(true);
     setError("");
     const url  = mode === "edit" ? `/api/products/${initialData.id}` : "/api/products";

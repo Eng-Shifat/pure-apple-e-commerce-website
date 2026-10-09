@@ -90,7 +90,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         >
           <div className="relative w-full h-full">
             <Image
-              src={product.image}
+              src={/^(\/|https?:\/\/)/.test(product.image) ? product.image : "/logo/pure-apple-logo.png"}
               alt={product.name}
               fill
               sizes="(max-width: 768px) 50vw, 220px"

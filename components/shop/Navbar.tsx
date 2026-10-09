@@ -15,7 +15,7 @@ import { BrandLogo } from "./BrandIcons";
 interface Product {
   id: string; name: string; price: number; original_price?: number;
   image: string; slug: string; badge?: string; badge_color?: string;
-  rating?: number; category?: string; condition?: string;
+  rating?: number; category?: string; condition?: string; href?: string;
 }
 
 const BRAND_GROUPS = [
@@ -31,6 +31,61 @@ const BRAND_GROUPS = [
   { key: "iqoo",     label: "iQOO",     color: "text-gray-900",   bgFill: "#0B0B0B",  textOnFill: "text-white" },
 ];
 
+// Dropdown preview products (images from /public/images/Phone). Brands not listed here (e.g. Redmi) load from the API.
+const BRAND_PREVIEW: Record<string, Product[]> = {
+  apple: [
+    { id: "apple-0", name: "iPhone 18 Pro Max", price: 0, image: "/images/Phone/iphone/Apple_iPhone_18_Pro_Max.webp", slug: "", href: "/products?category=apple" },
+    { id: "apple-1", name: "iPhone 17 Pro Max", price: 0, image: "/images/Phone/iphone/iPhone_17_Pro_Max-removebg-preview.webp", slug: "", href: "/products?category=apple" },
+    { id: "apple-2", name: "iPhone 16", price: 0, image: "/images/Phone/iphone/iPhone_16.webp", slug: "", href: "/products?category=apple" },
+    { id: "apple-3", name: "iPhone 15 Pro", price: 0, image: "/images/Phone/iphone/iPhone_15_Pro.webp", slug: "", href: "/products?category=apple" },
+  ],
+  samsung: [
+    { id: "samsung-0", name: "Galaxy S26 Ultra", price: 0, image: "/images/Phone/Samsung/Samsung_Galaxy_s26_ultra.webp", slug: "", href: "/products?category=samsung" },
+    { id: "samsung-1", name: "Galaxy S25 Ultra", price: 0, image: "/images/Phone/Samsung/Samsung_s25_ultra.webp", slug: "", href: "/products?category=samsung" },
+    { id: "samsung-2", name: "Galaxy S25", price: 0, image: "/images/Phone/Samsung/Samsung_Galaxy_S25.webp", slug: "", href: "/products?category=samsung" },
+    { id: "samsung-3", name: "Galaxy S24", price: 0, image: "/images/Phone/Samsung/Samsung Galaxy S24.webp", slug: "", href: "/products?category=samsung" },
+  ],
+  oneplus: [
+    { id: "oneplus-0", name: "OnePlus 13s 5G", price: 0, image: "/images/Phone/OnePlus/OnePlus-13s-5G-7246.webp", slug: "", href: "/products?category=oneplus" },
+    { id: "oneplus-1", name: "OnePlus 12", price: 0, image: "/images/Phone/OnePlus/OnePlus 12.webp", slug: "", href: "/products?category=oneplus" },
+    { id: "oneplus-2", name: "OnePlus Nord 6 5G", price: 0, image: "/images/Phone/OnePlus/OnePlus Nord 6 5G.webp", slug: "", href: "/products?category=oneplus" },
+    { id: "oneplus-3", name: "OnePlus Nord CE6", price: 0, image: "/images/Phone/OnePlus/OnePlus Nord CE6.webp", slug: "", href: "/products?category=oneplus" },
+  ],
+  realme: [
+    { id: "realme-0", name: "Realme 15 Pro 5G", price: 0, image: "/images/Phone/Realme/Realme 15 Pro 5G - Official.webp", slug: "", href: "/products?category=realme" },
+    { id: "realme-1", name: "Realme 15 5G", price: 0, image: "/images/Phone/Realme/Realme 15 5G - Official.webp", slug: "", href: "/products?category=realme" },
+    { id: "realme-2", name: "Realme Note 70", price: 0, image: "/images/Phone/Realme/realme Note 70 - Official.webp", slug: "", href: "/products?category=realme" },
+    { id: "realme-3", name: "Realme C85 Pro", price: 0, image: "/images/Phone/Realme/realme C85 Pro - Official.webp", slug: "", href: "/products?category=realme" },
+  ],
+  nothing: [
+    { id: "nothing-0", name: "Nothing Phone (4a) Pro", price: 0, image: "/images/Phone/Nothing/Nothing Phone (4a) Pro.webp", slug: "", href: "/products?category=nothing" },
+    { id: "nothing-1", name: "Nothing Phone (4a)", price: 0, image: "/images/Phone/Nothing/Nothing Phone (4a).webp", slug: "", href: "/products?category=nothing" },
+    { id: "nothing-2", name: "Nothing Phone (4b)", price: 0, image: "/images/Phone/Nothing/Nothing Phone (4b).webp", slug: "", href: "/products?category=nothing" },
+  ],
+  motorola: [
+    { id: "motorola-0", name: "Moto Edge 70 Pro 5G", price: 0, image: "/images/Phone/Motorola/Motorola Edge 70 Pro 5G.webp", slug: "", href: "/products?category=motorola" },
+    { id: "motorola-1", name: "Moto G96 5G", price: 0, image: "/images/Phone/Motorola/Motorola Moto G96 5G.webp", slug: "", href: "/products?category=motorola" },
+    { id: "motorola-2", name: "Moto Signature 5G", price: 0, image: "/images/Phone/Motorola/Motorola Signature 5G.webp", slug: "", href: "/products?category=motorola" },
+    { id: "motorola-3", name: "Moto G67 Power", price: 0, image: "/images/Phone/Motorola/Motorola Moto G67 Power.webp", slug: "", href: "/products?category=motorola" },
+  ],
+  vivo: [
+    { id: "vivo-0", name: "Vivo X300 Ultra", price: 0, image: "/images/Phone/Vivo/VIVO X300 Ultra.webp", slug: "", href: "/products?category=vivo" },
+    { id: "vivo-1", name: "Vivo T5x 5G", price: 0, image: "/images/Phone/Vivo/vivo T5x 5G.webp", slug: "", href: "/products?category=vivo" },
+  ],
+  honor: [
+    { id: "honor-0", name: "Honor Magic V6", price: 0, image: "/images/Phone/Honor/Honor Magic V6.webp", slug: "", href: "/products?category=honor" },
+    { id: "honor-1", name: "Honor Magic V5", price: 0, image: "/images/Phone/Honor/Honor Magic V5.webp", slug: "", href: "/products?category=honor" },
+    { id: "honor-2", name: "Honor 200 Pro", price: 0, image: "/images/Phone/Honor/Honor 200 Pro.webp", slug: "", href: "/products?category=honor" },
+    { id: "honor-3", name: "Honor 600 Smart", price: 0, image: "/images/Phone/Honor/Honor 600 Smart.webp", slug: "", href: "/products?category=honor" },
+  ],
+  iqoo: [
+    { id: "iqoo-0", name: "iQOO 15T", price: 0, image: "/images/Phone/IQOO/iQOO 15T.webp", slug: "", href: "/products?category=iqoo" },
+    { id: "iqoo-1", name: "iQOO 12 Pro 5G", price: 0, image: "/images/Phone/IQOO/iQOO 12 Pro 5G.webp", slug: "", href: "/products?category=iqoo" },
+    { id: "iqoo-2", name: "iQOO Neo 11 5G", price: 0, image: "/images/Phone/IQOO/iQOO Neo 11 5G - CN.webp", slug: "", href: "/products?category=iqoo" },
+    { id: "iqoo-3", name: "iQOO Neo 10 5G", price: 0, image: "/images/Phone/IQOO/iQOO Neo 10 5G.webp", slug: "", href: "/products?category=iqoo" },
+  ],
+};
+
 const mobileLinks = [
   { label: "Home",       href: "/",                        icon: Home        },
   { label: "Shop",       href: "/products",                icon: ShoppingBag },
@@ -44,11 +99,11 @@ function MiniCard({ p }: { p: Product }) {
   const disc = p.original_price && p.original_price > p.price
     ? Math.round((1 - p.price / p.original_price) * 100) : 0;
   return (
-    <Link href={`/products/${p.slug}`}
+    <Link href={p.href ?? `/products/${p.slug}`}
       className="group flex flex-col gap-1.5 p-2 rounded-xl hover:bg-gray-50 transition-colors min-w-0">
       <div className="relative w-full aspect-square rounded-lg bg-gray-100 overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={p.image} alt={p.name} className="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-300" />
+        <img src={encodeURI(p.image)} alt={p.name} className="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-300" />
         {disc > 0 && (
           <span className="absolute top-1 right-1 text-[9px] font-bold text-white bg-red-500 px-1 py-0.5 rounded-full">-{disc}%</span>
         )}
@@ -57,12 +112,12 @@ function MiniCard({ p }: { p: Product }) {
         )}
       </div>
       <p className="text-[11px] font-semibold text-gray-800 leading-tight line-clamp-2">{p.name}</p>
-      <div className="flex items-center gap-1">
+      {p.price > 0 && <div className="flex items-center gap-1">
         <span className="text-[12px] font-bold text-brand-600">৳{p.price.toLocaleString("en-BD")}</span>
         {p.original_price && p.original_price > p.price && (
           <span className="text-[9px] text-gray-400 line-through">৳{p.original_price.toLocaleString("en-BD")}</span>
         )}
-      </div>
+      </div>}
       {p.rating && p.rating > 0 && (
         <div className="flex items-center gap-0.5">
           <Star size={9} className="fill-yellow-400 text-yellow-400" />
@@ -120,6 +175,10 @@ export default function Navbar() {
   // Fetch products for a brand
   const fetchBrandProducts = useCallback(async (brand: string) => {
     if (brandProducts[brand]) return;
+    if (BRAND_PREVIEW[brand]) {
+      setBrandProducts(prev => ({ ...prev, [brand]: BRAND_PREVIEW[brand] }));
+      return;
+    }
     try {
       const r = await fetch(`/api/products?category=${brand}&available=true`);
       const d = await r.json();
@@ -303,6 +362,7 @@ export default function Navbar() {
                       {BRAND_GROUPS.map((b, i) => (
                         <button key={b.key}
                           onMouseEnter={() => handleBrandHover(b.key)}
+                          onClick={() => { router.push(`/products?category=${b.key}`); setCatOpen(false); setCatHover(false); }}
                           style={{
                             opacity: catVisible ? 1 : 0,
                             transform: catVisible ? "translateX(0)" : "translateX(-28px)",

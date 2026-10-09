@@ -99,7 +99,7 @@ export default function ProductDetailPage() {
               <Heart size={16} className={wished ? "fill-white text-white" : "text-gray-400"} />
             </button>
             <div className="relative w-full" style={{ height: "340px" }}>
-              <Image src={product.image} alt={product.name} fill className="object-contain drop-shadow-xl" sizes="(max-width: 768px) 100vw, 50vw" />
+              <Image src={/^(\/|https?:\/\/)/.test(product.image) ? product.image : "/logo/pure-apple-logo.png"} alt={product.name} fill className="object-contain drop-shadow-xl" sizes="(max-width: 768px) 100vw, 50vw" />
             </div>
           </div>
 

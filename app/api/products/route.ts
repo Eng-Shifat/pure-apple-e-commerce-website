@@ -1,5 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+import path from "path";
+
+// Products saved with a local computer path (file:///D:/... or C:\...) can't load in a browser.
+// Map them to the same-named file inside /public/images so the images show up.
+let imageIndex: Map<string, string> | null = null;
+function getImageIndex() {
+  if (imageIndex) return imageIndex;
+  const map = new Map<string, string>();
+  const root = path.join(process.cwd(), "public");
+  const walk = (dir: string) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else map.set(e.name.toLowerCase(), "/" + path.relative(root, full).split(path.sep).join("/"));
+    }
+  };
+  try { walk(path.join(root, "images")); } catch {}
+  return (imageIndex = map);
+}
+function fixLocalImage(image: unknown) {
+  if (typeof image !== "string" || !/^(file:|[a-zA-Z]:[\\/])/.test(image)) return image;
+  let decoded = image;
+  try { decoded = decodeURIComponent(image); } catch {}
+  const name = decoded.split(/[\\/]/).pop()!.toLowerCase();
+  return getImageIndex().get(name) ?? image;
+}
 
 function getSupabase() {
   return createClient(
@@ -34,7 +61,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ products: data ?? [] });
+  return NextResponse.json({ products: (data ?? []).map((p) => ({ ...p, image: fixLocalImage(p.image) })) });
 }
 
 // POST /api/products

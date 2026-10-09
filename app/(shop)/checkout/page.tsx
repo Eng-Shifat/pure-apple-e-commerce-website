@@ -133,7 +133,7 @@ export default function CheckoutPage() {
                 {lines.map(({ product, quantity }) => (
                   <div key={product.id} className="flex items-center gap-3">
                     <div className="relative w-12 h-12 bg-gray-50 rounded-lg overflow-hidden shrink-0">
-                      <Image src={product.image} alt={product.name} fill className="object-contain p-0.5" />
+                      <Image src={/^(\/|https?:\/\/)/.test(product.image) ? product.image : "/logo/pure-apple-logo.png"} alt={product.name} fill className="object-contain p-0.5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-800 line-clamp-1">{product.name}</p>
