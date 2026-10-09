@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -127,6 +127,7 @@ const APPLE_PREOWNED: PhoneModel[] = [
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
+  { label:"All",      key:"all",      bgFill:"#FB5724", logoColor:"text-orange-500" },
   { label:"Apple",    key:"apple",    bgFill:"#1d1d1f", logoColor:"text-gray-800"   },
   { label:"Samsung",  key:"samsung",  bgFill:"#1428A0", logoColor:"text-blue-700"   },
   { label:"OnePlus",  key:"oneplus",  bgFill:"#EF1B25", logoColor:"text-red-600"    },
@@ -248,13 +249,13 @@ function ModelCard({ model, isPreOwned }: { model: PhoneModel; isPreOwned: boole
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function ProductsPage() {
+function ProductsPageInner() {
   const [condition,       setCondition]       = useState<Condition>("brand-new");
   const searchParams = useSearchParams();
 
   // Map URL slug (e.g. "apple") → brand name (e.g. "Apple")
   const SLUG_TO_BRAND: Record<string, string> = {
-    apple: "Apple", samsung: "Samsung", oneplus: "OnePlus",
+    all: "All", apple: "Apple", samsung: "Samsung", oneplus: "OnePlus",
     redmi: "Redmi", realme: "Realme", nothing: "Nothing",
     motorola: "Motorola", vivo: "Vivo", honor: "Honor", iqoo: "iQOO", google: "Google",
   };
@@ -265,7 +266,8 @@ export default function ProductsPage() {
   useEffect(() => {
     const categoryParam = searchParams.get("category") ?? "";
     const brand = SLUG_TO_BRAND[categoryParam.toLowerCase()];
-    if (brand) setActiveCategory(brand);
+    // If no param or unrecognized → default to "All"
+    setActiveCategory(brand ?? "All");
   }, [searchParams]);
   const [sidebarOpen,     setSidebarOpen]     = useState(false);
   const [search,          setSearch]          = useState("");
@@ -297,10 +299,16 @@ export default function ProductsPage() {
   // Derive the active price ranges
   const activePriceRanges = PRICE_RANGES.filter((_, i) => priceFilters[i]);
 
-  // Source pool — brand-new uses ALL_MODELS, pre-owned only has Apple list (extend as needed)
+  // Source pool — "All" shows everything, otherwise filter by brand
   const pool = useMemo(() => {
-    if (condition === "pre-owned") return APPLE_PREOWNED.filter(m => m.brand === activeCategory);
-    return ALL_MODELS.filter(m => m.brand === activeCategory);
+    if (condition === "pre-owned") {
+      return activeCategory === "All"
+        ? APPLE_PREOWNED
+        : APPLE_PREOWNED.filter(m => m.brand === activeCategory);
+    }
+    return activeCategory === "All"
+      ? ALL_MODELS
+      : ALL_MODELS.filter(m => m.brand === activeCategory);
   }, [condition, activeCategory]);
 
   // Apply search + price filter + sort
@@ -363,7 +371,7 @@ export default function ProductsPage() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-                {activeCategory} Smartphones
+                {activeCategory === "All" ? "All Smartphones" : `${activeCategory} Smartphones`}
               </h1>
               <p className="text-gray-400 text-sm mt-0.5">{filtered.length} models available</p>
             </div>
@@ -469,7 +477,10 @@ export default function ProductsPage() {
                         }
                         ${cat.logoColor}
                       `}>
-                        <BrandLogo brand={cat.key} className="w-4 h-4" />
+                        {cat.key === "all"
+                          ? <svg viewBox="0 0 16 16" className="w-4 h-4 fill-current"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+                          : <BrandLogo brand={cat.key} className="w-4 h-4" />
+                        }
                       </span>
 
                       {/* ── Label: shifts left, turns white on hover/active ── */}
@@ -634,8 +645,8 @@ export default function ProductsPage() {
                   ? "bg-orange-50 text-orange-600 border border-orange-200"
                   : "bg-green-50 text-green-700 border border-green-200"}`}>
                 {condition === "brand-new"
-                  ? <><BadgeCheck size={13} /> Brand New — {activeCategory}</>
-                  : <><RefreshCw size={12} /> Pre-Owned — {activeCategory}</>}
+                  ? <><BadgeCheck size={13} /> Brand New{activeCategory !== "All" ? ` — ${activeCategory}` : ""}</>
+                  : <><RefreshCw size={12} /> Pre-Owned{activeCategory !== "All" ? ` — ${activeCategory}` : ""}</>}
               </div>
               <span className="text-xs text-gray-400">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
             </div>
@@ -684,5 +695,13 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <ProductsPageInner />
+    </Suspense>
   );
 }

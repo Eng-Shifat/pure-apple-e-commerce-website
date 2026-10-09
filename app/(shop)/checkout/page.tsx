@@ -51,10 +51,13 @@ export default function CheckoutPage() {
     }
   }
 
-  if (lines.length === 0) {
-    router.push("/cart");
-    return null;
-  }
+  useEffect(() => {
+    if (lines.length === 0) {
+      router.push("/cart");
+    }
+  }, [lines.length, router]);
+
+  if (lines.length === 0) return null;
 
   const subtotal = total();
 
