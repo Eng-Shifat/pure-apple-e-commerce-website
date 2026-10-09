@@ -76,7 +76,7 @@ const brands = [
   },
   {
     name: "Honor",
-    logo: "/images/brands/honor.svg",
+    logo: "/images/brands/honor.png",
     slug: "honor",
     card: "from-[#ecfdf5] to-[#d1fae5]",
     border: "border-[#a7f3d0] hover:border-[#CC0000]",

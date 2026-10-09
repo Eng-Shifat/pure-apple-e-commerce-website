@@ -1,5 +1,6 @@
 import HeroSlider from "@/components/shop/HeroSlider";
 import MobileCategoryStrip from "@/components/shop/MobileCategoryStrip";
+import MobileCategories from "@/components/shop/MobileCategories";
 import PopularProducts from "@/components/shop/PopularProducts";
 import PromoBanner from "@/components/shop/PromoBanner";
 import ShopByBrand from "@/components/shop/ShopByBrand";
@@ -20,6 +21,7 @@ export default function HomePage() {
         <MobileCategoryStrip />
         <HeroSlider />
       </div>
+      <MobileCategories />
       <ShopByBrand />
       <PopularProducts />
       <PromoBanner />

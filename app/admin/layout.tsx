@@ -6,13 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart3,
-  LogOut, ChevronRight, ExternalLink,
+  LogOut, ChevronRight, ExternalLink, FolderOpen,
 } from "lucide-react";
 
 const NAV = [
   { label: "Dashboard",  href: "/admin",            icon: LayoutDashboard },
   { label: "Products",   href: "/admin/products",   icon: Package         },
   { label: "Orders",     href: "/admin/orders",     icon: ShoppingBag     },
+  { label: "Categories", href: "/admin/categories", icon: FolderOpen      }, // ← নতুন
   { label: "Inventory",  href: "/admin/inventory",  icon: BarChart3       },
 ];
 
