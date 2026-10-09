@@ -6,7 +6,6 @@ const brands = [
     name: "Apple",
     logo: "/images/brands/apple-logo.png",
     slug: "apple",
-    // square icon — needs equal w/h
     logoSize: { w: 44, h: 44 },
     card: "from-[#f5f5f7] to-[#e8e8ed]",
     border: "border-[#d1d1d6] hover:border-[#86868b]",
@@ -17,7 +16,6 @@ const brands = [
     name: "Samsung",
     logo: "/images/brands/samsung-logo.png",
     slug: "samsung",
-    // wide wordmark
     logoSize: { w: 72, h: 24 },
     card: "from-[#f2faf2] to-[#ddf2de]",
     border: "border-[#bde5bf] hover:border-[#1428A0]",
@@ -28,7 +26,6 @@ const brands = [
     name: "OnePlus",
     logo: "/images/brands/oneplus-logo.png",
     slug: "oneplus",
-    // square icon
     logoSize: { w: 44, h: 44 },
     card: "from-[#fff1f1] to-[#ffe4e4]",
     border: "border-[#fecaca] hover:border-[#ef4444]",
@@ -39,7 +36,6 @@ const brands = [
     name: "Redmi",
     logo: "/images/brands/Xiaomi-logo.png",
     slug: "redmi",
-    // square icon
     logoSize: { w: 44, h: 44 },
     card: "from-[#fff7ed] to-[#ffedd5]",
     border: "border-[#fed7aa] hover:border-[#FB5724]",
@@ -50,7 +46,6 @@ const brands = [
     name: "Realme",
     logo: "/images/brands/realme-logo.png",
     slug: "realme",
-    // wide wordmark
     logoSize: { w: 72, h: 28 },
     card: "from-[#fffbeb] to-[#fef08a]",
     border: "border-[#fde68a] hover:border-[#FCC10B]",
@@ -61,7 +56,6 @@ const brands = [
     name: "Nothing",
     logo: "/images/brands/nothing.png",
     slug: "nothing",
-    // wide wordmark
     logoSize: { w: 72, h: 28 },
     card: "from-[#f9fafb] to-[#f3f4f6]",
     border: "border-[#e5e7eb] hover:border-[#374151]",
@@ -72,7 +66,6 @@ const brands = [
     name: "Motorola",
     logo: "/images/brands/Motorolla.jpeg",
     slug: "motorola",
-    // square icon
     logoSize: { w: 44, h: 44 },
     card: "from-[#f0f9ff] to-[#e0f2fe]",
     border: "border-[#bae6fd] hover:border-[#0099E6]",
@@ -83,7 +76,6 @@ const brands = [
     name: "Vivo",
     logo: "/images/brands/vivo.png",
     slug: "vivo",
-    // wide wordmark
     logoSize: { w: 64, h: 28 },
     card: "from-[#eef1ff] to-[#dde3ff]",
     border: "border-[#c7d0ff] hover:border-[#415FFF]",
@@ -94,7 +86,6 @@ const brands = [
     name: "Honor",
     logo: "/images/brands/honor.svg",
     slug: "honor",
-    // wide wordmark
     logoSize: { w: 72, h: 28 },
     card: "from-[#ecfdf5] to-[#d1fae5]",
     border: "border-[#a7f3d0] hover:border-[#CC0000]",
@@ -105,7 +96,6 @@ const brands = [
     name: "iQOO",
     logo: "/images/brands/iqoo.png",
     slug: "iqoo",
-    // wide wordmark
     logoSize: { w: 64, h: 28 },
     card: "from-[#fafafa] to-[#f0f0f0]",
     border: "border-[#e0e0e0] hover:border-[#0B0B0B]",
@@ -116,7 +106,7 @@ const brands = [
 
 export default function ShopByBrand() {
   return (
-    <section className="relative bg-white pt-5 pb-6 md:py-10 overflow-hidden">
+    <section className="relative bg-white pt-5 pb-6 md:py-10">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -128,7 +118,7 @@ export default function ShopByBrand() {
       />
 
       <div className="relative max-w-7xl mx-auto">
-        {/* Header — padded */}
+        {/* Header */}
         <div className="flex items-end justify-between mb-4 sm:mb-6 px-4 sm:px-6 lg:px-8">
           <div>
             <p className="text-[11px] font-bold tracking-[0.14em] text-brand-600 uppercase mb-1">
@@ -147,22 +137,9 @@ export default function ShopByBrand() {
           </Link>
         </div>
 
-        {/*
-          ── Scrollable row ──
-          • Mobile  : horizontal scroll, cards snap, left padding so first card
-                      lines up with page content, right padding so last card
-                      isn't flush against the edge.
-          • Desktop (sm+) : normal flex-wrap grid look via justify-center.
-          scrollbar-hide via Tailwind plugin or inline style below.
-        */}
+        {/* Scrollable row */}
         <div
-          className="
-            flex gap-3
-            sm:flex-wrap sm:justify-center sm:px-6 lg:px-8
-            overflow-x-auto
-            px-4 pb-2
-            snap-x snap-mandatory
-          "
+          className="flex gap-3 overflow-x-auto px-4 pb-3 sm:flex-wrap sm:justify-center sm:px-6 lg:px-8 snap-x snap-mandatory"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {brands.map((brand) => (
@@ -185,7 +162,7 @@ export default function ShopByBrand() {
                 style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.7) 0%, transparent 50%)" }}
               />
 
-              {/* Logo — exact pixel dimensions, no stretching */}
+              {/* Logo */}
               <div
                 className="relative flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
                 style={{ width: brand.logoSize.w, height: brand.logoSize.h }}
