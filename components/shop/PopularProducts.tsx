@@ -38,13 +38,20 @@ export default function PopularProducts() {
   return (
     <section className="bg-white pt-5 pb-5 md:pt-8 md:pb-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between gap-3 mb-8">
-          <div>
+        <div className="flex items-center justify-between gap-2 mb-6 sm:mb-8">
+          <div className="min-w-0">
             <p className="text-brand-500 text-xs font-semibold uppercase tracking-widest mb-1">Top Picks</p>
-            <h2 className="text-gray-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Popular Smartphones</h2>
+            <h2 className="text-gray-900 text-xl sm:text-3xl font-extrabold tracking-tight leading-tight">
+              Popular<br className="sm:hidden" /> Smartphones
+            </h2>
             <p className="hidden sm:block text-gray-400 text-sm mt-1">Discover the most loved devices by our customers.</p>
           </div>
-          <Link href="/products" className="shrink-0 text-brand-500 text-sm font-semibold border border-brand-200 hover:border-brand-400 hover:bg-brand-50 px-4 py-2 rounded-full transition-all">View All →</Link>
+          <Link
+            href="/products"
+            className="shrink-0 text-brand-500 text-[13px] sm:text-sm font-semibold border border-brand-200 hover:border-brand-400 hover:bg-brand-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-all whitespace-nowrap"
+          >
+            View All →
+          </Link>
         </div>
 
         {loading ? (

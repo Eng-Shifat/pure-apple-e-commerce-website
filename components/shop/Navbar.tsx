@@ -204,16 +204,16 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl backdrop-saturate-150 border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.05)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
 
             {/* Logo */}
-            <Link href="/" aria-label="Pure Apple – Home" className="group flex items-center gap-2.5 sm:gap-3.5 flex-shrink-0">
-              <ShineLogo height={54} priority className="transition-transform duration-500 ease-out group-hover:scale-105" />
-              <span aria-hidden className="hidden min-[360px]:block h-7 sm:h-8 w-[2px] rounded-full bg-gradient-to-b from-leaf-500 via-brand-500 to-sun-500" />
-              <span className="hidden min-[360px]:flex flex-col leading-none">
-                <span className="text-[8px] sm:text-[9px] font-semibold tracking-[0.22em] text-gray-600 uppercase">Mobile &amp;</span>
-                <span className="mt-1 text-[10px] sm:text-[11px] font-bold tracking-[0.14em] text-gray-800 uppercase whitespace-nowrap">
+            <Link href="/" aria-label="Pure Apple – Home" className="group flex items-center gap-2 sm:gap-3.5 flex-shrink-0 min-w-0">
+              <ShineLogo height={46} priority className="transition-transform duration-500 ease-out group-hover:scale-105 shrink-0 sm:h-[54px]" />
+              <span aria-hidden className="block h-6 sm:h-8 w-[2px] rounded-full bg-gradient-to-b from-leaf-500 via-brand-500 to-sun-500 shrink-0" />
+              <span className="flex flex-col leading-none min-w-0">
+                <span className="text-[8px] sm:text-[9px] font-semibold tracking-[0.20em] text-gray-600 uppercase">Mobile &amp;</span>
+                <span className="mt-0.5 text-[9px] sm:text-[11px] font-bold tracking-[0.12em] text-gray-800 uppercase whitespace-nowrap">
                   Gadget <span className="text-brand-500">Shop</span>
                 </span>
               </span>
@@ -487,7 +487,7 @@ export default function Navbar() {
       </header>
 
       {/* Mobile search */}
-      <div className={`md:hidden fixed left-0 right-0 z-40 transition-all duration-300 ${searchOpen ? "top-[64px] opacity-100 translate-y-0" : "top-[64px] opacity-0 -translate-y-2 pointer-events-none"}`}>
+      <div className={`md:hidden fixed left-0 right-0 z-40 transition-all duration-300 ${searchOpen ? "top-[56px] sm:top-[64px] opacity-100 translate-y-0" : "top-[56px] sm:top-[64px] opacity-0 -translate-y-2 pointer-events-none"}`}>
         <div className="mx-3 mt-1.5 rounded-2xl border border-white/60 bg-white/90 backdrop-blur-2xl shadow-lg overflow-hidden">
           <form onSubmit={handleSearch} className="flex items-center gap-2 px-4 py-3">
             <Search size={18} className="text-brand-500 shrink-0" />
@@ -503,7 +503,7 @@ export default function Navbar() {
       <div className="md:hidden">
         <div aria-hidden onClick={close}
           className={`fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-[2px] transition-opacity duration-300 ${mobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} />
-        <nav className={`fixed left-3 right-3 top-[72px] z-50 origin-top rounded-3xl border border-white/60 bg-white/60 p-2 backdrop-blur-2xl shadow-[0_24px_60px_rgba(15,23,42,0.22)] transition-all duration-300 ${mobileOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-3 scale-95 pointer-events-none invisible"}`}>
+        <nav className={`fixed left-3 right-3 top-[64px] sm:top-[72px] z-50 origin-top rounded-3xl border border-white/60 bg-white/60 p-2 backdrop-blur-2xl shadow-[0_24px_60px_rgba(15,23,42,0.22)] transition-all duration-300 ${mobileOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-3 scale-95 pointer-events-none invisible"}`}>
           <ul className="space-y-1">
             {mobileLinks.map((l, i) => {
               const Icon = l.icon;

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 
-// All brands use real logo files from /public/images/brands/
 const brands = [
   {
     name: "Apple",
     logo: "/images/brands/apple-logo.png",
     slug: "apple",
-    logoW: "w-10 h-10",
+    // square icon — needs equal w/h
+    logoSize: { w: 44, h: 44 },
     card: "from-[#f5f5f7] to-[#e8e8ed]",
     border: "border-[#d1d1d6] hover:border-[#86868b]",
     shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]",
@@ -17,7 +17,8 @@ const brands = [
     name: "Samsung",
     logo: "/images/brands/samsung-logo.png",
     slug: "samsung",
-    logoW: "w-20 h-8",
+    // wide wordmark
+    logoSize: { w: 72, h: 24 },
     card: "from-[#f2faf2] to-[#ddf2de]",
     border: "border-[#bde5bf] hover:border-[#1428A0]",
     shadow: "hover:shadow-[0_12px_32px_rgba(20,40,160,0.15)]",
@@ -27,7 +28,8 @@ const brands = [
     name: "OnePlus",
     logo: "/images/brands/oneplus-logo.png",
     slug: "oneplus",
-    logoW: "w-11 h-11",
+    // square icon
+    logoSize: { w: 44, h: 44 },
     card: "from-[#fff1f1] to-[#ffe4e4]",
     border: "border-[#fecaca] hover:border-[#ef4444]",
     shadow: "hover:shadow-[0_12px_32px_rgba(239,68,68,0.18)]",
@@ -37,7 +39,8 @@ const brands = [
     name: "Redmi",
     logo: "/images/brands/Xiaomi-logo.png",
     slug: "redmi",
-    logoW: "w-11 h-11",
+    // square icon
+    logoSize: { w: 44, h: 44 },
     card: "from-[#fff7ed] to-[#ffedd5]",
     border: "border-[#fed7aa] hover:border-[#FB5724]",
     shadow: "hover:shadow-[0_12px_32px_rgba(234,88,12,0.13)]",
@@ -47,7 +50,8 @@ const brands = [
     name: "Realme",
     logo: "/images/brands/realme-logo.png",
     slug: "realme",
-    logoW: "w-20 h-8",
+    // wide wordmark
+    logoSize: { w: 72, h: 28 },
     card: "from-[#fffbeb] to-[#fef08a]",
     border: "border-[#fde68a] hover:border-[#FCC10B]",
     shadow: "hover:shadow-[0_12px_32px_rgba(217,119,6,0.15)]",
@@ -57,7 +61,8 @@ const brands = [
     name: "Nothing",
     logo: "/images/brands/nothing.png",
     slug: "nothing",
-    logoW: "w-20 h-8",
+    // wide wordmark
+    logoSize: { w: 72, h: 28 },
     card: "from-[#f9fafb] to-[#f3f4f6]",
     border: "border-[#e5e7eb] hover:border-[#374151]",
     shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.15)]",
@@ -67,7 +72,8 @@ const brands = [
     name: "Motorola",
     logo: "/images/brands/Motorolla.jpeg",
     slug: "motorola",
-    logoW: "w-10 h-10",
+    // square icon
+    logoSize: { w: 44, h: 44 },
     card: "from-[#f0f9ff] to-[#e0f2fe]",
     border: "border-[#bae6fd] hover:border-[#0099E6]",
     shadow: "hover:shadow-[0_12px_32px_rgba(0,153,230,0.2)]",
@@ -77,7 +83,8 @@ const brands = [
     name: "Vivo",
     logo: "/images/brands/vivo.png",
     slug: "vivo",
-    logoW: "w-20 h-8",
+    // wide wordmark
+    logoSize: { w: 64, h: 28 },
     card: "from-[#eef1ff] to-[#dde3ff]",
     border: "border-[#c7d0ff] hover:border-[#415FFF]",
     shadow: "hover:shadow-[0_12px_32px_rgba(65,95,255,0.18)]",
@@ -87,7 +94,8 @@ const brands = [
     name: "Honor",
     logo: "/images/brands/honor.svg",
     slug: "honor",
-    logoW: "w-20 h-8",
+    // wide wordmark
+    logoSize: { w: 72, h: 28 },
     card: "from-[#ecfdf5] to-[#d1fae5]",
     border: "border-[#a7f3d0] hover:border-[#CC0000]",
     shadow: "hover:shadow-[0_12px_32px_rgba(204,0,0,0.15)]",
@@ -97,7 +105,8 @@ const brands = [
     name: "iQOO",
     logo: "/images/brands/iqoo.png",
     slug: "iqoo",
-    logoW: "w-20 h-8",
+    // wide wordmark
+    logoSize: { w: 64, h: 28 },
     card: "from-[#fafafa] to-[#f0f0f0]",
     border: "border-[#e0e0e0] hover:border-[#0B0B0B]",
     shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)]",
@@ -118,8 +127,9 @@ export default function ShopByBrand() {
         }}
       />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-5 sm:mb-7">
+      <div className="relative max-w-7xl mx-auto">
+        {/* Header — padded */}
+        <div className="flex items-end justify-between mb-4 sm:mb-6 px-4 sm:px-6 lg:px-8">
           <div>
             <p className="text-[11px] font-bold tracking-[0.14em] text-brand-600 uppercase mb-1">
               Official Partners
@@ -137,41 +147,69 @@ export default function ShopByBrand() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 sm:gap-3">
-          {brands.map((brand) => {
-            return (
-              <Link
-                key={brand.name}
-                href={`/products?category=${brand.slug}`}
+        {/*
+          ── Scrollable row ──
+          • Mobile  : horizontal scroll, cards snap, left padding so first card
+                      lines up with page content, right padding so last card
+                      isn't flush against the edge.
+          • Desktop (sm+) : normal flex-wrap grid look via justify-center.
+          scrollbar-hide via Tailwind plugin or inline style below.
+        */}
+        <div
+          className="
+            flex gap-3
+            sm:flex-wrap sm:justify-center sm:px-6 lg:px-8
+            overflow-x-auto
+            px-4 pb-2
+            snap-x snap-mandatory
+          "
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {brands.map((brand) => (
+            <Link
+              key={brand.name}
+              href={`/products?category=${brand.slug}`}
+              className={`
+                group relative flex-shrink-0 flex flex-col items-center justify-center gap-3
+                w-[88px] sm:w-[96px] py-4 px-2
+                rounded-2xl border bg-gradient-to-b
+                ${brand.card} ${brand.border} ${brand.shadow}
+                transition-all duration-300 hover:-translate-y-1
+                snap-start overflow-hidden
+              `}
+            >
+              {/* shine overlay on hover */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.7) 0%, transparent 50%)" }}
+              />
+
+              {/* Logo — exact pixel dimensions, no stretching */}
+              <div
+                className="relative flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                style={{ width: brand.logoSize.w, height: brand.logoSize.h }}
+              >
+                <Image
+                  src={brand.logo}
+                  alt={brand.name}
+                  fill
+                  className="object-contain"
+                  sizes="80px"
+                />
+              </div>
+
+              <span
                 className={`
-                  group relative flex flex-col items-center justify-center gap-3
-                  py-5 px-3 rounded-2xl border bg-gradient-to-b
-                  ${brand.card} ${brand.border} ${brand.shadow}
-                  transition-all duration-300 hover:-translate-y-1 overflow-hidden
+                  relative z-10 text-[11px] font-semibold tracking-wide
+                  text-gray-400 transition-colors duration-200 text-center leading-tight
+                  ${brand.labelHover}
                 `}
               >
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.7) 0%, transparent 50%)" }}
-                />
-
-                <div className={`relative ${brand.logoW} transition-transform duration-300 group-hover:scale-110`}>
-                  <Image
-                    src={brand.logo}
-                    alt={brand.name}
-                    fill
-                    className="object-contain"
-                    sizes="80px"
-                  />
-                </div>
-
-                <span className={`text-[11px] font-semibold tracking-wide text-gray-400 transition-colors duration-200 ${brand.labelHover}`}>
-                  {brand.name}
-                </span>
-              </Link>
-            );
-          })}
+                {brand.name}
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </section>
