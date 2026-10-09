@@ -41,8 +41,8 @@ export default function PopularProducts() {
         <div className="flex items-center justify-between gap-2 mb-6 sm:mb-8">
           <div className="min-w-0">
             <p className="text-brand-500 text-xs font-semibold uppercase tracking-widest mb-1">Top Picks</p>
-            <h2 className="text-gray-900 text-xl sm:text-3xl font-extrabold tracking-tight leading-tight">
-              Popular<br className="sm:hidden" /> Smartphones
+            <h2 className="text-gray-900 text-xl sm:text-3xl font-extrabold tracking-tight leading-tight whitespace-nowrap">
+              Popular Smartphones
             </h2>
             <p className="hidden sm:block text-gray-400 text-sm mt-1">Discover the most loved devices by our customers.</p>
           </div>
@@ -61,7 +61,7 @@ export default function PopularProducts() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-3">
             {products.map(p => <ProductCard key={p.id} product={p} onAddToCart={handleAddToCart} />)}
           </div>
         )}

@@ -44,20 +44,25 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   }
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 overflow-hidden flex flex-col">
+    <div className="group relative bg-white rounded-xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 flex flex-col">
+
+      {/* Badge — half outside top edge of card, centered */}
+      {product.badge && (
+        <span
+          className="absolute left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-20 shadow-md whitespace-nowrap"
+          style={{
+            backgroundColor: product.badgeColor ?? "#FB5724",
+            opacity: 0.82,
+            top: 0,
+            transform: "translateY(-50%)",
+          }}
+        >
+          {product.badge}
+        </span>
+      )}
 
       {/* ── Image Zone ── */}
-      <div className="relative bg-[#F7F8FA] overflow-hidden" style={{ height: "200px" }}>
-
-        {/* Top-left: badge */}
-        {product.badge && (
-          <span
-            className="absolute top-2.5 left-2.5 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm"
-            style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
-          >
-            {product.badge}
-          </span>
-        )}
+      <div className="relative bg-[#F7F8FA] rounded-t-xl overflow-hidden" style={{ height: "155px" }}>
 
         {/* Top-right: discount pill + wishlist stacked */}
         <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5">
@@ -68,7 +73,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
             </span>
           )}
 
-          {/* Wishlist button — always visible, fills in on toggle */}
+          {/* Wishlist button */}
           <button
             onClick={() => setWished((w) => !w)}
             aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
@@ -88,7 +93,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         {/* Product Image */}
         <Link
           href={`/products/${product.slug}`}
-          className="absolute inset-0 flex items-center justify-center p-5"
+          className="absolute inset-0 flex items-center justify-center p-3"
         >
           <div className="relative w-full h-full">
             <Image
@@ -103,21 +108,21 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       </div>
 
       {/* ── Info Zone ── */}
-      <div className="px-3 pt-2.5 pb-3 flex flex-col flex-1">
+      <div className="px-2.5 pt-2 pb-2.5 flex flex-col flex-1">
 
-        {/* Name */}
+        {/* Name — single line, truncated */}
         <Link href={`/products/${product.slug}`}>
-          <h3 className="text-gray-900 font-bold text-[14px] leading-snug hover:text-brand-500 transition-colors line-clamp-1">
+          <h3 className="text-gray-900 font-bold text-[14px] leading-snug hover:text-brand-500 transition-colors truncate w-full">
             {product.name}
           </h3>
         </Link>
 
         {/* Variant */}
-        <p className="text-gray-400 text-[11px] mt-0.5 truncate">{product.variant}</p>
+        <p className="text-gray-400 text-[10px] mt-0.5 truncate">{product.variant}</p>
 
         {/* Specs pills */}
         {product.specs && (
-          <div className="flex items-center flex-nowrap gap-1 mt-1.5 overflow-hidden">
+          <div className="flex items-center flex-nowrap gap-1 mt-1 overflow-hidden">
             {product.specs.screen && (
               <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[10px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
                 📱{product.specs.screen}
@@ -137,7 +142,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         )}
 
         {/* Price row */}
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-1.5">
           <span className="text-gray-900 font-extrabold text-[16px] tracking-tight">
             ৳{product.price.toLocaleString("en-BD")}
           </span>
@@ -153,22 +158,46 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           )}
         </div>
 
-        {/* Buttons */}
-        <div className="flex gap-1.5 mt-2.5">
+        {/* ── Action Buttons ── */}
+        <div className="flex gap-1.5 mt-2">
+          {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
-            className={`h-8 flex items-center justify-center gap-1.5 text-[11px] font-semibold px-2 flex-1 min-w-0 rounded-lg transition-all duration-200 active:scale-95 shadow-sm
+            className={`
+              relative flex-1 min-w-0 h-8 flex items-center justify-center gap-1
+              text-[10px] font-bold rounded-lg overflow-hidden
+              transition-all duration-200 active:scale-95 shadow-sm
               ${added
-                ? "bg-green-500 text-white"
-                : "bg-brand-500 hover:bg-brand-600 text-white hover:shadow-md"
-              }`}
+                ? "bg-green-500 text-white shadow-green-200"
+                : "bg-brand-500 hover:bg-brand-600 text-white hover:shadow-brand-200 hover:shadow-md"
+              }
+            `}
           >
-            <ShoppingCart size={12} className="shrink-0" />
-            {added ? "Added!" : "Add to Cart"}
+            {/* Shine sweep on hover */}
+            {!added && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)",
+                }}
+              />
+            )}
+            <ShoppingCart size={11} className="shrink-0" />
+            <span className="truncate">{added ? "Added ✓" : "Add to Cart"}</span>
           </button>
+
+          {/* Buy Now */}
           <Link
             href={`/products/${product.slug}`}
-            className="h-8 flex items-center justify-center gap-1 whitespace-nowrap text-[11px] font-semibold px-3 rounded-lg border-2 border-brand-200 text-brand-500 hover:bg-brand-50 transition-all"
+            className="
+              h-8 flex items-center justify-center gap-1 px-2.5
+              text-[10px] font-bold rounded-lg whitespace-nowrap
+              border-2 border-brand-400 text-brand-500
+              hover:bg-brand-500 hover:text-white hover:border-brand-500
+              transition-all duration-200 active:scale-95
+            "
           >
             <Zap size={11} className="shrink-0" />
             Buy

@@ -162,17 +162,14 @@ export default function ShopByBrand() {
                 style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.7) 0%, transparent 50%)" }}
               />
 
-              {/* Logo */}
-              <div
-                className="relative flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
-                style={{ width: brand.logoSize.w, height: brand.logoSize.h }}
-              >
+              {/* Logo — uniform container, object-contain keeps aspect ratio */}
+              <div className="relative w-[52px] h-[36px] flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
                 <Image
                   src={brand.logo}
                   alt={brand.name}
                   fill
                   className="object-contain"
-                  sizes="80px"
+                  sizes="52px"
                 />
               </div>
 
