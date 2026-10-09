@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import type { Product } from "@/types";
+import { BrandLogo } from "@/components/shop/BrandIcons";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -125,16 +126,16 @@ const APPLE_PREOWNED: PhoneModel[] = [
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { label:"Apple",    icon:"🍎" },
-  { label:"Samsung",  icon:"🔵" },
-  { label:"OnePlus",  icon:"🔴" },
-  { label:"Redmi",    icon:"🟠" },
-  { label:"Realme",   icon:"🟡" },
-  { label:"Nothing",  icon:"⚫" },
-  { label:"Motorola", icon:"🔷" },
-  { label:"Vivo",     icon:"🟣" },
-  { label:"Honor",    icon:"🟤" },
-  { label:"iQOO",     icon:"⚡" },
+  { label:"Apple",    key:"apple",    bgFill:"#1d1d1f", logoColor:"text-gray-800"   },
+  { label:"Samsung",  key:"samsung",  bgFill:"#1428A0", logoColor:"text-blue-700"   },
+  { label:"OnePlus",  key:"oneplus",  bgFill:"#EF1B25", logoColor:"text-red-600"    },
+  { label:"Redmi",    key:"redmi",    bgFill:"#FB5724", logoColor:"text-orange-600" },
+  { label:"Realme",   key:"realme",   bgFill:"#FCC10B", logoColor:"text-yellow-600" },
+  { label:"Nothing",  key:"nothing",  bgFill:"#111827", logoColor:"text-gray-800"   },
+  { label:"Motorola", key:"motorola", bgFill:"#0099E6", logoColor:"text-blue-500"   },
+  { label:"Vivo",     key:"vivo",     bgFill:"#415FFF", logoColor:"text-indigo-600" },
+  { label:"Honor",    key:"honor",    bgFill:"#CC0000", logoColor:"text-red-700"    },
+  { label:"iQOO",     key:"iqoo",     bgFill:"#0B0B0B", logoColor:"text-gray-900"   },
 ];
 
 const PRICE_RANGES = [
@@ -253,6 +254,23 @@ export default function ProductsPage() {
   const [search,          setSearch]          = useState("");
   const [sortKey,         setSortKey]         = useState<SortKey>("featured");
   const [priceFilters,    setPriceFilters]    = useState<boolean[]>([false,false,false,false]);
+  const [brandsVisible,   setBrandsVisible]   = useState(false);
+  const brandsRef = useRef<HTMLUListElement>(null);
+
+  // Trigger brand logo animation on mount (and when sidebar opens on mobile)
+  useEffect(() => {
+    const timer = setTimeout(() => setBrandsVisible(true), 80);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Re-animate when mobile sidebar opens
+  useEffect(() => {
+    if (sidebarOpen) {
+      setBrandsVisible(false);
+      const timer = setTimeout(() => setBrandsVisible(true), 60);
+      return () => clearTimeout(timer);
+    }
+  }, [sidebarOpen]);
 
   // Toggle a price range checkbox
   function togglePrice(i: number) {
@@ -399,18 +417,58 @@ export default function ProductsPage() {
               <div className="px-4 py-3 border-b border-gray-50">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Phone Brands</h3>
               </div>
-              <ul>
-                {CATEGORIES.map(cat => (
-                  <li key={cat.label}>
+              <ul ref={brandsRef} className="overflow-hidden">
+                {CATEGORIES.map((cat, i) => (
+                  <li key={cat.label}
+                    style={{
+                      opacity: brandsVisible ? 1 : 0,
+                      transform: brandsVisible ? "translateX(0)" : "translateX(-32px)",
+                      transition: brandsVisible
+                        ? `opacity 0.32s ease ${i * 42}ms, transform 0.35s cubic-bezier(0.22,1,0.36,1) ${i * 42}ms`
+                        : "none",
+                    }}
+                  >
                     <button onClick={() => handleBrandClick(cat.label)}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors
+                      className="group/sb relative w-full flex items-center px-4 py-2.5 text-sm font-semibold overflow-hidden">
+
+                      {/* ── BG: hover sweep OR active solid fill ── */}
+                      <span
+                        aria-hidden
+                        className={`absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] rounded-r-lg ${
+                          activeCategory === cat.label
+                            ? "translate-x-0"                                         // active → always filled
+                            : "translate-x-[-101%] group-hover/sb:translate-x-0"     // idle → sweep in on hover
+                        }`}
+                        style={{ backgroundColor: cat.bgFill }}
+                      />
+
+                      {/* ── Logo: visible when idle, sweeps out when hovered/active ── */}
+                      <span className={`
+                        relative z-10 flex items-center justify-center w-5 h-5 shrink-0 mr-2.5
+                        transition-all duration-300 ease-in-out
                         ${activeCategory === cat.label
-                          ? "bg-orange-50 text-orange-600 border-r-2 border-orange-500"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}>
-                      <span className="flex items-center gap-2.5">
-                        <span>{cat.icon}</span>{cat.label}
+                          ? "translate-x-10 opacity-0 scale-50"                       // active → already gone
+                          : "group-hover/sb:translate-x-10 group-hover/sb:opacity-0 group-hover/sb:scale-50"
+                        }
+                        ${cat.logoColor}
+                      `}>
+                        <BrandLogo brand={cat.key} className="w-4 h-4" />
                       </span>
-                      {activeCategory === cat.label && <ChevronRight size={14} className="text-orange-400" />}
+
+                      {/* ── Label: shifts left, turns white on hover/active ── */}
+                      <span className={`
+                        relative z-10 flex-1 text-left transition-all duration-300 ease-in-out
+                        ${activeCategory === cat.label
+                          ? "-translate-x-7 text-white"                               // active → already shifted + white
+                          : "text-gray-600 group-hover/sb:-translate-x-7 group-hover/sb:text-white"
+                        }
+                      `}>
+                        {cat.label}
+                      </span>
+
+                      {activeCategory === cat.label && (
+                        <ChevronRight size={14} className="relative z-10 text-white/70 shrink-0" />
+                      )}
                     </button>
                   </li>
                 ))}

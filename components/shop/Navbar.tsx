@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
+import { BrandLogo } from "./BrandIcons";
 
 interface Product {
   id: string; name: string; price: number; original_price?: number;
@@ -18,16 +19,16 @@ interface Product {
 }
 
 const BRAND_GROUPS = [
-  { key: "apple",    label: "Apple",    emoji: "🍎", color: "text-gray-800" },
-  { key: "samsung",  label: "Samsung",  emoji: "📱", color: "text-blue-600"  },
-  { key: "oneplus",  label: "OnePlus",  emoji: "📱", color: "text-red-600"   },
-  { key: "redmi",    label: "Redmi",    emoji: "📱", color: "text-orange-600"},
-  { key: "realme",   label: "Realme",   emoji: "📱", color: "text-yellow-600"},
-  { key: "nothing",  label: "Nothing",  emoji: "📱", color: "text-gray-700"  },
-  { key: "motorola", label: "Motorola", emoji: "📱", color: "text-blue-500"  },
-  { key: "vivo",     label: "Vivo",     emoji: "📱", color: "text-indigo-600"},
-  { key: "honor",    label: "Honor",    emoji: "📱", color: "text-red-700"   },
-  { key: "iqoo",     label: "iQOO",     emoji: "📱", color: "text-gray-900"  },
+  { key: "apple",    label: "Apple",    color: "text-gray-800",   bgFill: "#1d1d1f",  textOnFill: "text-white" },
+  { key: "samsung",  label: "Samsung",  color: "text-blue-700",   bgFill: "#1428A0",  textOnFill: "text-white" },
+  { key: "oneplus",  label: "OnePlus",  color: "text-red-600",    bgFill: "#EF1B25",  textOnFill: "text-white" },
+  { key: "redmi",    label: "Redmi",    color: "text-orange-600", bgFill: "#FB5724",  textOnFill: "text-white" },
+  { key: "realme",   label: "Realme",   color: "text-yellow-600", bgFill: "#FCC10B",  textOnFill: "text-gray-900" },
+  { key: "nothing",  label: "Nothing",  color: "text-gray-800",   bgFill: "#111827",  textOnFill: "text-white" },
+  { key: "motorola", label: "Motorola", color: "text-blue-500",   bgFill: "#0099E6",  textOnFill: "text-white" },
+  { key: "vivo",     label: "Vivo",     color: "text-indigo-600", bgFill: "#415FFF",  textOnFill: "text-white" },
+  { key: "honor",    label: "Honor",    color: "text-red-700",    bgFill: "#CC0000",  textOnFill: "text-white" },
+  { key: "iqoo",     label: "iQOO",     color: "text-gray-900",   bgFill: "#0B0B0B",  textOnFill: "text-white" },
 ];
 
 const mobileLinks = [
@@ -83,6 +84,7 @@ export default function Navbar() {
   // Hover state
   const [shopHover,    setShopHover]    = useState(false);
   const [catHover,     setCatHover]     = useState(false);
+  const [catVisible,   setCatVisible]   = useState(false); // controls brand logo animation
   const [activeBrand,  setActiveBrand]  = useState("apple");
 
   // Products cache
@@ -140,9 +142,12 @@ export default function Navbar() {
     setCatHover(true);
     setShopHover(false);
     fetchBrandProducts(activeBrand);
+    // slight delay so dropdown is mounted before animation fires
+    setTimeout(() => setCatVisible(true), 20);
   }
   function handleCatLeave() {
-    catHoverTimer.current = setTimeout(() => setCatHover(false), 150);
+    setCatVisible(false); // trigger exit animation first
+    catHoverTimer.current = setTimeout(() => setCatHover(false), 350);
   }
   function handleBrandHover(brand: string) {
     setActiveBrand(brand);
@@ -161,7 +166,7 @@ export default function Navbar() {
   // Escape key
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") { setShopHover(false); setCatHover(false); setUserMenuOpen(false); setMobileOpen(false); }
+      if (e.key === "Escape") { setShopHover(false); setCatHover(false); setCatVisible(false); setUserMenuOpen(false); setMobileOpen(false); }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -174,7 +179,7 @@ export default function Navbar() {
 
   useEffect(() => {
     setSearchOpen(false); setMobileOpen(false);
-    setShopHover(false); setCatHover(false); setUserMenuOpen(false);
+    setShopHover(false); setCatHover(false); setCatVisible(false); setUserMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -284,19 +289,67 @@ export default function Navbar() {
                   <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex">
 
                     {/* Left: brand list */}
-                    <div className="w-40 bg-gray-50 border-r border-gray-100 py-3 shrink-0">
-                      <p className="px-4 pb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Brands</p>
-                      {BRAND_GROUPS.map(b => (
+                    <div className="w-40 bg-gray-50 border-r border-gray-100 py-3 shrink-0 overflow-hidden">
+                      <p
+                        className="px-4 pb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest"
+                        style={{
+                          opacity: catVisible ? 1 : 0,
+                          transform: catVisible ? "translateX(0)" : "translateX(-18px)",
+                          transition: "opacity 0.28s ease, transform 0.28s ease",
+                        }}
+                      >
+                        Brands
+                      </p>
+                      {BRAND_GROUPS.map((b, i) => (
                         <button key={b.key}
                           onMouseEnter={() => handleBrandHover(b.key)}
-                          className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors text-left ${
-                            activeBrand === b.key
-                              ? "bg-white text-brand-600 border-r-2 border-brand-500"
-                              : "text-gray-700 hover:bg-white hover:text-brand-600"
-                          }`}>
-                          <span className="text-base">{b.emoji}</span>
-                          <span>{b.label}</span>
-                          {activeBrand === b.key && <ChevronRight size={12} className="ml-auto text-brand-400" />}
+                          style={{
+                            opacity: catVisible ? 1 : 0,
+                            transform: catVisible ? "translateX(0)" : "translateX(-28px)",
+                            transition: catVisible
+                              ? `opacity 0.30s ease ${i * 38}ms, transform 0.32s cubic-bezier(0.22,1,0.36,1) ${i * 38}ms`
+                              : `opacity 0.18s ease ${(BRAND_GROUPS.length - 1 - i) * 22}ms, transform 0.18s ease ${(BRAND_GROUPS.length - 1 - i) * 22}ms`,
+                          }}
+                          className="group/brand relative w-full flex items-center px-4 py-2 text-sm font-semibold text-left overflow-hidden">
+
+                          {/* ── BG: hover sweep OR active solid fill ── */}
+                          <span
+                            aria-hidden
+                            className={`absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] rounded-r-lg ${
+                              activeBrand === b.key
+                                ? "translate-x-0"
+                                : "translate-x-[-101%] group-hover/brand:translate-x-0"
+                            }`}
+                            style={{ backgroundColor: b.bgFill }}
+                          />
+
+                          {/* ── Logo: visible idle, gone on hover/active ── */}
+                          <span className={`
+                            relative z-10 flex items-center justify-center w-6 h-6 shrink-0 mr-2.5
+                            transition-all duration-300 ease-in-out
+                            ${activeBrand === b.key
+                              ? "translate-x-10 opacity-0 scale-50"
+                              : "group-hover/brand:translate-x-10 group-hover/brand:opacity-0 group-hover/brand:scale-50"
+                            }
+                            ${b.color}
+                          `}>
+                            <BrandLogo brand={b.key} className="w-5 h-5" />
+                          </span>
+
+                          {/* ── Label: shifts left, white on hover/active ── */}
+                          <span className={`
+                            relative z-10 transition-all duration-300 ease-in-out
+                            ${activeBrand === b.key
+                              ? "-translate-x-8 text-white"
+                              : "text-gray-700 group-hover/brand:-translate-x-8 group-hover/brand:text-white"
+                            }
+                          `}>
+                            {b.label}
+                          </span>
+
+                          {activeBrand === b.key && (
+                            <ChevronRight size={12} className="relative z-10 ml-auto text-white/70 shrink-0" />
+                          )}
                         </button>
                       ))}
                     </div>
