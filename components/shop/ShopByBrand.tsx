@@ -6,120 +6,111 @@ const brands = [
     name: "Apple",
     logo: "/images/brands/apple-logo.png",
     slug: "apple",
-    logoSize: { w: 44, h: 44 },
     card: "from-[#f5f5f7] to-[#e8e8ed]",
     border: "border-[#d1d1d6] hover:border-[#86868b]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)]",
     labelHover: "group-hover:text-[#1d1d1f]",
   },
   {
     name: "Samsung",
     logo: "/images/brands/samsung-logo.png",
     slug: "samsung",
-    logoSize: { w: 72, h: 24 },
     card: "from-[#f2faf2] to-[#ddf2de]",
     border: "border-[#bde5bf] hover:border-[#1428A0]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(20,40,160,0.15)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(20,40,160,0.13)]",
     labelHover: "group-hover:text-[#1428A0]",
   },
   {
     name: "OnePlus",
     logo: "/images/brands/oneplus-logo.png",
     slug: "oneplus",
-    logoSize: { w: 44, h: 44 },
     card: "from-[#fff1f1] to-[#ffe4e4]",
     border: "border-[#fecaca] hover:border-[#ef4444]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(239,68,68,0.18)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(239,68,68,0.15)]",
     labelHover: "group-hover:text-[#dc2626]",
   },
   {
     name: "Redmi",
     logo: "/images/brands/Xiaomi-logo.png",
     slug: "redmi",
-    logoSize: { w: 44, h: 44 },
     card: "from-[#fff7ed] to-[#ffedd5]",
     border: "border-[#fed7aa] hover:border-[#FB5724]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(234,88,12,0.13)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(234,88,12,0.13)]",
     labelHover: "group-hover:text-[#E8470F]",
   },
   {
     name: "Realme",
     logo: "/images/brands/realme-logo.png",
     slug: "realme",
-    logoSize: { w: 72, h: 28 },
     card: "from-[#fffbeb] to-[#fef08a]",
     border: "border-[#fde68a] hover:border-[#FCC10B]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(217,119,6,0.15)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(217,119,6,0.13)]",
     labelHover: "group-hover:text-[#A87A05]",
   },
   {
     name: "Nothing",
     logo: "/images/brands/nothing.png",
     slug: "nothing",
-    logoSize: { w: 72, h: 28 },
     card: "from-[#f9fafb] to-[#f3f4f6]",
     border: "border-[#e5e7eb] hover:border-[#374151]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.15)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(0,0,0,0.13)]",
     labelHover: "group-hover:text-[#111827]",
   },
   {
     name: "Motorola",
     logo: "/images/brands/Motorolla.jpeg",
     slug: "motorola",
-    logoSize: { w: 44, h: 44 },
     card: "from-[#f0f9ff] to-[#e0f2fe]",
     border: "border-[#bae6fd] hover:border-[#0099E6]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(0,153,230,0.2)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(0,153,230,0.15)]",
     labelHover: "group-hover:text-[#0099E6]",
   },
   {
     name: "Vivo",
     logo: "/images/brands/vivo.png",
     slug: "vivo",
-    logoSize: { w: 64, h: 28 },
     card: "from-[#eef1ff] to-[#dde3ff]",
     border: "border-[#c7d0ff] hover:border-[#415FFF]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(65,95,255,0.18)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(65,95,255,0.15)]",
     labelHover: "group-hover:text-[#415FFF]",
   },
   {
     name: "Honor",
     logo: "/images/brands/honor.svg",
     slug: "honor",
-    logoSize: { w: 72, h: 28 },
     card: "from-[#ecfdf5] to-[#d1fae5]",
     border: "border-[#a7f3d0] hover:border-[#CC0000]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(204,0,0,0.15)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(204,0,0,0.13)]",
     labelHover: "group-hover:text-[#CC0000]",
   },
   {
     name: "iQOO",
     logo: "/images/brands/iqoo.png",
     slug: "iqoo",
-    logoSize: { w: 64, h: 28 },
     card: "from-[#fafafa] to-[#f0f0f0]",
     border: "border-[#e0e0e0] hover:border-[#0B0B0B]",
-    shadow: "hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(0,0,0,0.15)]",
     labelHover: "group-hover:text-[#0B0B0B]",
   },
 ];
 
 export default function ShopByBrand() {
   return (
-    <section className="relative bg-white pt-5 pb-6 md:py-10">
+    <section className="relative bg-white pt-6 pb-2 md:pt-[32px] md:pb-[20px]">
+      {/* Subtle dot pattern background */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage: "radial-gradient(circle at 1px 1px, #94a3b8 1px, transparent 0)",
           backgroundSize: "24px 24px",
-          opacity: 0.06,
+          opacity: 0.05,
         }}
       />
 
       <div className="relative max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-end justify-between mb-4 sm:mb-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-5 sm:mb-6 px-4 sm:px-6 lg:px-8">
           <div>
             <p className="text-[11px] font-bold tracking-[0.14em] text-brand-600 uppercase mb-1">
               Official Partners
@@ -137,9 +128,9 @@ export default function ShopByBrand() {
           </Link>
         </div>
 
-        {/* Scrollable row */}
+        {/* Scrollable row — mobile scroll, desktop wrap from left */}
         <div
-          className="flex gap-3 overflow-x-auto px-4 pb-3 sm:flex-wrap sm:justify-center sm:px-6 lg:px-8 snap-x snap-mandatory"
+          className="flex gap-2 overflow-x-auto px-4 pb-3 sm:flex-wrap sm:justify-start sm:overflow-visible sm:px-6 lg:px-8"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {brands.map((brand) => (
@@ -147,22 +138,21 @@ export default function ShopByBrand() {
               key={brand.name}
               href={`/products?category=${brand.slug}`}
               className={`
-                group relative flex-shrink-0 flex flex-col items-center justify-center gap-3
+                group relative flex-shrink-0 flex flex-col items-center justify-center gap-2
                 w-[88px] sm:w-[96px] py-4 px-2
                 rounded-2xl border bg-gradient-to-b
                 ${brand.card} ${brand.border} ${brand.shadow}
                 transition-all duration-300 hover:-translate-y-1
-                snap-start overflow-hidden
               `}
             >
-              {/* shine overlay on hover */}
+              {/* Shine overlay on hover */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.7) 0%, transparent 50%)" }}
               />
 
-              {/* Logo — uniform container, object-contain keeps aspect ratio */}
+              {/* Logo */}
               <div className="relative w-[52px] h-[36px] flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
                 <Image
                   src={brand.logo}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -249,7 +250,23 @@ function ModelCard({ model, isPreOwned }: { model: PhoneModel; isPreOwned: boole
 
 export default function ProductsPage() {
   const [condition,       setCondition]       = useState<Condition>("brand-new");
+  const searchParams = useSearchParams();
+
+  // Map URL slug (e.g. "apple") → brand name (e.g. "Apple")
+  const SLUG_TO_BRAND: Record<string, string> = {
+    apple: "Apple", samsung: "Samsung", oneplus: "OnePlus",
+    redmi: "Redmi", realme: "Realme", nothing: "Nothing",
+    motorola: "Motorola", vivo: "Vivo", honor: "Honor", iqoo: "iQOO", google: "Google",
+  };
+
   const [activeCategory,  setActiveCategory]  = useState("Apple");
+
+  // Sync brand from URL param on mount and when URL changes
+  useEffect(() => {
+    const categoryParam = searchParams.get("category") ?? "";
+    const brand = SLUG_TO_BRAND[categoryParam.toLowerCase()];
+    if (brand) setActiveCategory(brand);
+  }, [searchParams]);
   const [sidebarOpen,     setSidebarOpen]     = useState(false);
   const [search,          setSearch]          = useState("");
   const [sortKey,         setSortKey]         = useState<SortKey>("featured");

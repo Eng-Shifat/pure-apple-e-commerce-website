@@ -5,6 +5,7 @@ import PromoBanner from "@/components/shop/PromoBanner";
 import ShopByBrand from "@/components/shop/ShopByBrand";
 import BestDeals from "@/components/shop/BestDeals";
 import Newsletter from "@/components/shop/Newsletter";
+import PhoneSeriesSection from "@/components/shop/PhoneSeriesSection";
 
 export const metadata = {
   title: "Pure Apple – Better Tech, Brighter Tomorrow",
@@ -22,6 +23,7 @@ export default function HomePage() {
       <ShopByBrand />
       <PopularProducts />
       <PromoBanner />
+      <PhoneSeriesSection />
       <BestDeals />
       <Newsletter />
     </main>

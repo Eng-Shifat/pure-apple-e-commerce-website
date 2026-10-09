@@ -44,18 +44,14 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   }
 
   return (
-    <div className="group relative bg-white rounded-xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 flex flex-col">
+    /* mt-3 gives space for the badge that overflows the top */
+    <div className="group relative bg-white rounded-xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 flex flex-col mt-3">
 
-      {/* Badge — half outside top edge of card, centered */}
+      {/* Badge — sits at the very top-left, half outside the card */}
       {product.badge && (
         <span
-          className="absolute left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-20 shadow-md whitespace-nowrap"
-          style={{
-            backgroundColor: product.badgeColor ?? "#FB5724",
-            opacity: 0.82,
-            top: 0,
-            transform: "translateY(-50%)",
-          }}
+          className="absolute left-3 -top-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-20 shadow-md whitespace-nowrap"
+          style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
         >
           {product.badge}
         </span>
@@ -66,14 +62,11 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
         {/* Top-right: discount pill + wishlist stacked */}
         <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5">
-          {/* Discount badge */}
           {discount && (
             <span className="bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm leading-none">
               -{discount}%
             </span>
           )}
-
-          {/* Wishlist button */}
           <button
             onClick={() => setWished((w) => !w)}
             aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
@@ -110,17 +103,14 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       {/* ── Info Zone ── */}
       <div className="px-2.5 pt-2 pb-2.5 flex flex-col flex-1">
 
-        {/* Name — single line, truncated */}
         <Link href={`/products/${product.slug}`}>
           <h3 className="text-gray-900 font-bold text-[14px] leading-snug hover:text-brand-500 transition-colors truncate w-full">
             {product.name}
           </h3>
         </Link>
 
-        {/* Variant */}
         <p className="text-gray-400 text-[10px] mt-0.5 truncate">{product.variant}</p>
 
-        {/* Specs pills */}
         {product.specs && (
           <div className="flex items-center flex-nowrap gap-1 mt-1 overflow-hidden">
             {product.specs.screen && (
@@ -141,7 +131,6 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           </div>
         )}
 
-        {/* Price row */}
         <div className="flex items-center gap-2 mt-1.5">
           <span className="text-gray-900 font-extrabold text-[16px] tracking-tight">
             ৳{product.price.toLocaleString("en-BD")}
@@ -160,7 +149,6 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
         {/* ── Action Buttons ── */}
         <div className="flex gap-1.5 mt-2">
-          {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
             className={`
@@ -173,7 +161,6 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
               }
             `}
           >
-            {/* Shine sweep on hover */}
             {!added && (
               <span
                 aria-hidden
@@ -188,7 +175,6 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
             <span className="truncate">{added ? "Added ✓" : "Add to Cart"}</span>
           </button>
 
-          {/* Buy Now */}
           <Link
             href={`/products/${product.slug}`}
             className="
