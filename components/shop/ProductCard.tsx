@@ -154,10 +154,10 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         </div>
 
         {/* Buttons */}
-        <div className="grid grid-cols-[1fr_auto] gap-1.5 mt-2.5">
+        <div className="flex gap-1.5 mt-2.5">
           <button
             onClick={handleAddToCart}
-            className={`h-8 flex items-center justify-center gap-1.5 whitespace-nowrap text-[11px] font-semibold px-3 rounded-lg transition-all duration-200 active:scale-95 shadow-sm
+            className={`h-8 flex items-center justify-center gap-1.5 text-[11px] font-semibold px-2 flex-1 min-w-0 rounded-lg transition-all duration-200 active:scale-95 shadow-sm
               ${added
                 ? "bg-green-500 text-white"
                 : "bg-brand-500 hover:bg-brand-600 text-white hover:shadow-md"
