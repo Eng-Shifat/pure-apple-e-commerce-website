@@ -3,8 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 
-// Products saved with a local computer path (file:///D:/... or C:\...) can't load in a browser.
-// Map them to the same-named file inside /public/images so the images show up.
 let imageIndex: Map<string, string> | null = null;
 function getImageIndex() {
   if (imageIndex) return imageIndex;
@@ -24,7 +22,7 @@ function fixLocalImage(image: unknown) {
   if (typeof image !== "string" || !/^(file:|[a-zA-Z]:[\\/])/.test(image)) return image;
   let decoded = image;
   try { decoded = decodeURIComponent(image); } catch {}
-  const name = decoded.split(/[\\/]/).pop()!.toLowerCase();
+  const name = decoded.split(/[\\\/]/).pop()!.toLowerCase();
   return getImageIndex().get(name) ?? image;
 }
 
@@ -46,18 +44,20 @@ export async function GET(req: NextRequest) {
   const deals      = searchParams.get("deals");
   const q          = searchParams.get("q");
   const available  = searchParams.get("available");
+  const slug       = searchParams.get("slug");
 
   let query = supabase
     .from("products")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (featured === "true")        query = query.eq("is_featured", true);
-  if (category)                   query = query.eq("category", category);
-  if (condition)                  query = query.eq("condition", condition);
-  if (deals === "true")           query = query.eq("badge", "Hot Deal");
-  if (available === "true")       query = query.eq("is_available", true);
-  if (q)                          query = query.ilike("name", `%${q}%`);
+  if (featured === "true")  query = query.eq("is_featured", true);
+  if (category)             query = query.eq("category", category);
+  if (condition)            query = query.eq("condition", condition);
+  if (deals === "true")     query = query.eq("badge", "Hot Deal");
+  if (available === "true") query = query.eq("is_available", true);
+  if (q)                    query = query.ilike("name", `%${q}%`);
+  if (slug)                 query = query.eq("slug", slug);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -75,6 +75,8 @@ export async function POST(req: NextRequest) {
     badge, badge_color,
     spec_screen, spec_ram, spec_camera,
     is_featured, category, condition, stock,
+    product_code, colors, storage_variants,
+    emi_available, whatsapp_number,
   } = body;
 
   if (!name || !price || !slug || !image) {
@@ -94,6 +96,11 @@ export async function POST(req: NextRequest) {
     condition: condition ?? "brand-new",
     is_available: true,
     stock: stock ? Number(stock) : null,
+    product_code: product_code ?? null,
+    colors: colors ?? null,
+    storage_variants: storage_variants ?? null,
+    emi_available: emi_available ?? false,
+    whatsapp_number: whatsapp_number ?? null,
     created_at: new Date().toISOString(),
   }]).select().single();
 

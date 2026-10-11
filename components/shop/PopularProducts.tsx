@@ -4,14 +4,40 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ProductCard, { Product } from "./ProductCard";
 import { useCartStore } from "@/store/cartStore";
+import { phonesBySlugs, toCardProduct } from "@/lib/phoneCatalog";
 
-const FALLBACK: Product[] = [
-  { id: "1", name: "iPhone 16 Pro", variant: "256GB – Desert Titanium", price: 114499, originalPrice: 124999, rating: 4.8, reviewCount: 2500, image: "/images/products/iPhone16.webp", slug: "iphone-16-pro", badge: "Best Seller", badgeColor: "#4FAE53", specs: { screen: "6.3-inch", ram: "8GB", camera: "48 MP" } },
-  { id: "2", name: "Samsung Galaxy S24", variant: "256GB – Phantom Black", price: 99999, originalPrice: 109999, rating: 4.6, reviewCount: 1980, image: "/images/products/Samsung Galaxy S24.webp", slug: "samsung-galaxy-s24", badge: "Hot Deal", badgeColor: "#FB5724", specs: { screen: "6.2-inch", ram: "8GB", camera: "50 MP" } },
-  { id: "3", name: "Google Pixel 9", variant: "128GB – Obsidian", price: 79999, rating: 4.4, reviewCount: 530, image: "/images/products/Google Pixel 9.webp", slug: "google-pixel-9", specs: { screen: "6.3-inch", ram: "12GB", camera: "50 MP" } },
-  { id: "4", name: "OnePlus 12", variant: "256GB – Flowy Emerald", price: 89999, rating: 4.5, reviewCount: 880, image: "/images/products/OnePlus 12.webp", slug: "oneplus-12", specs: { screen: "6.7-inch", ram: "12GB", camera: "50 MP" } },
-  { id: "5", name: "Google Pixel 10 Pro", variant: "256GB – Hazel", price: 109999, originalPrice: 119999, rating: 4.7, reviewCount: 310, image: "/images/products/Google Pixel 10 Pro.webp", slug: "google-pixel-10-pro", badge: "New", badgeColor: "#7C3AED", specs: { screen: "6.3-inch", ram: "16GB", camera: "50 MP" } },
+const POPULAR_SLUGS = [
+  "iphone-16-pro",
+  "galaxy-s26-ultra",
+  "google-pixel-9",
+  "oneplus-12",
+  "google-pixel-10-pro",
 ];
+
+const FALLBACK: Product[] = phonesBySlugs(POPULAR_SLUGS).map(toCardProduct);
+
+// Supabase row (snake_case) → ProductCard-এর shape
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function fromApi(r: any): Product {
+  return {
+    id: String(r.id),
+    name: r.name ?? "",
+    variant: r.variant ?? "",
+    price: Number(r.price ?? 0),
+    originalPrice: r.original_price ?? r.originalPrice ?? undefined,
+    rating: Number(r.rating ?? 0),
+    reviewCount: Number(r.review_count ?? r.reviewCount ?? 0),
+    image: r.image ?? "",
+    slug: r.slug ?? "",
+    badge: r.badge ?? undefined,
+    badgeColor: r.badge_color ?? r.badgeColor ?? undefined,
+    specs: {
+      screen: r.spec_screen ?? r.specs?.screen,
+      ram: r.spec_ram ?? r.specs?.ram,
+      camera: r.spec_camera ?? r.specs?.camera,
+    },
+  };
+}
 
 export default function PopularProducts() {
   const [products, setProducts] = useState<Product[]>(FALLBACK);
@@ -21,7 +47,7 @@ export default function PopularProducts() {
   useEffect(() => {
     fetch("/api/products?featured=true")
       .then(r => r.json())
-      .then(d => { if (Array.isArray(d.products) && d.products.length > 0) setProducts(d.products); })
+      .then(d => { if (Array.isArray(d.products) && d.products.length > 0) setProducts(d.products.map(fromApi)); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

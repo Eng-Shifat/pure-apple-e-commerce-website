@@ -18,6 +18,11 @@ export interface Product {
   condition?: "brand-new" | "pre-owned";
   is_available?: boolean;
   stock?: number;
+  product_code?: string;
+  colors?: string;        // JSON string: ["Black","Burgundy","Glacier","Silver"]
+  storage_variants?: string; // JSON string: ["128GB","256GB","512GB","1TB"]
+  emi_available?: boolean;
+  whatsapp_number?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -27,6 +32,8 @@ export interface CartItem {
   product_id: string;
   quantity: number;
   product: Product;
+  selected_color?: string;
+  selected_storage?: string;
 }
 
 export interface Order {

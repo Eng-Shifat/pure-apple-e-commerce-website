@@ -2,15 +2,16 @@
 
 import { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import {
-  ChevronRight, SlidersHorizontal, X, ShoppingCart,
-  Heart, Zap, Star, BadgeCheck, RefreshCw, Search,
+  ChevronRight, SlidersHorizontal, X,
+  BadgeCheck, RefreshCw, Search,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import type { Product } from "@/types";
 import { BrandLogo } from "@/components/shop/BrandIcons";
+import SharedProductCard, { type SharedProduct } from "@/components/shop/SharedProductCard";
+import { PHONES, type ColorVariant, type BrandKey } from "@/lib/phoneCatalog";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -26,70 +27,32 @@ interface PhoneModel {
   rating?: number;
   discount?: number;
   brand: string;
+  colors?: ColorVariant[];
+  storage?: string;
 }
 
-const ALL_MODELS: PhoneModel[] = [
-  // ── Apple Brand New ──
-  { brand:"Apple", name:"iPhone 18 Pro Max", slug:"iphone-18-pro-max",    startingPrice:179999, image:"/images/products/iPhone16.webp", badge:"New",         badgeColor:"#7C3AED", rating:4.9 },
-  { brand:"Apple", name:"iPhone 18 Pro",     slug:"iphone-18-pro",        startingPrice:159999, image:"/images/products/iPhone16.webp", badge:"New",         badgeColor:"#7C3AED", rating:4.9 },
-  { brand:"Apple", name:"iPhone 17 Pro Max", slug:"iphone-17-pro-max",    startingPrice:154999, image:"/images/products/iPhone16.webp", badge:"Hot",         badgeColor:"#FB5724", rating:4.8, discount:5 },
-  { brand:"Apple", name:"iPhone 17 Pro",     slug:"iphone-17-pro",        startingPrice:134999, image:"/images/products/iPhone16.webp", rating:4.8, discount:5 },
-  { brand:"Apple", name:"iPhone 17",         slug:"iphone-17",            startingPrice:109999, image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 17 Air",     slug:"iphone-17-air",        startingPrice:119999, image:"/images/products/iPhone16.webp", badge:"Slim",        badgeColor:"#0284C7", rating:4.7 },
-  { brand:"Apple", name:"iPhone 16 Pro Max", slug:"iphone-16-pro-max",    startingPrice:139999, image:"/images/products/iPhone16.webp", rating:4.8, discount:8 },
-  { brand:"Apple", name:"iPhone 16 Pro",     slug:"iphone-16-pro",        startingPrice:119999, image:"/images/products/iPhone16.webp", badge:"Best Seller", badgeColor:"#4FAE53", rating:4.8, discount:8 },
-  { brand:"Apple", name:"iPhone 16",         slug:"iphone-16",            startingPrice:94999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 16e",        slug:"iphone-16e",           startingPrice:74999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  // ── Samsung Brand New ──
-  { brand:"Samsung", name:"Galaxy S25 Ultra", slug:"galaxy-s25-ultra",   startingPrice:174999, image:"/images/products/Samsung Galaxy S24.webp", badge:"New", badgeColor:"#7C3AED", rating:4.9 },
-  { brand:"Samsung", name:"Galaxy S25+",      slug:"galaxy-s25-plus",    startingPrice:139999, image:"/images/products/Samsung Galaxy S24.webp", badge:"New", badgeColor:"#7C3AED", rating:4.8 },
-  { brand:"Samsung", name:"Galaxy S25",       slug:"galaxy-s25",         startingPrice:119999, image:"/images/products/Samsung Galaxy S24.webp", rating:4.7 },
-  { brand:"Samsung", name:"Galaxy S24 Ultra", slug:"galaxy-s24-ultra",   startingPrice:154999, image:"/images/products/Samsung Galaxy S24.webp", badge:"Hot", badgeColor:"#FB5724", rating:4.8, discount:10 },
-  { brand:"Samsung", name:"Galaxy S24+",      slug:"galaxy-s24-plus",    startingPrice:119999, image:"/images/products/Samsung Galaxy S24.webp", rating:4.7, discount:10 },
-  { brand:"Samsung", name:"Galaxy S24",       slug:"galaxy-s24",         startingPrice:99999,  image:"/images/products/Samsung Galaxy S24.webp", badge:"Best Seller", badgeColor:"#4FAE53", rating:4.7, discount:9 },
-  { brand:"Samsung", name:"Galaxy A55",       slug:"galaxy-a55",         startingPrice:54999,  image:"/images/products/Samsung Galaxy S24.webp", rating:4.4 },
-  { brand:"Samsung", name:"Galaxy A35",       slug:"galaxy-a35",         startingPrice:39999,  image:"/images/products/Samsung Galaxy S24.webp", rating:4.3 },
-  // ── OnePlus ──
-  { brand:"OnePlus", name:"OnePlus 13",       slug:"oneplus-13",         startingPrice:109999, image:"/images/products/OnePlus 12.webp", badge:"New", badgeColor:"#7C3AED", rating:4.8 },
-  { brand:"OnePlus", name:"OnePlus 12",       slug:"oneplus-12",         startingPrice:89999,  image:"/images/products/OnePlus 12.webp", badge:"Hot", badgeColor:"#FB5724", rating:4.7, discount:8 },
-  { brand:"OnePlus", name:"OnePlus 12R",      slug:"oneplus-12r",        startingPrice:64999,  image:"/images/products/OnePlus 12.webp", rating:4.5 },
-  { brand:"OnePlus", name:"OnePlus Nord 4",   slug:"oneplus-nord-4",     startingPrice:44999,  image:"/images/products/OnePlus 12.webp", rating:4.4 },
-  { brand:"OnePlus", name:"OnePlus Nord CE4", slug:"oneplus-nord-ce4",   startingPrice:29999,  image:"/images/products/OnePlus 12.webp", rating:4.2 },
-  // ── Redmi ──
-  { brand:"Redmi", name:"Redmi Note 14 Pro+", slug:"redmi-note-14-pro-plus", startingPrice:44999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.5 },
-  { brand:"Redmi", name:"Redmi Note 14 Pro",  slug:"redmi-note-14-pro",      startingPrice:34999, image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Redmi", name:"Redmi Note 14",      slug:"redmi-note-14",          startingPrice:24999, image:"/images/products/iPhone16.webp", rating:4.3 },
-  { brand:"Redmi", name:"Redmi 14C",          slug:"redmi-14c",              startingPrice:14999, image:"/images/products/iPhone16.webp", rating:4.1 },
-  // ── Realme ──
-  { brand:"Realme", name:"Realme GT 7 Pro",  slug:"realme-gt-7-pro",  startingPrice:69999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.6 },
-  { brand:"Realme", name:"Realme 13 Pro+",   slug:"realme-13-pro-plus", startingPrice:44999, image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Realme", name:"Realme 13 Pro",    slug:"realme-13-pro",    startingPrice:34999, image:"/images/products/iPhone16.webp", rating:4.3 },
-  { brand:"Realme", name:"Realme C75",       slug:"realme-c75",       startingPrice:19999, image:"/images/products/iPhone16.webp", rating:4.1 },
-  // ── Nothing ──
-  { brand:"Nothing", name:"Nothing Phone 3",   slug:"nothing-phone-3",   startingPrice:89999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#111", rating:4.7 },
-  { brand:"Nothing", name:"Nothing Phone 2a+", slug:"nothing-phone-2a-plus", startingPrice:44999, image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Nothing", name:"Nothing Phone 2a",  slug:"nothing-phone-2a",  startingPrice:34999, image:"/images/products/iPhone16.webp", rating:4.4 },
-  // ── Motorola ──
-  { brand:"Motorola", name:"Motorola Edge 50 Ultra", slug:"moto-edge-50-ultra", startingPrice:79999, image:"/images/products/iPhone16.webp", badge:"Hot", badgeColor:"#FB5724", rating:4.6 },
-  { brand:"Motorola", name:"Motorola Edge 50 Pro",   slug:"moto-edge-50-pro",   startingPrice:54999, image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Motorola", name:"Moto G85",               slug:"moto-g85",           startingPrice:29999, image:"/images/products/iPhone16.webp", rating:4.2 },
-  // ── Vivo ──
-  { brand:"Vivo", name:"Vivo X200 Pro",  slug:"vivo-x200-pro",  startingPrice:109999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.7 },
-  { brand:"Vivo", name:"Vivo X200",      slug:"vivo-x200",      startingPrice:84999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Vivo", name:"Vivo V40 Pro",   slug:"vivo-v40-pro",   startingPrice:54999,  image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Vivo", name:"Vivo V40",       slug:"vivo-v40",       startingPrice:39999,  image:"/images/products/iPhone16.webp", rating:4.2 },
-  // ── Honor ──
-  { brand:"Honor", name:"Honor Magic 7 Pro", slug:"honor-magic-7-pro", startingPrice:99999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.7 },
-  { brand:"Honor", name:"Honor 200 Pro",     slug:"honor-200-pro",     startingPrice:69999, image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Honor", name:"Honor 200",         slug:"honor-200",         startingPrice:49999, image:"/images/products/iPhone16.webp", rating:4.3 },
-  // ── iQOO ──
-  { brand:"iQOO", name:"iQOO 13",       slug:"iqoo-13",       startingPrice:89999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.8 },
-  { brand:"iQOO", name:"iQOO 12",       slug:"iqoo-12",       startingPrice:69999, image:"/images/products/iPhone16.webp", rating:4.6, discount:10 },
-  { brand:"iQOO", name:"iQOO Neo 9 Pro",slug:"iqoo-neo-9-pro",startingPrice:49999, image:"/images/products/iPhone16.webp", rating:4.5 },
-];
+const BRAND_LABEL: Record<BrandKey, string> = {
+  apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi", realme: "Realme",
+  google: "Google", vivo: "Vivo", iqoo: "iQOO", honor: "Honor", motorola: "Motorola", nothing: "Nothing",
+};
+
+// সব brand-new model এখন lib/phoneCatalog.ts থেকে আসে (color অনুযায়ী ছবি সহ)
+const ALL_MODELS: PhoneModel[] = PHONES.map((p) => ({
+  brand: BRAND_LABEL[p.brand],
+  name: p.name,
+  slug: p.slug,
+  startingPrice: p.price,
+  image: p.colors[0].image,
+  badge: p.badge,
+  badgeColor: p.badgeColor,
+  rating: p.rating,
+  discount: p.originalPrice ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : undefined,
+  colors: p.colors,
+  storage: p.storage,
+}));
 
 // Apple Pre-Owned
-const APPLE_PREOWNED: PhoneModel[] = [
+const APPLE_PREOWNED_RAW: PhoneModel[] = [
   { brand:"Apple", name:"iPhone 18 Pro Max", slug:"po-18-pro-max", startingPrice:149999, image:"/images/products/iPhone16.webp", badge:"Like New", badgeColor:"#4FAE53", rating:4.9 },
   { brand:"Apple", name:"iPhone 18 Pro",     slug:"po-18-pro",     startingPrice:129999, image:"/images/products/iPhone16.webp", badge:"Like New", badgeColor:"#4FAE53", rating:4.9 },
   { brand:"Apple", name:"iPhone 17 Pro Max", slug:"po-17-pro-max", startingPrice:114999, image:"/images/products/iPhone16.webp", rating:4.8 },
@@ -124,6 +87,12 @@ const APPLE_PREOWNED: PhoneModel[] = [
   { brand:"Apple", name:"iPhone 8",          slug:"po-8",          startingPrice:8999,   image:"/images/products/iPhone16.webp", rating:3.5 },
 ];
 
+// ছবি আছে এমন model-ই দেখানো হয়; ছবি/color catalog থেকে নেওয়া
+const APPLE_PREOWNED: PhoneModel[] = APPLE_PREOWNED_RAW.flatMap((m) => {
+  const match = PHONES.find((p) => p.brand === "apple" && p.name === m.name);
+  return match ? [{ ...m, image: match.colors[0].image, colors: match.colors, storage: match.storage }] : [];
+});
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
@@ -138,6 +107,7 @@ const CATEGORIES = [
   { label:"Vivo",     key:"vivo",     bgFill:"#415FFF", logoColor:"text-indigo-600" },
   { label:"Honor",    key:"honor",    bgFill:"#CC0000", logoColor:"text-red-700"    },
   { label:"iQOO",     key:"iqoo",     bgFill:"#0B0B0B", logoColor:"text-gray-900"   },
+  { label:"Google",   key:"google",   bgFill:"#4285F4", logoColor:"text-blue-600"   },
 ];
 
 const PRICE_RANGES = [
@@ -149,102 +119,27 @@ const PRICE_RANGES = [
 
 type SortKey = "featured" | "price-asc" | "price-desc" | "rating";
 
-// ─── Model Card ───────────────────────────────────────────────────────────────
+// ─── Model Card helper (uses SharedProductCard) ──────────────────────────────
 
-function ModelCard({ model, isPreOwned }: { model: PhoneModel; isPreOwned: boolean }) {
-  const [wished, setWished] = useState(false);
-  const [added,  setAdded]  = useState(false);
-  const addItem = useCartStore(s => s.addItem);
-
-  function handleAdd() {
-    const p: Product = {
-      id: model.slug, name: model.name, variant: "", price: model.startingPrice,
-      rating: model.rating ?? 0, review_count: 0, image: model.image, slug: model.slug,
-      badge: model.badge, badge_color: model.badgeColor,
-    };
-    addItem(p);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  }
-
-  return (
-    <div className="group bg-white rounded-2xl border border-gray-100 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col">
-      {/* Image */}
-      <div className="relative bg-[#F7F8FA] overflow-hidden" style={{ height: "180px" }}>
-        {model.badge && (
-          <span className="absolute top-2.5 left-2.5 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm"
-            style={{ backgroundColor: model.badgeColor ?? "#FB5724" }}>
-            {model.badge}
-          </span>
-        )}
-
-        <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5">
-          {model.discount && (
-            <span className="bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm">
-              -{model.discount}%
-            </span>
-          )}
-          <button onClick={() => setWished(w => !w)}
-            className={`w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 active:scale-95
-              ${wished ? "bg-red-500" : "bg-white border border-gray-200 hover:border-red-300"}`}>
-            <Heart size={13} className={wished ? "fill-white text-white" : "text-gray-400 group-hover:text-red-400 transition-colors"} />
-          </button>
-        </div>
-
-        <Link href={`/products/${model.slug}`} className="absolute inset-0 flex items-center justify-center p-5">
-          <div className="relative w-full h-full">
-            <Image src={model.image} alt={model.name} fill sizes="200px"
-              className="object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-lg" />
-          </div>
-        </Link>
-      </div>
-
-      {/* Info */}
-      <div className="px-3 pt-2.5 pb-3 flex flex-col flex-1">
-        <Link href={`/products/${model.slug}`}>
-          <h3 className="text-gray-900 font-bold text-[13px] leading-snug hover:text-orange-500 transition-colors line-clamp-1">
-            {model.name}
-          </h3>
-        </Link>
-
-        {model.rating && (
-          <div className="flex items-center gap-1 mt-0.5">
-            <Star size={10} className="fill-yellow-400 text-yellow-400" />
-            <span className="text-[10px] font-semibold text-gray-600">{model.rating}</span>
-          </div>
-        )}
-
-        {isPreOwned && (
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {["Like New","Excellent","Good"].map(g => (
-              <span key={g} className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-green-50 text-green-700">{g}</span>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-2">
-          <p className="text-[10px] text-gray-400">Starting from</p>
-          <span className="text-gray-900 font-extrabold text-[15px] tracking-tight">
-            ৳{model.startingPrice.toLocaleString("en-BD")}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-[1fr_auto] gap-1.5 mt-2.5">
-          <button onClick={handleAdd}
-            className={`h-8 flex items-center justify-center gap-1.5 text-[11px] font-semibold px-3 rounded-lg transition-all active:scale-95 shadow-sm
-              ${added ? "bg-green-500 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"}`}>
-            <ShoppingCart size={12} className="shrink-0" />
-            {added ? "Added!" : "Select"}
-          </button>
-          <Link href={`/products/${model.slug}`}
-            className="h-8 flex items-center justify-center gap-1 text-[11px] font-semibold px-3 rounded-lg border-2 border-orange-200 text-orange-500 hover:bg-orange-50 transition-all">
-            <Zap size={11} className="shrink-0" />
-            Buy
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+function modelToShared(model: PhoneModel, isPreOwned: boolean): SharedProduct {
+  const originalPrice = model.discount
+    ? Math.round(model.startingPrice / (1 - model.discount / 100))
+    : undefined;
+  return {
+    id: model.slug,
+    name: model.name,
+    brand: model.brand,
+    price: model.startingPrice,
+    originalPrice,
+    rating: model.rating,
+    image: model.image,
+    slug: model.slug,
+    storage: model.storage,
+    colors: model.colors,
+    badge: isPreOwned ? "Pre-Owned" : model.badge,
+    badgeColor: isPreOwned ? "#4FAE53" : (model.badgeColor ?? "#FB5724"),
+    showStartingFrom: true,
+  };
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -252,6 +147,7 @@ function ModelCard({ model, isPreOwned }: { model: PhoneModel; isPreOwned: boole
 function ProductsPageInner() {
   const [condition,       setCondition]       = useState<Condition>("brand-new");
   const searchParams = useSearchParams();
+  const addItem = useCartStore(s => s.addItem);
 
   // Map URL slug (e.g. "apple") → brand name (e.g. "Apple")
   const SLUG_TO_BRAND: Record<string, string> = {
@@ -663,9 +559,21 @@ function ProductsPageInner() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
                 {filtered.map(model => (
-                  <ModelCard key={model.slug} model={model} isPreOwned={condition === "pre-owned"} />
+                  <SharedProductCard
+                    key={model.slug}
+                    product={modelToShared(model, condition === "pre-owned")}
+                    onAddToCart={(p) => {
+                      addItem({
+                        id: p.id, name: p.name, variant: p.variant ?? "",
+                        price: p.price, original_price: p.originalPrice,
+                        rating: p.rating ?? 0, review_count: 0,
+                        image: p.image, slug: p.slug,
+                        badge: p.badge, badge_color: p.badgeColor,
+                      } as never);
+                    }}
+                  />
                 ))}
               </div>
             )}

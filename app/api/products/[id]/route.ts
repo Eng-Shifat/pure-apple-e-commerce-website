@@ -35,6 +35,8 @@ export async function PUT(
     "image", "slug", "badge", "badge_color",
     "spec_screen", "spec_ram", "spec_camera",
     "is_featured", "category", "condition", "is_available", "stock",
+    "product_code", "colors", "storage_variants",
+    "emi_available", "whatsapp_number",
   ];
 
   const payload: Record<string, unknown> = {};

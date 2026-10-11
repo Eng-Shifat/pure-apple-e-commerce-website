@@ -1,63 +1,33 @@
+"use client";
+
 import Link from "next/link";
 import ProductCard, { Product } from "./ProductCard";
+import { useCartStore } from "@/store/cartStore";
+import { phonesBySlugs, toCardProduct } from "@/lib/phoneCatalog";
 
-// ─── Replace image paths with your actual product images ──────────────────────
-const dealProducts: Product[] = [
-  {
-    id: "5",
-    name: "iPhone 15",
-    variant: "128GB – Blue",
-    price: 849.0,
-    originalPrice: 999.0,
-    rating: 4.7,
-    reviewCount: 3200,
-    image: "/images/products/iphone15.png",
-    slug: "iphone-15",
-    badge: "15%",
-    badgeColor: "#FB5724",
-  },
-  {
-    id: "6",
-    name: "Samsung Galaxy S23",
-    variant: "120GB – Lavender",
-    price: 719.0,
-    originalPrice: 899.0,
-    rating: 4.5,
-    reviewCount: 1135,
-    image: "/images/products/galaxy-s23.png",
-    slug: "samsung-galaxy-s23",
-    badge: "20%",
-    badgeColor: "#FB5724",
-  },
-  {
-    id: "7",
-    name: "Google Pixel 8",
-    variant: "128GB – Hazel",
-    price: 719.0,
-    originalPrice: 799.0,
-    rating: 4.4,
-    reviewCount: 680,
-    image: "/images/products/pixel8.png",
-    slug: "google-pixel-8",
-    badge: "10%",
-    badgeColor: "#FB5724",
-  },
-  {
-    id: "8",
-    name: "OnePlus Nord 3",
-    variant: "256GB – Black",
-    price: 599.0,
-    originalPrice: 679.0,
-    rating: 4.3,
-    reviewCount: 580,
-    image: "/images/products/oneplus-nord3.png",
-    slug: "oneplus-nord-3",
-    badge: "12%",
-    badgeColor: "#FB5724",
-  },
-];
+const DEAL_SLUGS = ["iphone-15", "galaxy-s25", "google-pixel-8", "oneplus-11r"];
+
+// "Best Deals" section-এ discount % badge দেখানো হয়
+const dealProducts: Product[] = phonesBySlugs(DEAL_SLUGS).map((p) => {
+  const card = toCardProduct(p);
+  const pct = card.originalPrice
+    ? Math.round(((card.originalPrice - card.price) / card.originalPrice) * 100)
+    : 0;
+  return { ...card, badge: pct ? `${pct}% OFF` : undefined, badgeColor: "#FB5724" };
+});
 
 export default function BestDeals() {
+  const addItem = useCartStore((s) => s.addItem);
+
+  function handleAddToCart(p: Product) {
+    addItem({
+      id: p.id, name: p.name, variant: p.variant, price: p.price,
+      original_price: p.originalPrice, rating: p.rating, review_count: p.reviewCount,
+      image: p.image, slug: p.slug, badge: p.badge, badge_color: p.badgeColor,
+      spec_screen: p.specs?.screen, spec_ram: p.specs?.ram, spec_camera: p.specs?.camera,
+    } as never);
+  }
+
   return (
     <section className="bg-gray-50 py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,7 +50,7 @@ export default function BestDeals() {
         {/* Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {dealProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
           ))}
         </div>
       </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, Loader2, CheckCircle, X } from "lucide-react";
+import { Upload, Loader2, CheckCircle, X, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface ProductFormProps {
@@ -25,6 +25,12 @@ interface ProductFormProps {
     is_featured?: boolean;
     category?: string;
     condition?: string;
+    stock?: number;
+    product_code?: string;
+    colors?: string;
+    storage_variants?: string;
+    emi_available?: boolean;
+    whatsapp_number?: string;
   };
   mode?: "create" | "edit";
 }
@@ -49,24 +55,26 @@ const CATEGORIES = [
   { label: "iQOO",     value: "iqoo"     },
 ];
 
+const COLOR_PRESETS = ["Black","White","Silver","Gold","Burgundy","Glacier","Desert Titanium","Natural Titanium","Blue Titanium","Purple","Pink","Green","Yellow","Red","Midnight","Starlight"];
+const STORAGE_PRESETS = ["64GB","128GB","256GB","512GB","1TB","2TB"];
+
 function slugify(text: string) {
   return text.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
-
 function isAbsoluteUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:";
-  } catch {
-    return false;
-  }
+  try { const url = new URL(value); return url.protocol === "https:" || url.protocol === "http:"; } catch { return false; }
 }
-
 function safeImageSrc(value: string): string | null {
   if (!value) return null;
   if (value.startsWith("/")) return value;
   if (isAbsoluteUrl(value)) return value;
   return null;
+}
+
+// Parse JSON array string safely
+function parseArr(val: string | undefined): string[] {
+  if (!val) return [];
+  try { const p = JSON.parse(val); return Array.isArray(p) ? p : []; } catch { return []; }
 }
 
 export default function ProductForm({ initialData = {}, mode = "create" }: ProductFormProps) {
@@ -79,43 +87,69 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   const [imageSizeError, setImageSizeError] = useState("");
   const [localPreview, setLocalPreview] = useState<string>("");
 
+  // Color & Storage as arrays (UI state)
+  const [colors,           setColors]           = useState<string[]>(parseArr(initialData.colors));
+  const [storageVariants,  setStorageVariants]  = useState<string[]>(parseArr(initialData.storage_variants));
+  const [colorInput,       setColorInput]       = useState("");
+  const [storageInput,     setStorageInput]     = useState("");
+
   const [form, setForm] = useState({
-    name:           initialData.name           ?? "",
-    variant:        initialData.variant         ?? "",
-    price:          initialData.price           ?? "",
-    original_price: initialData.original_price  ?? "",
-    rating:         initialData.rating          ?? "",
-    review_count:   initialData.review_count    ?? "",
-    image:          initialData.image           ?? "",
-    slug:           initialData.slug            ?? "",
-    badge:          initialData.badge           ?? "",
-    badge_color:    initialData.badge_color     ?? "#FB5724",
-    spec_screen:    initialData.spec_screen     ?? "",
-    spec_ram:       initialData.spec_ram        ?? "",
-    spec_camera:    initialData.spec_camera     ?? "",
-    is_featured:    initialData.is_featured     ?? false,
-    category:       initialData.category        ?? "",
-    condition:      initialData.condition       ?? "brand-new",
+    name:            initialData.name            ?? "",
+    variant:         initialData.variant          ?? "",
+    price:           initialData.price            ?? "",
+    original_price:  initialData.original_price   ?? "",
+    rating:          initialData.rating            ?? "",
+    review_count:    initialData.review_count      ?? "",
+    image:           initialData.image             ?? "",
+    slug:            initialData.slug              ?? "",
+    badge:           initialData.badge             ?? "",
+    badge_color:     initialData.badge_color       ?? "#FB5724",
+    spec_screen:     initialData.spec_screen       ?? "",
+    spec_ram:        initialData.spec_ram          ?? "",
+    spec_camera:     initialData.spec_camera       ?? "",
+    is_featured:     initialData.is_featured       ?? false,
+    category:        initialData.category          ?? "",
+    condition:       initialData.condition         ?? "brand-new",
+    stock:           initialData.stock             ?? "",
+    product_code:    initialData.product_code      ?? "",
+    emi_available:   initialData.emi_available     ?? false,
+    whatsapp_number: initialData.whatsapp_number   ?? "",
   });
 
   function set(key: string, value: unknown) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
-
   function handleNameChange(v: string) {
     set("name", v);
     if (!initialData.slug) set("slug", slugify(v));
   }
 
+  // ── Color helpers ──
+  function addColor(c: string) {
+    const val = c.trim();
+    if (!val || colors.includes(val)) return;
+    setColors((prev) => [...prev, val]);
+    setColorInput("");
+  }
+  function removeColor(c: string) { setColors((prev) => prev.filter((x) => x !== c)); }
+
+  // ── Storage helpers ──
+  function addStorage(s: string) {
+    const val = s.trim();
+    if (!val || storageVariants.includes(val)) return;
+    setStorageVariants((prev) => [...prev, val]);
+    setStorageInput("");
+  }
+  function removeStorage(s: string) { setStorageVariants((prev) => prev.filter((x) => x !== s)); }
+
   async function handleImageUpload(file: File) {
     setImageSizeError("");
     setImageSize(file.size);
     if (file.size > 100 * 1024) {
-      setImageSizeError(`File is ${(file.size / 1024).toFixed(1)} KB — maximum allowed size is 100 KB. Please compress or resize the image.`);
+      setImageSizeError(`File is ${(file.size / 1024).toFixed(1)} KB — max 100 KB.`);
       setLocalPreview("");
       return;
     }
-    // Show instant local preview via blob URL
     const blobUrl = URL.createObjectURL(file);
     setLocalPreview(blobUrl);
     setUploading(true);
@@ -123,17 +157,12 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     try {
       const ext = file.name.split(".").pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(fileName, file, { cacheControl: "3600", upsert: false });
+      const { error: uploadError } = await supabase.storage.from("product-images").upload(fileName, file, { cacheControl: "3600", upsert: false });
       if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage
-        .from("product-images")
-        .getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(fileName);
       set("image", publicUrl);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Upload failed";
-      setError(`Image upload failed: ${message}`);
+      setError(`Image upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
       setUploading(false);
     }
@@ -142,7 +171,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!safeImageSrc(form.image)) {
-      setError("Invalid image URL. Use the Upload button, an https:// link, or a /images/... path (not a file:/// or C:\\ path from your computer).");
+      setError("Invalid image URL. Use Upload button, https:// link, or /images/... path.");
       return;
     }
     setSaving(true);
@@ -152,7 +181,11 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     const res = await fetch(url, {
       method: meth,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        colors:           colors.length > 0 ? JSON.stringify(colors) : null,
+        storage_variants: storageVariants.length > 0 ? JSON.stringify(storageVariants) : null,
+      }),
     });
     const data = await res.json();
     setSaving(false);
@@ -180,7 +213,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       {error   && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>}
       {success && <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl flex items-center gap-2"><CheckCircle size={15}/> Saved! Redirecting…</div>}
 
-      {/* Basic Info */}
+      {/* ── Basic Info ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Basic Info</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -196,6 +229,14 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             <label className="block text-xs font-semibold text-gray-600 mb-1">Slug *</label>
             <input required value={form.slug} onChange={(e) => set("slug", e.target.value)} placeholder="iphone-16-pro" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Product Code</label>
+            <input value={form.product_code} onChange={(e) => set("product_code", e.target.value)} placeholder="AGL146988" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Stock Qty</label>
+            <input type="number" min="0" value={form.stock} onChange={(e) => set("stock", e.target.value)} placeholder="50" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+          </div>
         </div>
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input type="checkbox" checked={form.is_featured} onChange={(e) => set("is_featured", e.target.checked)} className="w-4 h-4 accent-brand-500 rounded"/>
@@ -203,32 +244,20 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </label>
       </section>
 
-      {/* Category & Condition */}
+      {/* ── Category & Condition ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Category & Condition</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Brand / Category *</label>
-            <select
-              required
-              value={form.category}
-              onChange={(e) => set("category", e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 bg-white"
-            >
+            <select required value={form.category} onChange={(e) => set("category", e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 bg-white">
               <option value="">-- Select Brand --</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
+              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Condition *</label>
-            <select
-              required
-              value={form.condition}
-              onChange={(e) => set("condition", e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 bg-white"
-            >
+            <select required value={form.condition} onChange={(e) => set("condition", e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 bg-white">
               <option value="brand-new">🆕 Brand New</option>
               <option value="pre-owned">♻️ Pre-Owned</option>
             </select>
@@ -236,11 +265,74 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </div>
       </section>
 
-      {/* Product Image */}
+      {/* ── Colors ── */}
+      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">🎨 Available Colors</h2>
+        {/* Presets */}
+        <div className="flex flex-wrap gap-2">
+          {COLOR_PRESETS.map((c) => (
+            <button key={c} type="button"
+              onClick={() => addColor(c)}
+              disabled={colors.includes(c)}
+              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${colors.includes(c) ? "bg-brand-500 text-white border-brand-500" : "border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600"}`}
+            >{c}</button>
+          ))}
+        </div>
+        {/* Custom input */}
+        <div className="flex gap-2">
+          <input value={colorInput} onChange={(e) => setColorInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addColor(colorInput); }}} placeholder="Custom color name…" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+          <button type="button" onClick={() => addColor(colorInput)} className="px-4 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:bg-brand-600 flex items-center gap-1"><Plus size={14}/> Add</button>
+        </div>
+        {/* Selected tags */}
+        {colors.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {colors.map((c) => (
+              <span key={c} className="inline-flex items-center gap-1.5 bg-brand-50 text-brand-700 border border-brand-200 text-xs font-semibold px-3 py-1.5 rounded-full">
+                {c}
+                <button type="button" onClick={() => removeColor(c)} className="hover:text-red-500"><X size={11}/></button>
+              </span>
+            ))}
+          </div>
+        )}
+        {colors.length === 0 && <p className="text-xs text-gray-400">No colors added — color selector won't show on product page.</p>}
+      </section>
+
+      {/* ── Storage ── */}
+      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">💾 Storage Variants</h2>
+        {/* Presets */}
+        <div className="flex flex-wrap gap-2">
+          {STORAGE_PRESETS.map((s) => (
+            <button key={s} type="button"
+              onClick={() => addStorage(s)}
+              disabled={storageVariants.includes(s)}
+              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${storageVariants.includes(s) ? "bg-gray-900 text-white border-gray-900" : "border-gray-200 text-gray-600 hover:border-gray-400"}`}
+            >{s}</button>
+          ))}
+        </div>
+        {/* Custom input */}
+        <div className="flex gap-2">
+          <input value={storageInput} onChange={(e) => setStorageInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addStorage(storageInput); }}} placeholder="Custom storage e.g. 3TB…" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+          <button type="button" onClick={() => addStorage(storageInput)} className="px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 flex items-center gap-1"><Plus size={14}/> Add</button>
+        </div>
+        {/* Selected tags */}
+        {storageVariants.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {storageVariants.map((s) => (
+              <span key={s} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full">
+                {s}
+                <button type="button" onClick={() => removeStorage(s)} className="hover:text-red-500"><X size={11}/></button>
+              </span>
+            ))}
+          </div>
+        )}
+        {storageVariants.length === 0 && <p className="text-xs text-gray-400">No storage variants — storage selector won't show on product page.</p>}
+      </section>
+
+      {/* ── Product Image ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Product Image</h2>
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Left: Upload controls */}
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-3 flex-wrap">
               <label className={`cursor-pointer flex items-center gap-2 border-2 border-dashed rounded-xl px-4 py-3 text-sm transition ${uploading ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand-300 text-brand-600 hover:bg-brand-50"}`}>
@@ -250,23 +342,16 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
               <span className="text-xs text-gray-400">or paste URL below</span>
               <span className="text-[11px] font-semibold text-orange-500 bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg">Max 100 KB</span>
             </div>
-
-            {/* Size error */}
             {imageSizeError && (
               <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-xl">
-                <X size={13} className="shrink-0"/>
-                {imageSizeError}
+                <X size={13} className="shrink-0"/>{imageSizeError}
               </div>
             )}
-
-            {/* Size OK badge (after successful upload) */}
             {imageSize !== null && imageSize <= 100 * 1024 && !imageSizeError && (
               <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-2 rounded-xl">
-                <CheckCircle size={13} className="shrink-0"/>
-                Image size: {(imageSize / 1024).toFixed(1)} KB ✓
+                <CheckCircle size={13} className="shrink-0"/> Image size: {(imageSize / 1024).toFixed(1)} KB ✓
               </div>
             )}
-
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Image URL *</label>
               <div className="flex gap-2 items-center">
@@ -275,8 +360,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
               </div>
             </div>
           </div>
-
-          {/* Right: Preview */}
           <div className="flex flex-col items-center gap-2 shrink-0">
             <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Preview</p>
             <div className="relative w-36 h-36 rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center">
@@ -296,7 +379,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* ── Pricing ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Pricing</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -311,7 +394,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </div>
       </section>
 
-      {/* Rating */}
+      {/* ── Rating ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Rating</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -326,7 +409,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </div>
       </section>
 
-      {/* Badge */}
+      {/* ── Badge ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Badge (Optional)</h2>
         <div className="flex flex-wrap gap-2">
@@ -350,13 +433,13 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </div>
       </section>
 
-      {/* Specs */}
+      {/* ── Specs ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Specs</h2>
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">📱 Screen</label>
-            <input value={form.spec_screen} onChange={(e) => set("spec_screen", e.target.value)} placeholder="6.3-inch" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+            <input value={form.spec_screen} onChange={(e) => set("spec_screen", e.target.value)} placeholder='6.3"' className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">⚙️ RAM</label>
@@ -366,6 +449,20 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             <label className="block text-xs font-semibold text-gray-600 mb-1">📷 Camera</label>
             <input value={form.spec_camera} onChange={(e) => set("spec_camera", e.target.value)} placeholder="48 MP" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           </div>
+        </div>
+      </section>
+
+      {/* ── EMI & WhatsApp ── */}
+      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">EMI & WhatsApp</h2>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" checked={form.emi_available} onChange={(e) => set("emi_available", e.target.checked)} className="w-4 h-4 accent-green-500 rounded"/>
+          <span className="text-sm font-medium text-gray-700">EMI Available for this product</span>
+        </label>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Number (with country code)</label>
+          <input value={form.whatsapp_number} onChange={(e) => set("whatsapp_number", e.target.value)} placeholder="+8801XXXXXXXXX" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+          <p className="text-[11px] text-gray-400 mt-1">Leave blank to hide the WhatsApp button on the product page.</p>
         </div>
       </section>
 
