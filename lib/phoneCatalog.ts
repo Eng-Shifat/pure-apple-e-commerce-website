@@ -1,6 +1,6 @@
 /**
  * Shared phone catalog — প্রতিটা model-এর color অনুযায়ী আলাদা image।
- * সব image path: /images/Phone/<Brand>/<filename> — flat structure, no spaces, no encoding.
+ * Image paths: actual public folder structure অনুযায়ী (spaces allowed — Next.js encodeURI handles it).
  * Homepage Popular / Best Deals / Series section + product pages সব এখান থেকে data নেয়।
  * নতুন product বা color যোগ করতে শুধু এই file-এ entry বসালেই হবে।
  */
@@ -25,7 +25,6 @@ export interface CatalogPhone {
   badgeColor?: string;
   specs: { screen: string; ram: string; camera: string };
   colors: ColorVariant[];
-  /** color-এর বাইরে বাড়তি (side) ছবি — product page-এর thumbnail-এ দেখায় */
   gallery?: string[];
 }
 
@@ -64,7 +63,7 @@ export const BRAND_SERIES: BrandSeries[] = [
 export const PHONES: CatalogPhone[] = [
 
   // ═══════════════════════════════════════════════
-  // APPLE
+  // APPLE — /images/Phone/iphone/...
   // ═══════════════════════════════════════════════
   {
     id: "a1", brand: "apple", name: "iPhone 18 Pro Max", storage: "256GB",
@@ -72,7 +71,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-18-pro-max", badge: "New", badgeColor: "#7C3AED",
     specs: { screen: "6.9″", ram: "12GB", camera: "48 MP" },
     colors: [
-      { name: "Sky Blue",   hex: "#A9C4DE", image: "/images/Phone/Apple/iphone-18-pro-max.webp" },
+      { name: "Sky Blue", hex: "#A9C4DE", image: "/images/Phone/iphone/iPhone 18/iPhone 18 pro max/iPhone_18_Pro_Max.webp" },
     ],
   },
   {
@@ -81,7 +80,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-17-pro-max", badge: "Hot", badgeColor: "#FB5724",
     specs: { screen: "6.9″", ram: "12GB", camera: "48 MP" },
     colors: [
-      { name: "Desert Titanium", hex: "#B79A7C", image: "/images/Phone/Apple/iphone-17-pro-max.webp" },
+      { name: "Desert Titanium", hex: "#B79A7C", image: "/images/Phone/iphone/iPhone 17/iPhone 17 pro max/iPhone_17_Pro_Max.webp" },
     ],
   },
   {
@@ -90,7 +89,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-17",
     specs: { screen: "6.3″", ram: "8GB", camera: "48 MP" },
     colors: [
-      { name: "Lavender", hex: "#C9B8E0", image: "/images/Phone/Apple/iphone-17.webp" },
+      { name: "Lavender", hex: "#C9B8E0", image: "/images/Phone/iphone/iPhone 17/iPhone_17.webp" },
     ],
   },
   {
@@ -99,8 +98,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-16-pro", badge: "Best Seller", badgeColor: "#4FAE53",
     specs: { screen: "6.3″", ram: "8GB", camera: "48 MP" },
     colors: [
-      { name: "Black Titanium",   hex: "#2B2B2D", image: "/images/Phone/Apple/iphone-16-pro.webp" },
-      { name: "Desert Titanium",  hex: "#B79A7C", image: "/images/Phone/Apple/iphone-16-pro-desert.webp" },
+      { name: "Desert Titanium", hex: "#B79A7C", image: "/images/Phone/iphone/iPhone 16/iPhone 16 pro/iphone_16pro.webp" },
     ],
   },
   {
@@ -109,8 +107,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-16",
     specs: { screen: "6.1″", ram: "8GB", camera: "48 MP" },
     colors: [
-      { name: "White", hex: "#F2F2F2", image: "/images/Phone/Apple/iphone-16-white.webp" },
-      { name: "Teal",  hex: "#7FC4C0", image: "/images/Phone/Apple/iphone-16-teal.webp" },
+      { name: "White", hex: "#F2F2F2", image: "/images/Phone/iphone/iPhone 16/iPhone_16.webp" },
     ],
   },
   {
@@ -119,7 +116,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-15-pro-max",
     specs: { screen: "6.7″", ram: "8GB", camera: "48 MP" },
     colors: [
-      { name: "Natural Titanium", hex: "#B8B2A7", image: "/images/Phone/Apple/iphone-15-pro-max.webp" },
+      { name: "Natural Titanium", hex: "#B8B2A7", image: "/images/Phone/iphone/iPhone 15/iPhone 15 pro max/iPhone 15 pro max.webp" },
     ],
   },
   {
@@ -128,8 +125,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-15-pro",
     specs: { screen: "6.1″", ram: "8GB", camera: "48 MP" },
     colors: [
-      { name: "Black Titanium",   hex: "#2B2B2D", image: "/images/Phone/Apple/iphone-15-pro.webp" },
-      { name: "Natural Titanium", hex: "#B8B2A7", image: "/images/Phone/Apple/iphone-15-pro-max.webp" },
+      { name: "Black Titanium", hex: "#2B2B2D", image: "/images/Phone/iphone/iPhone 15/iPhone 15 pro/iPhone 15 pro.webp" },
     ],
   },
   {
@@ -138,7 +134,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-15",
     specs: { screen: "6.1″", ram: "6GB", camera: "48 MP" },
     colors: [
-      { name: "Pink", hex: "#F2C4CE", image: "/images/Phone/Apple/iphone-15.webp" },
+      { name: "Pink", hex: "#F2C4CE", image: "/images/Phone/iphone/iPhone 15/iPhone 15.webp" },
     ],
   },
   {
@@ -147,7 +143,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-13-pro-max",
     specs: { screen: "6.7″", ram: "6GB", camera: "12 MP" },
     colors: [
-      { name: "Sierra Blue", hex: "#A7C1D9", image: "/images/Phone/Apple/iphone-13-pro-max.webp" },
+      { name: "Sierra Blue", hex: "#A7C1D9", image: "/images/Phone/iphone/iPhone 13/iPhone 13 pro max/iPhone 13 pro max.webp" },
     ],
   },
   {
@@ -156,7 +152,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-11-pro",
     specs: { screen: "5.8″", ram: "4GB", camera: "12 MP" },
     colors: [
-      { name: "Midnight Green", hex: "#4E5851", image: "/images/Phone/Apple/iphone-11.webp" },
+      { name: "Midnight Green", hex: "#4E5851", image: "/images/Phone/iphone/iPhone 11/iPhone-11.webp" },
     ],
   },
 
@@ -229,7 +225,7 @@ export const PHONES: CatalogPhone[] = [
   },
 
   // ═══════════════════════════════════════════════
-  // GOOGLE
+  // GOOGLE — /images/Phone/Google Pixel/...
   // ═══════════════════════════════════════════════
   {
     id: "g1", brand: "google", name: "Pixel 11 Pro XL", storage: "256GB",
@@ -237,8 +233,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "pixel-11-pro-xl", badge: "New", badgeColor: "#7C3AED",
     specs: { screen: "6.8″", ram: "16GB", camera: "50 MP" },
     colors: [
-      { name: "Obsidian", hex: "#2B2B2D", image: "/images/Phone/Google/pixel-11-pro-xl-obsidian.webp" },
-      { name: "Coral",    hex: "#F08A78", image: "/images/Phone/Google/pixel-11-pro-xl-coral.webp" },
+      { name: "Obsidian", hex: "#2B2B2D", image: "/images/Phone/Google Pixel/Google Pixel 11/Google_Pixel_11_Pro_XL_5G_Obsidian.webp" },
     ],
   },
   {
@@ -247,7 +242,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "pixel-11-pro", badge: "New", badgeColor: "#7C3AED",
     specs: { screen: "6.3″", ram: "16GB", camera: "50 MP" },
     colors: [
-      { name: "Jade", hex: "#BFD9CC", image: "/images/Phone/Google/pixel-11-pro-jade.webp" },
+      { name: "Jade", hex: "#BFD9CC", image: "/images/Phone/Google Pixel/Google Pixel 11/google pixel 11 pro.webp" },
     ],
   },
   {
@@ -256,7 +251,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "google-pixel-10-pro", badge: "Hot", badgeColor: "#FB5724",
     specs: { screen: "6.3″", ram: "16GB", camera: "50 MP" },
     colors: [
-      { name: "Moonstone", hex: "#8E8DB5", image: "/images/Phone/Google/pixel-10-pro.webp" },
+      { name: "Moonstone", hex: "#8E8DB5", image: "/images/Phone/Google Pixel/Google Pixel 10/Google Pixel 10 Pro.webp" },
     ],
   },
   {
@@ -265,8 +260,8 @@ export const PHONES: CatalogPhone[] = [
     slug: "pixel-9-pro-xl",
     specs: { screen: "6.8″", ram: "16GB", camera: "50 MP" },
     colors: [
-      { name: "Obsidian", hex: "#2B2B2D", image: "/images/Phone/Google/pixel-9-pro-xl.webp" },
-      { name: "Hazel",    hex: "#8E8A78", image: "/images/Phone/Google/pixel-9-pro-hazel.webp" },
+      { name: "Obsidian", hex: "#2B2B2D", image: "/images/Phone/Google Pixel/Google Pixel 9/Google Pixel 9 Pro/Google_Pixel_9_Pro_XL-removebg-preview.webp" },
+      { name: "Hazel",    hex: "#8E8A78", image: "/images/Phone/Google Pixel/Google Pixel 9/Google Pixel 9 Pro/Google_Pixel_9_Pro__128GB__Hazel_-_Unlocked__Renewed_-removebg-preview.webp" },
     ],
   },
   {
@@ -275,9 +270,9 @@ export const PHONES: CatalogPhone[] = [
     slug: "google-pixel-9", badge: "Best Seller", badgeColor: "#4FAE53",
     specs: { screen: "6.3″", ram: "12GB", camera: "50 MP" },
     colors: [
-      { name: "Obsidian",   hex: "#2D2E31", image: "/images/Phone/Google/pixel-9-obsidian.webp" },
-      { name: "Porcelain",  hex: "#E9E4DC", image: "/images/Phone/Google/pixel-9-porcelain.webp" },
-      { name: "Peony",      hex: "#E9B7C5", image: "/images/Phone/Google/pixel-9-peony.webp" },
+      { name: "Obsidian",  hex: "#2D2E31", image: "/images/Phone/Google Pixel/Google Pixel 9/Google Pixel 9/Google_Pixel_9_5G_Obsidian.webp" },
+      { name: "Porcelain", hex: "#E9E4DC", image: "/images/Phone/Google Pixel/Google Pixel 9/Google Pixel 9/Google_Pixel_9 Porcelain.webp" },
+      { name: "Peony",     hex: "#E9B7C5", image: "/images/Phone/Google Pixel/Google Pixel 9/Google Pixel 9/GOOGLE__Pixel_9_Peony.webp" },
     ],
   },
   {
@@ -286,9 +281,9 @@ export const PHONES: CatalogPhone[] = [
     slug: "pixel-9a",
     specs: { screen: "6.3″", ram: "8GB", camera: "48 MP" },
     colors: [
-      { name: "Obsidian", hex: "#2D2E31", image: "/images/Phone/Google/pixel-9a-obsidian.webp" },
-      { name: "Iris",     hex: "#8F86C9", image: "/images/Phone/Google/pixel-9a-iris.webp" },
-      { name: "Peony",    hex: "#E9B7C5", image: "/images/Phone/Google/pixel-9a-peony.webp" },
+      { name: "Obsidian", hex: "#2D2E31", image: "/images/Phone/Google Pixel/Google Pixel 9/Google Pixel 9a/Google_Pixel_9A__Obsidian.webp" },
+      { name: "Iris",     hex: "#8F86C9", image: "/images/Phone/Google Pixel/Google Pixel 9/Google Pixel 9a/Google_Pixel_9a_Iris.webp" },
+      { name: "Peony",    hex: "#E9B7C5", image: "/images/Phone/Google Pixel/Google Pixel 9/Google Pixel 9a/Google_Pixel_9a_Peony.webp" },
     ],
   },
   {
@@ -297,10 +292,10 @@ export const PHONES: CatalogPhone[] = [
     slug: "pixel-8-pro",
     specs: { screen: "6.7″", ram: "12GB", camera: "50 MP" },
     colors: [
-      { name: "Obsidian",  hex: "#2D2E31", image: "/images/Phone/Google/pixel-8-pro-obsidian.jpg" },
-      { name: "Porcelain", hex: "#E9E4DC", image: "/images/Phone/Google/pixel-8-pro-porcelain.jpg" },
-      { name: "Mint",      hex: "#BFD8C6", image: "/images/Phone/Google/pixel-8-pro-mint.jpg" },
-      { name: "Bay",       hex: "#9CB7D6", image: "/images/Phone/Google/pixel-8-pro-bay.jpg" },
+      { name: "Obsidian",  hex: "#2D2E31", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Google Pixel 8 Pro/Google Pixel 8 Pro Obsidian.jpg" },
+      { name: "Porcelain", hex: "#E9E4DC", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Google Pixel 8 Pro/Google Pixel 8 Pro Porcelain.jpg" },
+      { name: "Mint",      hex: "#BFD8C6", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Google Pixel 8 Pro/Google Pixel 8 Pro Mint.jpg" },
+      { name: "Bay",       hex: "#9CB7D6", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Google Pixel 8 Pro/Google Pixel 8 Pro Bay.jpg" },
     ],
   },
   {
@@ -309,10 +304,10 @@ export const PHONES: CatalogPhone[] = [
     slug: "google-pixel-8",
     specs: { screen: "6.2″", ram: "8GB", camera: "50 MP" },
     colors: [
-      { name: "Obsidian", hex: "#2D2E31", image: "/images/Phone/Google/pixel-8-obsidian.jpg" },
-      { name: "Mint",     hex: "#BFD8C6", image: "/images/Phone/Google/pixel-8-mint.jpg" },
-      { name: "Rose",     hex: "#F0C3C4", image: "/images/Phone/Google/pixel-8-rose.jpg" },
-      { name: "Haze",     hex: "#8E8A78", image: "/images/Phone/Google/pixel-8-haze.jpg" },
+      { name: "Obsidian", hex: "#2D2E31", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Google Pixel 8/Google Pixel 8 256Gb - Obsidian Black.jpg" },
+      { name: "Mint",     hex: "#BFD8C6", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Google Pixel 8/Google Pixel 8 Mint.jpg" },
+      { name: "Rose",     hex: "#F0C3C4", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Google Pixel 8/Google Pixel 8 Rose.jpg" },
+      { name: "Haze",     hex: "#8E8A78", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Google Pixel 8/google pixel 8 Haze.jpg" },
     ],
   },
   {
@@ -321,9 +316,9 @@ export const PHONES: CatalogPhone[] = [
     slug: "pixel-8a",
     specs: { screen: "6.1″", ram: "8GB", camera: "64 MP" },
     colors: [
-      { name: "Obsidian",  hex: "#2D2E31", image: "/images/Phone/Google/pixel-8a-obsidian.jpg" },
-      { name: "Porcelain", hex: "#E9E4DC", image: "/images/Phone/Google/pixel-8a-porcelain.jpg" },
-      { name: "Aloe",      hex: "#C9DCB4", image: "/images/Phone/Google/pixel-8a-aloe.jpg" },
+      { name: "Obsidian",  hex: "#2D2E31", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Goolge Pixel 8a/Google Pixel 8a Obsidian.jpg" },
+      { name: "Porcelain", hex: "#E9E4DC", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Goolge Pixel 8a/Google Pixel 8a Porcelain.jpg" },
+      { name: "Aloe",      hex: "#C9DCB4", image: "/images/Phone/Google Pixel/Goolge Pixel 8/Goolge Pixel 8a/Google Pixel 8a Aloe .jpg" },
     ],
   },
   {
@@ -332,7 +327,7 @@ export const PHONES: CatalogPhone[] = [
     slug: "pixel-7-pro",
     specs: { screen: "6.7″", ram: "12GB", camera: "50 MP" },
     colors: [
-      { name: "Snow", hex: "#F1F1EE", image: "/images/Phone/Google/pixel-7-pro.webp" },
+      { name: "Snow", hex: "#F1F1EE", image: "/images/Phone/Google Pixel/Google Pixel 7/Google Pixel 7 pro/Pixel 7 Pro.webp" },
     ],
   },
   {
@@ -341,8 +336,8 @@ export const PHONES: CatalogPhone[] = [
     slug: "pixel-7",
     specs: { screen: "6.3″", ram: "8GB", camera: "50 MP" },
     colors: [
-      { name: "Snow",     hex: "#F1F1EE", image: "/images/Phone/Google/pixel-7-snow.webp" },
-      { name: "Obsidian", hex: "#2D2E31", image: "/images/Phone/Google/pixel-7-obsidian.webp" },
+      { name: "Snow",     hex: "#F1F1EE", image: "/images/Phone/Google Pixel/Google Pixel 7/Google Pixel 7/Google Pixel 7 Snow.webp" },
+      { name: "Obsidian", hex: "#2D2E31", image: "/images/Phone/Google Pixel/Google Pixel 7/Google Pixel 7/Pixel 7 Obsidian.webp" },
     ],
   },
 
@@ -364,9 +359,9 @@ export const PHONES: CatalogPhone[] = [
     slug: "oneplus-12", badge: "Best Seller", badgeColor: "#4FAE53",
     specs: { screen: "6.82″", ram: "12GB", camera: "50 MP" },
     colors: [
-      { name: "Silky Black",    hex: "#1E1E20", image: "/images/Phone/OnePlus/oneplus-12-black.webp" },
-      { name: "Flowy Emerald",  hex: "#3E6B5A", image: "/images/Phone/OnePlus/oneplus-12-flowy.webp" },
-      { name: "Glacial White",  hex: "#E9EAEC", image: "/images/Phone/OnePlus/oneplus-12-white.webp" },
+      { name: "Silky Black",   hex: "#1E1E20", image: "/images/Phone/OnePlus/oneplus-12-black.webp" },
+      { name: "Flowy Emerald", hex: "#3E6B5A", image: "/images/Phone/OnePlus/oneplus-12-flowy.webp" },
+      { name: "Glacial White", hex: "#E9EAEC", image: "/images/Phone/OnePlus/oneplus-12-white.webp" },
     ],
   },
   {
@@ -386,9 +381,9 @@ export const PHONES: CatalogPhone[] = [
     slug: "oneplus-10-pro",
     specs: { screen: "6.7″", ram: "12GB", camera: "48 MP" },
     colors: [
-      { name: "Volcanic Black",  hex: "#2A2A2C", image: "/images/Phone/OnePlus/oneplus-10-pro-black.webp" },
-      { name: "Emerald Forest",  hex: "#5E8C7B", image: "/images/Phone/OnePlus/oneplus-10-pro-emerald.webp" },
-      { name: "Panda White",     hex: "#F1F1F1", image: "/images/Phone/OnePlus/oneplus-10-pro-white.webp" },
+      { name: "Volcanic Black", hex: "#2A2A2C", image: "/images/Phone/OnePlus/oneplus-10-pro-black.webp" },
+      { name: "Emerald Forest", hex: "#5E8C7B", image: "/images/Phone/OnePlus/oneplus-10-pro-emerald.webp" },
+      { name: "Panda White",    hex: "#F1F1F1", image: "/images/Phone/OnePlus/oneplus-10-pro-white.webp" },
     ],
   },
   {
@@ -523,9 +518,9 @@ export const PHONES: CatalogPhone[] = [
     slug: "vivo-v40",
     specs: { screen: "6.78″", ram: "12GB", camera: "50 MP" },
     colors: [
-      { name: "Lotus Purple", hex: "#B9A4D8", image: "/images/Phone/Vivo/vivo-v40-purple.webp" },
-      { name: "Ganges Blue",  hex: "#5C8FC4", image: "/images/Phone/Vivo/vivo-v40-blue.webp" },
-      { name: "Titanium Grey",hex: "#8A8D90", image: "/images/Phone/Vivo/vivo-v40-grey.webp" },
+      { name: "Lotus Purple",  hex: "#B9A4D8", image: "/images/Phone/Vivo/vivo-v40-purple.webp" },
+      { name: "Ganges Blue",   hex: "#5C8FC4", image: "/images/Phone/Vivo/vivo-v40-blue.webp" },
+      { name: "Titanium Grey", hex: "#8A8D90", image: "/images/Phone/Vivo/vivo-v40-grey.webp" },
     ],
   },
 
@@ -579,9 +574,9 @@ export const PHONES: CatalogPhone[] = [
     slug: "honor-200-pro",
     specs: { screen: "6.78″", ram: "12GB", camera: "50 MP" },
     colors: [
-      { name: "Midnight Black", hex: "#1E1E20", image: "/images/Phone/Honor/honor-200-pro-black.webp" },
-      { name: "Moonlight White",hex: "#F1EFE9", image: "/images/Phone/Honor/honor-200-pro-white.webp" },
-      { name: "Ocean Cyan",     hex: "#5FA3A8", image: "/images/Phone/Honor/honor-200-pro-cyan.webp" },
+      { name: "Midnight Black",  hex: "#1E1E20", image: "/images/Phone/Honor/honor-200-pro-black.webp" },
+      { name: "Moonlight White", hex: "#F1EFE9", image: "/images/Phone/Honor/honor-200-pro-white.webp" },
+      { name: "Ocean Cyan",      hex: "#5FA3A8", image: "/images/Phone/Honor/honor-200-pro-cyan.webp" },
     ],
   },
   {
