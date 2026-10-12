@@ -242,7 +242,7 @@ function SeriesBlock({ series }: { series: PhoneSeries }) {
 ───────────────────────────────────────────── */
 export default function PhoneSeriesSection() {
   return (
-    <section className="bg-gray-50 py-8 md:py-12">
+    <section className="bg-gray-50 pb-8 md:pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-8">
         {/* Section header */}
         <div className="flex items-end justify-between">
