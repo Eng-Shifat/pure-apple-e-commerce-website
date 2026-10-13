@@ -61,12 +61,7 @@ function RelatedCard({ p }: { p: Product }) {
       <div className="p-3 flex flex-col flex-1">
         <p className="text-xs text-gray-400 mb-0.5 truncate">{p.category ?? "Phone"}</p>
         <h3 className="text-sm font-bold text-gray-900 line-clamp-2 flex-1">{p.name}</h3>
-        {p.rating > 0 && (
-          <div className="flex items-center gap-1 mt-1.5">
-            <StarRow rating={p.rating} size={11}/>
-            <span className="text-[10px] text-gray-400">({p.review_count?.toLocaleString()})</span>
-          </div>
-        )}
+
         <div className="flex items-end gap-2 mt-2">
           <span className="font-extrabold text-gray-900 text-sm">৳{p.price.toLocaleString("en-BD")}</span>
           {p.original_price && <span className="text-xs line-through text-gray-400">৳{p.original_price.toLocaleString("en-BD")}</span>}
@@ -294,7 +289,7 @@ export default function ProductDetailPage() {
           <Link href="/products" className="hover:text-brand-500 transition-colors">Products</Link>
           {product.category && (
             <><ChevronRight size={12}/>
-            <Link href={`/category/${product.category.toLowerCase().replace(/\s+/g,"-")}`} className="hover:text-brand-500 transition-colors capitalize">{product.category}</Link></>
+            <Link href={`/products?category=${product.category.toLowerCase().replace(/\s+/g,"-")}`} className="hover:text-brand-500 transition-colors capitalize">{product.category}</Link></>
           )}
           <ChevronRight size={12}/>
           <span className="text-gray-700 font-medium line-clamp-1">{product.name}</span>
@@ -356,7 +351,7 @@ export default function ProductDetailPage() {
             {/* Brand row */}
             <div className="flex items-center justify-between mb-1">
               {product.category && (
-                <Link href={`/category/${product.category.toLowerCase().replace(/\s+/g,"-")}`} className="text-xs font-semibold text-brand-500 uppercase tracking-wider hover:underline">
+                <Link href={`/products?category=${product.category.toLowerCase().replace(/\s+/g,"-")}`} className="text-xs font-semibold text-brand-500 uppercase tracking-wider hover:underline">
                   {product.category}
                 </Link>
               )}
@@ -507,11 +502,11 @@ export default function ProductDetailPage() {
         {/* ── Tabs ── */}
         <div className="mt-10">
           <div className="flex gap-1 border-b border-gray-200 mb-6">
-            {(["specs","description","reviews"] as const).map((tab) => (
+            {(["specs","description"] as const).map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
                 className={`px-5 py-3 text-sm font-bold capitalize transition-colors relative ${activeTab===tab ? "text-brand-500" : "text-gray-400 hover:text-gray-700"}`}
               >
-                {tab==="specs" ? "Specifications" : tab==="reviews" ? `Reviews (${product.review_count?.toLocaleString()??0})` : "Description"}
+                {tab==="specs" ? "Specifications" : "Description"}
                 {activeTab===tab && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 rounded-t"/>}
               </button>
             ))}
@@ -536,7 +531,6 @@ export default function ProductDetailPage() {
                     { label:"Discount",           value: discount ? `${discount}%` : "—" },
                     { label:"EMI",                value: product.emi_available ? "Available" : "Not Available" },
                     { label:"Availability",       value: inStock ? `In Stock${stockCount ? ` (${stockCount} units)` : ""}` : "Out of Stock" },
-                    { label:"Rating",             value: product.rating>0 ? `${product.rating}/5 (${product.review_count?.toLocaleString()} reviews)` : "No ratings yet" },
                   ].map(({ label, value }, i) => (
                     <tr key={label} className={i%2===0 ? "bg-gray-50" : "bg-white"}>
                       <td className="py-3 px-5 font-semibold text-gray-500 w-44">{label}</td>
@@ -566,37 +560,7 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {activeTab==="reviews" && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              {product.rating > 0 ? (
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="text-center">
-                    <p className="text-5xl font-extrabold text-gray-900">{product.rating}</p>
-                    <StarRow rating={product.rating} size={18}/>
-                    <p className="text-xs text-gray-400 mt-1">{product.review_count?.toLocaleString()} reviews</p>
-                  </div>
-                  <div className="flex-1 space-y-1.5">
-                    {[5,4,3,2,1].map((star) => {
-                      const pct = star===Math.round(product.rating) ? 65 : star===Math.round(product.rating)-1 ? 25 : 5;
-                      return (
-                        <div key={star} className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-3">{star}</span>
-                          <Star size={11} className="fill-sun-400 text-sun-400 shrink-0"/>
-                          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-sun-400 rounded-full" style={{ width:`${pct}%` }}/>
-                          </div>
-                          <span className="text-[10px] text-gray-400 w-6">{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-400 text-sm text-center py-8">No reviews yet. Be the first!</p>
-              )}
-              <p className="text-xs text-gray-400 text-center mt-2">Detailed customer reviews are coming soon.</p>
-            </div>
-          )}
+
         </div>
 
         {/* ── Sticky Cart Bar ── */}
@@ -616,7 +580,7 @@ export default function ProductDetailPage() {
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-xl font-extrabold text-gray-900">Related Products</h2>
               {product.category && (
-                <Link href={`/category/${product.category.toLowerCase().replace(/\s+/g,"-")}`} className="text-sm font-semibold text-brand-500 hover:underline flex items-center gap-1">
+                <Link href={`/products?category=${product.category.toLowerCase().replace(/\s+/g,"-")}`} className="text-sm font-semibold text-brand-500 hover:underline flex items-center gap-1">
                   View all <ChevronRight size={14}/>
                 </Link>
               )}

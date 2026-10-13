@@ -1,6 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Facebook, Instagram, Youtube } from "lucide-react";
+import { Facebook, Instagram, Youtube, MapPin } from "lucide-react";
+
+// TikTok SVG icon (lucide doesn't have one)
+function TikTokIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.95a8.16 8.16 0 004.77 1.52V7.02a4.85 4.85 0 01-1-.33z"/>
+    </svg>
+  );
+}
 
 const quickLinks = [
   { label: "Home", href: "/" },
@@ -20,9 +29,10 @@ const categories = [
 ];
 
 const socialLinks = [
-  { icon: <Facebook size={14} />, href: "#", label: "Facebook", hover: "hover:bg-brand-500" },
-  { icon: <Instagram size={14} />, href: "#", label: "Instagram", hover: "hover:bg-brand-500" },
-  { icon: <Youtube size={14} />, href: "#", label: "Youtube", hover: "hover:bg-brand-500" },
+  { icon: <Facebook size={14} />, href: "https://www.facebook.com/share/1DvXTZtFFW/", label: "Facebook", hover: "hover:bg-[#1877F2]" },
+  { icon: <Instagram size={14} />, href: "https://www.instagram.com/pureapplebd?srtk=cjhoM3c4MDFycWFy", label: "Instagram", hover: "hover:bg-gradient-to-tr hover:from-[#f09433] hover:to-[#bc1888]" },
+  { icon: <Youtube size={14} />, href: "https://youtube.com/@pure_iphone?si=Y3a6X5KiD131F_95", label: "YouTube", hover: "hover:bg-[#FF0000]" },
+  { icon: <TikTokIcon size={14} />, href: "https://tiktok.com/@pureapplebd", label: "TikTok", hover: "hover:bg-black" },
 ];
 
 export default function Footer() {
@@ -66,6 +76,16 @@ export default function Footer() {
               Better Tech, Brighter Tomorrow. Your trusted source for premium
               smartphones &amp; gadgets.
             </p>
+
+            {/* Shop Address */}
+            <div className="mt-3 flex items-start gap-2">
+              <MapPin size={13} className="text-brand-500 shrink-0 mt-0.5" />
+              <p className="text-gray-400 text-[11px] leading-relaxed">
+                Jamuna Future Park, Level-4,<br />
+                Block-B, Shop No: 4B-012B2,<br />
+                Dhaka, Bangladesh
+              </p>
+            </div>
           </div>
 
           {/* ── Quick Links ── */}

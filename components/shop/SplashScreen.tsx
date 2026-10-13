@@ -70,9 +70,20 @@ function Wipe({ piece, fill, from, to }: { piece: Piece; fill: string; from: num
 }
 
 export default function SplashScreen() {
-  const [phase, setPhase] = useState<"show" | "exit" | "done">("show");
+  // Only show on hard reload — skip on client-side navigation
+  const alreadySeen =
+    typeof window !== "undefined" && (window as any).__paSplashDone === true;
+
+  const [phase, setPhase] = useState<"show" | "exit" | "done">(
+    alreadySeen ? "done" : "show"
+  );
 
   useEffect(() => {
+    // If splash was already shown in this browser session, skip immediately
+    if ((window as any).__paSplashDone) {
+      setPhase("done");
+      return;
+    }
     const t1 = setTimeout(() => {
       setPhase("exit");
       // tell the rest of the page (3D phone etc.) that it can start loading now
@@ -139,7 +150,7 @@ export default function SplashScreen() {
           box-shadow: -24px 0 48px rgba(15, 23, 42, 0.06);
           transition: transform 0.9s cubic-bezier(0.7, 0, 0.25, 1);
         }
-        .pa-center { display: flex; flex-direction: column; align-items: center; margin: auto; }
+        .pa-center { display: flex; flex-direction: column; align-items: center; }
 
         .pa-glow {
           position: absolute; width: min(560px, 110vw); aspect-ratio: 1; border-radius: 50%;
