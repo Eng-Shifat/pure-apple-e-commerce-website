@@ -213,28 +213,56 @@ function ProductsPageInner() {
   // Apply search + price filter + sort
   const filtered = useMemo(() => {
     let list = pool;
-
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(m => m.name.toLowerCase().includes(q));
     }
-
-    // Price range
     if (activePriceRanges.length > 0) {
       list = list.filter(m =>
         activePriceRanges.some(r => m.startingPrice >= r.min && m.startingPrice <= r.max)
       );
     }
-
-    // Sort
     return [...list].sort((a, b) => {
       if (sortKey === "price-asc")  return a.startingPrice - b.startingPrice;
       if (sortKey === "price-desc") return b.startingPrice - a.startingPrice;
       if (sortKey === "rating")     return (b.rating ?? 0) - (a.rating ?? 0);
-      return 0; // featured — original order
+      return 0;
     });
   }, [pool, search, activePriceRanges, sortKey]);
+
+  // Search comparison mode — যখন search active, brand-new এবং pre-owned দুটোই দেখানো হয়
+  const isSearchMode = search.trim().length > 0;
+
+  const applyFiltersAndSort = (list: PhoneModel[]) => {
+    let result = [...list];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(m => m.name.toLowerCase().includes(q));
+    }
+    if (activePriceRanges.length > 0) {
+      result = result.filter(m =>
+        activePriceRanges.some(r => m.startingPrice >= r.min && m.startingPrice <= r.max)
+      );
+    }
+    return result.sort((a, b) => {
+      if (sortKey === "price-asc")  return a.startingPrice - b.startingPrice;
+      if (sortKey === "price-desc") return b.startingPrice - a.startingPrice;
+      if (sortKey === "rating")     return (b.rating ?? 0) - (a.rating ?? 0);
+      return 0;
+    });
+  };
+
+  const brandNewPool = useMemo(() =>
+    activeCategory === "All" ? ALL_MODELS : ALL_MODELS.filter(m => m.brand === activeCategory),
+    [activeCategory]
+  );
+  const preOwnedPool = useMemo(() =>
+    activeCategory === "All" ? APPLE_PREOWNED : APPLE_PREOWNED.filter(m => m.brand === activeCategory),
+    [activeCategory]
+  );
+
+  const searchBrandNew  = useMemo(() => isSearchMode ? applyFiltersAndSort(brandNewPool)  : [], [isSearchMode, brandNewPool, search, activePriceRanges, sortKey]);
+  const searchPreOwned  = useMemo(() => isSearchMode ? applyFiltersAndSort(preOwnedPool)  : [], [isSearchMode, preOwnedPool,  search, activePriceRanges, sortKey]);
 
   // When switching brand, reset filters
   function handleBrandClick(brand: string) {
@@ -547,38 +575,111 @@ function ProductsPageInner() {
                   ? <><BadgeCheck size={13} /> Brand New{activeCategory !== "All" ? ` — ${activeCategory}` : ""}</>
                   : <><RefreshCw size={12} /> Pre-Owned{activeCategory !== "All" ? ` — ${activeCategory}` : ""}</>}
               </div>
-              <span className="text-xs text-gray-400">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
+              <span className="text-xs text-gray-400">
+                {isSearchMode
+                  ? `${searchBrandNew.length + searchPreOwned.length} result${(searchBrandNew.length + searchPreOwned.length) !== 1 ? "s" : ""}`
+                  : `${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
+              </span>
             </div>
 
-            {/* Grid */}
-            {filtered.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-4xl mb-3">🔍</p>
-                <p className="text-gray-500 font-semibold">No models found</p>
-                <p className="text-gray-400 text-sm mt-1">Try adjusting your filters or search term.</p>
-                <button onClick={() => { setPriceFilters([false,false,false,false]); setSearch(""); }}
-                  className="mt-4 text-sm text-orange-500 font-semibold hover:underline">
-                  Clear all filters
-                </button>
-              </div>
+            {/* ── Search Comparison Mode ── */}
+            {isSearchMode ? (
+              searchBrandNew.length === 0 && searchPreOwned.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-4xl mb-3">🔍</p>
+                  <p className="text-gray-500 font-semibold">No models found for &ldquo;{search}&rdquo;</p>
+                  <p className="text-gray-400 text-sm mt-1">Try a different search term.</p>
+                  <button onClick={() => setSearch("")}
+                    className="mt-4 text-sm text-orange-500 font-semibold hover:underline">
+                    Clear search
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-8 pt-2">
+                  {/* Brand New results */}
+                  {searchBrandNew.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-1.5 bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1.5 rounded-full text-xs font-bold">
+                          <BadgeCheck size={13} /> Brand New
+                        </div>
+                        <span className="text-xs text-gray-400">{searchBrandNew.length} result{searchBrandNew.length !== 1 ? "s" : ""}</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
+                        {searchBrandNew.map(model => (
+                          <SharedProductCard
+                            key={model.slug}
+                            product={modelToShared(model, false)}
+                            onAddToCart={(p) => {
+                              addItem({ id: p.id, name: p.name, variant: p.variant ?? "", price: p.price, original_price: p.originalPrice, rating: p.rating ?? 0, review_count: 0, image: p.image, slug: p.slug, badge: p.badge, badge_color: p.badgeColor } as never);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Divider */}
+                  {searchBrandNew.length > 0 && searchPreOwned.length > 0 && (
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 h-px bg-gray-200" />
+                      <span className="text-xs text-gray-400 font-medium px-2">Pre-Owned Options</span>
+                      <div className="flex-1 h-px bg-gray-200" />
+                    </div>
+                  )}
+
+                  {/* Pre-Owned results */}
+                  {searchPreOwned.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-full text-xs font-bold">
+                          <RefreshCw size={12} /> Pre-Owned
+                        </div>
+                        <span className="text-xs text-gray-400">{searchPreOwned.length} result{searchPreOwned.length !== 1 ? "s" : ""}</span>
+                        <span className="text-[11px] text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full font-medium">
+                          Save up to {Math.round((1 - searchPreOwned[0].startingPrice / (searchBrandNew.find(m => m.name === searchPreOwned[0].name)?.startingPrice ?? searchPreOwned[0].startingPrice)) * 100)}% vs Brand New
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
+                        {searchPreOwned.map(model => (
+                          <SharedProductCard
+                            key={model.slug}
+                            product={modelToShared(model, true)}
+                            onAddToCart={(p) => {
+                              addItem({ id: p.id, name: p.name, variant: p.variant ?? "", price: p.price, original_price: p.originalPrice, rating: p.rating ?? 0, review_count: 0, image: p.image, slug: p.slug, badge: p.badge, badge_color: p.badgeColor } as never);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
-                {filtered.map(model => (
-                  <SharedProductCard
-                    key={model.slug}
-                    product={modelToShared(model, condition === "pre-owned")}
-                    onAddToCart={(p) => {
-                      addItem({
-                        id: p.id, name: p.name, variant: p.variant ?? "",
-                        price: p.price, original_price: p.originalPrice,
-                        rating: p.rating ?? 0, review_count: 0,
-                        image: p.image, slug: p.slug,
-                        badge: p.badge, badge_color: p.badgeColor,
-                      } as never);
-                    }}
-                  />
-                ))}
-              </div>
+              /* ── Normal Mode (no search) ── */
+              filtered.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-4xl mb-3">🔍</p>
+                  <p className="text-gray-500 font-semibold">No models found</p>
+                  <p className="text-gray-400 text-sm mt-1">Try adjusting your filters or search term.</p>
+                  <button onClick={() => { setPriceFilters([false,false,false,false]); setSearch(""); }}
+                    className="mt-4 text-sm text-orange-500 font-semibold hover:underline">
+                    Clear all filters
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
+                  {filtered.map(model => (
+                    <SharedProductCard
+                      key={model.slug}
+                      product={modelToShared(model, condition === "pre-owned")}
+                      onAddToCart={(p) => {
+                        addItem({ id: p.id, name: p.name, variant: p.variant ?? "", price: p.price, original_price: p.originalPrice, rating: p.rating ?? 0, review_count: 0, image: p.image, slug: p.slug, badge: p.badge, badge_color: p.badgeColor } as never);
+                      }}
+                    />
+                  ))}
+                </div>
+              )
             )}
 
             {/* Pre-owned trust section */}
