@@ -41,7 +41,7 @@ export default function HomePage() {
               src="/images/Banner/deals-banner.webp"
               alt="Best Deals Banner"
               fill
-              className="object-cover object-center"
+              className="object-cover object-[center_center]"
               priority
             />
           </Link>
