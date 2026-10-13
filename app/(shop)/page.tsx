@@ -38,7 +38,7 @@ export default function HomePage() {
             style={{ aspectRatio: "16/4" }}
           >
             <Image
-              src="/images/banners/deals-banner.webp"
+              src="/images/Banner/deals-banner.webp"
               alt="Best Deals Banner"
               fill
               className="object-cover object-center"
