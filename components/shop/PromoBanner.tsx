@@ -7,8 +7,8 @@ export default function PromoBanner() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link href="/products?deals=true" className="block relative rounded-2xl overflow-hidden" style={{ aspectRatio: "16/5" }}>
           <Image
-            src="/images/hero/discount%20banner.webp"
-            alt="Deals on smartphones"
+            src="/images/Banner/discount%20banner.webp"
+            alt="Discount Banner"
             fill
             className="object-cover object-center"
             priority

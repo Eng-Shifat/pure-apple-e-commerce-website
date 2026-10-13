@@ -21,9 +21,7 @@ const FALLBACK: Product[] = phonesBySlugs(POPULAR_SLUGS).map(toCardProduct);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function fromApi(r: any): Product {
-  // catalog থেকে colors data নিয়ে আসো — API তে colors নাও থাকতে পারে
   const catalogPhone = PHONES.find((p) => p.slug === r.slug);
-
   return {
     id: String(r.id),
     name: r.name ?? "",
@@ -37,7 +35,6 @@ function fromApi(r: any): Product {
     badge: r.badge ?? undefined,
     badgeColor: r.badge_color ?? r.badgeColor ?? undefined,
     storage: catalogPhone?.storage,
-    // catalog থেকে colors নাও যাতে color swatches + image change কাজ করে
     colors: catalogPhone?.colors ?? undefined,
     specs: {
       screen: r.spec_screen ?? catalogPhone?.specs?.screen,
@@ -69,9 +66,13 @@ export default function PopularProducts() {
     } as never);
   }
 
+  const cardClass = "w-[160px] sm:w-auto shrink-0 sm:shrink";
+
   return (
     <section className="bg-white pt-3 pb-5 md:pt-[20px] md:pb-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Header */}
         <div className="flex items-center justify-between gap-2 mb-6 sm:mb-8">
           <div className="min-w-0">
             <p className="text-brand-500 text-xs font-semibold uppercase tracking-widest mb-1">Top Picks</p>
@@ -89,15 +90,41 @@ export default function PopularProducts() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="rounded-2xl bg-gray-100 animate-pulse" style={{ height: "360px" }} />
-            ))}
-          </div>
+          <>
+            {/* Mobile skeleton — horizontal scroll */}
+            <div className="flex gap-3 overflow-x-auto sm:hidden pb-2" style={{ scrollbarWidth: "none" }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-[160px] shrink-0 rounded-2xl bg-gray-100 animate-pulse" style={{ height: "320px" }} />
+              ))}
+            </div>
+            {/* Desktop skeleton — grid */}
+            <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="rounded-2xl bg-gray-100 animate-pulse" style={{ height: "360px" }} />
+              ))}
+            </div>
+          </>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-3">
-            {products.map(p => <ProductCard key={p.id} product={p} onAddToCart={handleAddToCart} />)}
-          </div>
+          <>
+            {/* ── Mobile: horizontal scroll ── */}
+            <div
+              className="flex gap-3 overflow-x-auto sm:hidden pb-2 pt-4"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {products.map(p => (
+                <div key={p.id} className={cardClass}>
+                  <ProductCard product={p} onAddToCart={handleAddToCart} />
+                </div>
+              ))}
+            </div>
+
+            {/* ── Desktop: grid ── */}
+            <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-3">
+              {products.map(p => (
+                <ProductCard key={p.id} product={p} onAddToCart={handleAddToCart} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </section>

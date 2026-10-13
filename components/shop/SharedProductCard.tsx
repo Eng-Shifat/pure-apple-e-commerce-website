@@ -238,7 +238,7 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
               onClick={handleAddToCart}
               className={`
                 relative flex-1 min-w-0 h-8 flex items-center justify-center gap-1
-                text-[10px] font-bold rounded-lg overflow-hidden
+                text-[9px] sm:text-[10px] font-bold rounded-lg overflow-hidden
                 transition-all duration-200 active:scale-95 shadow-sm
                 ${added
                   ? "bg-green-500 text-white shadow-green-200"
@@ -256,21 +256,21 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
                   }}
                 />
               )}
-              <ShoppingCart size={11} className="shrink-0" />
+              <ShoppingCart size={10} className="shrink-0" />
               <span className="truncate">{added ? "Added ✓" : "Add to Cart"}</span>
             </button>
 
             <Link
               href={`/products/${product.slug}`}
               className="
-                h-8 flex items-center justify-center gap-1 px-2.5
-                text-[10px] font-bold rounded-lg whitespace-nowrap
+                h-8 w-10 flex items-center justify-center gap-0.5
+                text-[9px] sm:text-[10px] font-bold rounded-lg whitespace-nowrap
                 border-2 border-brand-400 text-brand-500
                 hover:bg-brand-500 hover:text-white hover:border-brand-500
-                transition-all duration-200 active:scale-95
+                transition-all duration-200 active:scale-95 shrink-0
               "
             >
-              <Zap size={11} className="shrink-0" />
+              <Zap size={10} className="shrink-0" />
               Buy
             </Link>
           </div>
