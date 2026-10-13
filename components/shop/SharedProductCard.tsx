@@ -230,11 +230,12 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
 
           {/* ── Buttons — Add to Cart + Buy Now একই row ────────── */}
           <div className="flex items-center gap-1.5 mt-3 w-full">
+            {/* Add to Cart — flex-1 এ থাকবে */}
             <button
               onClick={handleAddToCart}
               className={`
-                relative flex-1 min-w-0 h-9 flex items-center justify-center gap-1
-                text-[11px] font-bold rounded-lg overflow-hidden
+                relative flex-1 h-8 flex items-center justify-center gap-1
+                text-[10px] font-bold rounded-lg overflow-hidden
                 transition-all duration-200 active:scale-95 shadow-sm
                 ${added
                   ? "bg-green-500 text-white"
@@ -242,32 +243,23 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
                 }
               `}
             >
-              {!added && (
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{
-                    background:
-                      "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%)",
-                  }}
-                />
-              )}
-              <ShoppingCart size={12} className="shrink-0" />
-              <span className="truncate leading-none">{added ? "Added ✓" : "Add to Cart"}</span>
+              <ShoppingCart size={11} className="shrink-0" />
+              <span className="leading-none whitespace-nowrap">{added ? "Added ✓" : "Add to Cart"}</span>
             </button>
 
+            {/* Buy Now — fixed width */}
             <Link
               href={`/products/${product.slug}`}
               className="
-                h-9 flex items-center justify-center gap-1 px-3
-                text-[11px] font-bold rounded-lg whitespace-nowrap shrink-0
+                h-8 flex items-center justify-center gap-0.5 px-2.5
+                text-[10px] font-bold rounded-lg whitespace-nowrap shrink-0
                 border-2 border-brand-400 text-brand-500
                 hover:bg-brand-500 hover:text-white hover:border-brand-500
                 transition-all duration-200 active:scale-95
               "
             >
-              <Zap size={12} className="shrink-0" />
-              <span>Buy Now</span>
+              <Zap size={11} className="shrink-0" />
+              <span>Buy</span>
             </Link>
           </div>
         </div>

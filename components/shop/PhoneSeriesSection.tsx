@@ -145,21 +145,21 @@ function MiniCard({ p }: { p: CatalogPhone; accentColor?: string }) {
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-1.5 mt-2">
+        <div className="flex items-center gap-1.5 mt-2 w-full">
           <button
             onClick={handleCart}
             className={`flex-1 h-8 flex items-center justify-center gap-1 text-[10px] font-bold rounded-lg transition-all duration-200 active:scale-95 shadow-sm
               ${added ? "bg-green-500 text-white" : "bg-brand-500 hover:bg-brand-600 text-white"}`}
           >
             <ShoppingCart size={10} className="shrink-0" />
-            <span>{added ? "Added ✓" : "Add to Cart"}</span>
+            <span className="whitespace-nowrap">{added ? "Added ✓" : "Add to Cart"}</span>
           </button>
           <Link
             href={`/products/${p.slug}`}
-            className="h-8 flex items-center justify-center gap-1 px-2.5 text-[10px] font-bold rounded-lg border-2 border-brand-400 text-brand-500 hover:bg-brand-500 hover:text-white hover:border-brand-500 transition-all duration-200 active:scale-95 whitespace-nowrap"
+            className="h-8 flex items-center justify-center gap-0.5 px-2.5 text-[10px] font-bold rounded-lg border-2 border-brand-400 text-brand-500 hover:bg-brand-500 hover:text-white hover:border-brand-500 transition-all duration-200 active:scale-95 whitespace-nowrap shrink-0"
           >
             <Zap size={10} />
-            Buy Now
+            Buy
           </Link>
         </div>
       </div>
