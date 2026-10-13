@@ -10,11 +10,8 @@ const POPULAR_SLUGS = [
   "iphone-16-pro",
   "iphone-17-pro-max",
   "galaxy-s25-ultra",
-  "samsung-galaxy-s24-ultra",
-  "google-pixel-9",
   "google-pixel-10-pro",
   "oneplus-12",
-  "vivo-x200-pro",
 ];
 
 const FALLBACK: Product[] = phonesBySlugs(POPULAR_SLUGS).map(toCardProduct);
@@ -98,7 +95,7 @@ export default function PopularProducts() {
               ))}
             </div>
             {/* Desktop skeleton — grid */}
-            <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="rounded-2xl bg-gray-100 animate-pulse" style={{ height: "360px" }} />
               ))}
@@ -119,7 +116,7 @@ export default function PopularProducts() {
             </div>
 
             {/* ── Desktop: grid ── */}
-            <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-3">
+            <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-4 pt-3">
               {products.map(p => (
                 <ProductCard key={p.id} product={p} onAddToCart={handleAddToCart} />
               ))}
