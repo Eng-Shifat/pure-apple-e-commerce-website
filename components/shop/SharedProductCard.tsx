@@ -10,7 +10,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart, Zap, Star } from "lucide-react";
+import { Heart, ShoppingCart, Zap } from "lucide-react";
 import { useState } from "react";
 import type { ColorVariant } from "@/lib/phoneCatalog";
 import ColorSwatches from "./ColorSwatches";
@@ -80,27 +80,26 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
   }
 
   return (
-    <div className="group relative flex flex-col">
-      {/* ── Card body ─────────────────────────────────────────── */}
-      <div className="relative bg-white rounded-xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 flex flex-col flex-1 overflow-visible">
+    /* badge এর জন্য উপরে space দিতে mt-4, overflow-visible যাতে badge দেখা যায় */
+    <div className="group relative flex flex-col mt-4" style={{ overflow: "visible" }}>
 
-        {/* ── Badge — half outside top-left of card ─────────────── */}
-        {product.badge && (
-          <div
-            className="absolute z-30 left-3"
-            style={{ top: "-12px" }}
+      {/* ── Badge — card এর উপরে half-outside ───────────────── */}
+      {product.badge && (
+        <div className="absolute z-30 left-3" style={{ top: "-14px" }}>
+          <span
+            className="inline-block text-white text-[10px] font-extrabold px-2.5 py-[5px] rounded-full shadow-lg whitespace-nowrap tracking-wide"
+            style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
           >
-            <span
-              className="inline-block text-white text-[10px] font-extrabold px-2.5 py-[5px] rounded-full shadow-lg whitespace-nowrap tracking-wide"
-              style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
-            >
-              {product.badge}
-            </span>
-          </div>
-        )}
+            {product.badge}
+          </span>
+        </div>
+      )}
+
+      {/* ── Card body ─────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 flex flex-col flex-1 overflow-hidden">
 
         {/* ── Image zone ───────────────────────────────────────── */}
-        <div className="relative bg-[#F7F8FA] rounded-t-xl overflow-hidden" style={{ height: "200px", marginTop: product.badge ? "12px" : "0" }}>
+        <div className="relative bg-[#F7F8FA]" style={{ height: "200px" }}>
 
           {/* Discount pill + wishlist — top right */}
           <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5">
@@ -169,16 +168,7 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
             <ColorSwatches colors={colors} active={colorIdx} onSelect={setColorIdx} />
           )}
 
-          {/* Rating */}
-          {product.rating != null && product.rating > 0 && (
-            <div className="flex items-center gap-1 mt-1">
-              <Star size={10} className="fill-yellow-400 text-yellow-400" />
-              <span className="text-[10px] font-semibold text-gray-600">{product.rating.toFixed(1)}</span>
-              {product.reviewCount != null && product.reviewCount > 0 && (
-                <span className="text-[9px] text-gray-400">({product.reviewCount})</span>
-              )}
-            </div>
-          )}
+          {/* Rating — removed */}
 
           {/* Specs pills — screen · ram · camera একই row */}
           {product.specs && (
@@ -228,13 +218,12 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
             </div>
           </div>
 
-          {/* ── Buttons — Add to Cart + Buy Now একই row ────────── */}
-          <div className="flex items-center gap-1.5 mt-3 w-full">
-            {/* Add to Cart — flex-1 এ থাকবে */}
+          {/* ── Buttons — Add to Cart বড়, Buy Now ছোট ────────── */}
+          <div className="flex gap-1.5 mt-3 w-full">
             <button
               onClick={handleAddToCart}
               className={`
-                relative flex-1 h-8 flex items-center justify-center gap-1
+                relative flex-1 h-9 flex items-center justify-center gap-1
                 text-[10px] font-bold rounded-lg overflow-hidden
                 transition-all duration-200 active:scale-95 shadow-sm
                 ${added
@@ -243,22 +232,21 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
                 }
               `}
             >
-              <ShoppingCart size={11} className="shrink-0" />
-              <span className="leading-none whitespace-nowrap">{added ? "Added ✓" : "Add to Cart"}</span>
+              <ShoppingCart size={12} className="shrink-0" />
+              <span className="whitespace-nowrap">{added ? "Added ✓" : "Add to Cart"}</span>
             </button>
 
-            {/* Buy Now — fixed width */}
             <Link
               href={`/products/${product.slug}`}
               className="
-                h-8 flex items-center justify-center gap-0.5 px-2.5
-                text-[10px] font-bold rounded-lg whitespace-nowrap shrink-0
+                h-9 w-16 shrink-0 flex items-center justify-center gap-1
+                text-[10px] font-bold rounded-lg
                 border-2 border-brand-400 text-brand-500
                 hover:bg-brand-500 hover:text-white hover:border-brand-500
                 transition-all duration-200 active:scale-95
               "
             >
-              <Zap size={11} className="shrink-0" />
+              <Zap size={12} className="shrink-0" />
               <span>Buy</span>
             </Link>
           </div>

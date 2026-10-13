@@ -66,7 +66,7 @@ export default function PopularProducts() {
     } as never);
   }
 
-  const cardClass = "w-[160px] sm:w-auto shrink-0 sm:shrink";
+  const cardClass = "w-[175px] sm:w-auto shrink-0 sm:shrink";
 
   return (
     <section className="bg-white pt-3 pb-5 md:pt-[20px] md:pb-14">
@@ -94,7 +94,7 @@ export default function PopularProducts() {
             {/* Mobile skeleton — horizontal scroll */}
             <div className="flex gap-3 overflow-x-auto sm:hidden pb-2" style={{ scrollbarWidth: "none" }}>
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="w-[160px] shrink-0 rounded-2xl bg-gray-100 animate-pulse" style={{ height: "320px" }} />
+                <div key={i} className="w-[175px] shrink-0 rounded-2xl bg-gray-100 animate-pulse" style={{ height: "320px" }} />
               ))}
             </div>
             {/* Desktop skeleton — grid */}

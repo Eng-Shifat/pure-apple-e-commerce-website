@@ -1,16 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { ShoppingCart, Zap, Heart, ChevronRight } from "lucide-react";
-import { useCartStore } from "@/store/cartStore";
+import { ChevronRight } from "lucide-react";
 import { BRAND_SERIES, phonesByBrand, type CatalogPhone } from "@/lib/phoneCatalog";
-import ColorSwatches from "./ColorSwatches";
+import SharedProductCard, { type SharedProduct } from "./SharedProductCard";
 
 /* ─────────────────────────────────────────────
-   DATA — সব product এখন lib/phoneCatalog.ts থেকে আসে।
-   নতুন model / color যোগ করতে ওই file edit করো।
+   DATA
 ───────────────────────────────────────────── */
 interface PhoneSeries {
   id: string;
@@ -32,164 +28,43 @@ const ALL_SERIES: PhoneSeries[] = BRAND_SERIES.map((b) => ({
   products: phonesByBrand(b.key),
 })).filter((s) => s.products.length > 0);
 
-/* ─────────────────────────────────────────────
-   MINI PRODUCT CARD (inline, no extra imports)
-───────────────────────────────────────────── */
-function MiniCard({ p }: { p: CatalogPhone; accentColor?: string }) {
-  const [wished, setWished] = useState(false);
-  const [added, setAdded] = useState(false);
-  const [colorIdx, setColorIdx] = useState(0);
-  const addItem = useCartStore((s) => s.addItem);
-
-  const color = p.colors[colorIdx] ?? p.colors[0];
-  const variant = `${p.storage} – ${color.name}`;
-
-  const discount = p.originalPrice
-    ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
-    : null;
-
-  function handleCart(e: React.MouseEvent) {
-    e.preventDefault();
-    addItem({
-      id: `${p.id}:${color.name}`, name: p.name, variant, price: p.price,
-      original_price: p.originalPrice, rating: p.rating, review_count: p.reviewCount,
-      image: color.image, slug: p.slug,
-      badge: p.badge, badge_color: p.badgeColor,
-      spec_screen: p.specs?.screen, spec_ram: p.specs?.ram, spec_camera: p.specs?.camera,
-    } as never);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  }
-
-  return (
-    <div className="group relative flex flex-col" style={{ marginTop: p.badge ? "14px" : "0" }}>
-
-      {/* Badge — card এর উপরে half-outside */}
-      {p.badge && (
-        <span
-          className="absolute left-3 -top-3 text-white text-[10px] font-bold px-2.5 py-[3px] rounded-full z-20 shadow-sm whitespace-nowrap"
-          style={{ backgroundColor: p.badgeColor ?? "#FB5724" }}
-        >
-          {p.badge}
-        </span>
-      )}
-
-      {/* Card body */}
-      <div className="bg-white rounded-xl border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all duration-300 flex flex-col flex-1">
-
-      {/* Image zone */}
-      <div className="relative bg-[#F7F8FA] rounded-t-xl overflow-hidden mx-0" style={{ height: "148px" }}>
-        {/* Discount + wishlist */}
-        <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1.5">
-          {discount && (
-            <span className="bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-sm leading-none">
-              -{discount}%
-            </span>
-          )}
-          <button
-            onClick={(e) => { e.preventDefault(); setWished((w) => !w); }}
-            aria-label="Wishlist"
-            className={`w-6 h-6 rounded-full flex items-center justify-center shadow transition-all hover:scale-110 active:scale-95
-              ${wished ? "bg-red-500" : "bg-white border border-gray-200 hover:border-red-300"}`}
-          >
-            <Heart size={11} className={wished ? "fill-white text-white" : "text-gray-400 group-hover:text-red-400"} />
-          </button>
-        </div>
-
-        <Link href={`/products/${p.slug}`} className="absolute inset-0 flex items-center justify-center p-3">
-          <div className="relative w-full h-full">
-            <Image
-              src={color.image}
-              alt={p.name}
-              fill
-              sizes="(max-width: 640px) 45vw, 200px"
-              className="object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-md"
-            />
-          </div>
-        </Link>
-      </div>
-
-      {/* Info zone */}
-      <div className="px-2.5 pt-2 pb-2.5 flex flex-col flex-1">
-        <Link href={`/products/${p.slug}`}>
-          <h3 className="text-gray-900 font-bold text-[13px] leading-snug hover:text-brand-500 transition-colors truncate">
-            {p.name}
-          </h3>
-        </Link>
-        <p className="text-gray-400 text-[10px] mt-0.5 truncate">{variant}</p>
-        <ColorSwatches colors={p.colors} active={colorIdx} onSelect={setColorIdx} size={12} max={4} />
-
-        {p.specs && (
-          <div className="flex flex-nowrap items-center gap-1 mt-1.5 w-full min-w-0">
-            {p.specs.screen && (
-              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0 leading-none">📱 {p.specs.screen}</span>
-            )}
-            {p.specs.ram && (
-              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0 leading-none">💾 {p.specs.ram}</span>
-            )}
-            {p.specs.camera && (
-              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0 leading-none">📷 {p.specs.camera}</span>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-          <span className="text-gray-900 font-extrabold text-[15px] tracking-tight">
-            ৳{p.price.toLocaleString("en-BD")}
-          </span>
-          {p.originalPrice && (
-            <span className="text-[10px] line-through text-gray-400">
-              ৳{p.originalPrice.toLocaleString("en-BD")}
-            </span>
-          )}
-        </div>
-
-        {/* Buttons */}
-        <div className="flex items-center gap-1.5 mt-2 w-full">
-          <button
-            onClick={handleCart}
-            className={`flex-1 h-8 flex items-center justify-center gap-1 text-[10px] font-bold rounded-lg transition-all duration-200 active:scale-95 shadow-sm
-              ${added ? "bg-green-500 text-white" : "bg-brand-500 hover:bg-brand-600 text-white"}`}
-          >
-            <ShoppingCart size={10} className="shrink-0" />
-            <span className="whitespace-nowrap">{added ? "Added ✓" : "Add to Cart"}</span>
-          </button>
-          <Link
-            href={`/products/${p.slug}`}
-            className="h-8 flex items-center justify-center gap-0.5 px-2.5 text-[10px] font-bold rounded-lg border-2 border-brand-400 text-brand-500 hover:bg-brand-500 hover:text-white hover:border-brand-500 transition-all duration-200 active:scale-95 whitespace-nowrap shrink-0"
-          >
-            <Zap size={10} />
-            Buy
-          </Link>
-        </div>
-      </div>
-      </div>
-    </div>
-  );
+/* CatalogPhone → SharedProduct */
+function toShared(p: CatalogPhone): SharedProduct {
+  return {
+    id: p.id,
+    name: p.name,
+    variant: p.storage ? `${p.storage} – ${p.colors[0]?.name ?? ""}` : undefined,
+    storage: p.storage,
+    price: p.price,
+    originalPrice: p.originalPrice,
+    image: p.colors[0]?.image ?? "",
+    slug: p.slug,
+    badge: p.badge,
+    badgeColor: p.badgeColor,
+    colors: p.colors,
+    specs: p.specs,
+  };
 }
 
 /* ─────────────────────────────────────────────
    SINGLE SERIES BLOCK
-   Desktop: 5 per row × 2 rows = 10 shown
-   Mobile: horizontal scroll
 ───────────────────────────────────────────── */
-const DESKTOP_VISIBLE = 10; // 2 rows × 5 cols
+const DESKTOP_VISIBLE = 10;
 
 function SeriesBlock({ series }: { series: PhoneSeries }) {
   const visibleProducts = series.products.slice(0, DESKTOP_VISIBLE);
 
   return (
     <div
-      className="rounded-2xl overflow-hidden"
+      className="rounded-2xl overflow-visible"
       style={{ border: `1.5px solid ${series.borderColor}` }}
     >
       {/* Header stripe */}
       <div
-        className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5"
+        className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 rounded-t-2xl"
         style={{ backgroundColor: series.accentBg }}
       >
         <div className="flex items-center gap-2.5">
-          {/* Accent bar */}
           <span
             className="w-1 h-5 rounded-full flex-shrink-0"
             style={{ backgroundColor: series.accentColor }}
@@ -215,24 +90,25 @@ function SeriesBlock({ series }: { series: PhoneSeries }) {
         </Link>
       </div>
 
-      {/* Products — mobile: horizontal scroll | desktop: grid */}
-      <div className="bg-white px-3 py-4 sm:px-4">
-        {/* Mobile horizontal scroll */}
+      {/* Products */}
+      <div className="bg-white px-3 py-4 sm:px-4 rounded-b-2xl overflow-visible">
+
+        {/* Mobile: horizontal scroll */}
         <div
-          className="flex gap-3 overflow-x-auto sm:hidden pb-1"
+          className="flex gap-3 overflow-x-auto sm:hidden pb-2"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {visibleProducts.map((p) => (
-            <div key={p.id} className="flex-shrink-0 w-[150px]">
-              <MiniCard p={p} accentColor={series.accentColor} />
+            <div key={p.id} className="flex-shrink-0 w-[175px]">
+              <SharedProductCard product={toShared(p)} />
             </div>
           ))}
         </div>
 
-        {/* Desktop: 5-col grid, max 2 rows = 10 items */}
+        {/* Desktop: grid */}
         <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {visibleProducts.map((p) => (
-            <MiniCard key={p.id} p={p} accentColor={series.accentColor} />
+            <SharedProductCard key={p.id} product={toShared(p)} />
           ))}
         </div>
       </div>
