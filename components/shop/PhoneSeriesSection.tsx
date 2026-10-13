@@ -62,18 +62,20 @@ function MiniCard({ p }: { p: CatalogPhone; accentColor?: string }) {
   }
 
   return (
-    /* pt-3 = space for badge that overflows top */
-    <div className="group relative bg-white rounded-xl border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all duration-300 flex flex-col pt-3">
+    <div className="group relative flex flex-col" style={{ marginTop: p.badge ? "14px" : "0" }}>
 
-      {/* Badge */}
+      {/* Badge — card এর উপরে half-outside */}
       {p.badge && (
         <span
-          className="absolute left-3 top-0 -translate-y-1/2 text-white text-[10px] font-bold px-2.5 py-[3px] rounded-full z-20 shadow-sm whitespace-nowrap"
+          className="absolute left-3 -top-3 text-white text-[10px] font-bold px-2.5 py-[3px] rounded-full z-20 shadow-sm whitespace-nowrap"
           style={{ backgroundColor: p.badgeColor ?? "#FB5724" }}
         >
           {p.badge}
         </span>
       )}
+
+      {/* Card body */}
+      <div className="bg-white rounded-xl border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all duration-300 flex flex-col flex-1">
 
       {/* Image zone */}
       <div className="relative bg-[#F7F8FA] rounded-t-xl overflow-hidden mx-0" style={{ height: "148px" }}>
@@ -118,15 +120,15 @@ function MiniCard({ p }: { p: CatalogPhone; accentColor?: string }) {
         <ColorSwatches colors={p.colors} active={colorIdx} onSelect={setColorIdx} size={12} max={4} />
 
         {p.specs && (
-          <div className="flex flex-wrap gap-1 mt-1">
+          <div className="flex flex-nowrap items-center gap-1 mt-1.5 w-full min-w-0">
             {p.specs.screen && (
-              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap">📱{p.specs.screen}</span>
+              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0 leading-none">📱 {p.specs.screen}</span>
             )}
             {p.specs.ram && (
-              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap">⚙️{p.specs.ram}</span>
+              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0 leading-none">💾 {p.specs.ram}</span>
             )}
             {p.specs.camera && (
-              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap">📷{p.specs.camera}</span>
+              <span className="text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0 leading-none">📷 {p.specs.camera}</span>
             )}
           </div>
         )}
@@ -157,9 +159,10 @@ function MiniCard({ p }: { p: CatalogPhone; accentColor?: string }) {
             className="h-8 flex items-center justify-center gap-1 px-2.5 text-[10px] font-bold rounded-lg border-2 border-brand-400 text-brand-500 hover:bg-brand-500 hover:text-white hover:border-brand-500 transition-all duration-200 active:scale-95 whitespace-nowrap"
           >
             <Zap size={10} />
-            Buy
+            Buy Now
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );

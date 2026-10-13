@@ -80,31 +80,27 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
   }
 
   return (
-    /**
-     * mt-4 = space for badge that overflows top
-     * relative + overflow-visible so badge can stick out
-     */
-    <div className="group relative flex flex-col mt-4" style={{ overflow: "visible" }}>
-      {/* ── Badge — half outside top-left of card ─────────────── */}
-      {product.badge && (
-        <div
-          className="absolute z-30 left-3"
-          style={{ top: "-14px" }}
-        >
-          <span
-            className="inline-block text-white text-[10px] font-extrabold px-2.5 py-[5px] rounded-full shadow-lg whitespace-nowrap tracking-wide"
-            style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
-          >
-            {product.badge}
-          </span>
-        </div>
-      )}
-
+    <div className="group relative flex flex-col">
       {/* ── Card body ─────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 flex flex-col flex-1 overflow-hidden">
+      <div className="relative bg-white rounded-xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 flex flex-col flex-1 overflow-visible">
+
+        {/* ── Badge — half outside top-left of card ─────────────── */}
+        {product.badge && (
+          <div
+            className="absolute z-30 left-3"
+            style={{ top: "-12px" }}
+          >
+            <span
+              className="inline-block text-white text-[10px] font-extrabold px-2.5 py-[5px] rounded-full shadow-lg whitespace-nowrap tracking-wide"
+              style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
+            >
+              {product.badge}
+            </span>
+          </div>
+        )}
 
         {/* ── Image zone ───────────────────────────────────────── */}
-        <div className="relative bg-[#F7F8FA]" style={{ height: "160px" }}>
+        <div className="relative bg-[#F7F8FA] rounded-t-xl overflow-hidden" style={{ height: "200px", marginTop: product.badge ? "12px" : "0" }}>
 
           {/* Discount pill + wishlist — top right */}
           <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5">
@@ -147,7 +143,7 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
         </div>
 
         {/* ── Info zone ─────────────────────────────────────────── */}
-        <div className="px-2.5 pt-2.5 pb-3 flex flex-col flex-1">
+        <div className="px-3 pt-3 pb-3 flex flex-col flex-1">
 
           {/* Brand label (optional) */}
           {product.brand && (
@@ -158,7 +154,7 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
 
           {/* Name */}
           <Link href={`/products/${product.slug}`}>
-            <h3 className="text-gray-900 font-bold text-[13.5px] leading-snug hover:text-brand-500 transition-colors line-clamp-2">
+            <h3 className="text-gray-900 font-bold text-sm leading-snug hover:text-brand-500 transition-colors line-clamp-2">
               {product.name}
             </h3>
           </Link>
@@ -184,22 +180,22 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
             </div>
           )}
 
-          {/* Specs pills */}
+          {/* Specs pills — screen · ram · camera একই row */}
           {product.specs && (
-            <div className="flex items-center flex-nowrap gap-1 mt-1 overflow-hidden">
+            <div className="flex items-center flex-nowrap gap-1 mt-1.5 w-full min-w-0">
               {product.specs.screen && (
-                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
-                  📱{product.specs.screen}
+                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 leading-none">
+                  📱 {product.specs.screen}
                 </span>
               )}
               {product.specs.ram && (
-                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
-                  ⚙️{product.specs.ram}
+                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 leading-none">
+                  💾 {product.specs.ram}
                 </span>
               )}
               {product.specs.camera && (
-                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
-                  📷{product.specs.camera}
+                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 leading-none">
+                  📷 {product.specs.camera}
                 </span>
               )}
             </div>
@@ -212,7 +208,7 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
             )}
             <div className="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
               {/* Discounted / current price */}
-              <span className="text-gray-900 font-extrabold text-[16px] tracking-tight leading-none">
+              <span className="text-gray-900 font-extrabold text-lg tracking-tight leading-none">
                 ৳{product.price.toLocaleString("en-BD")}
               </span>
 
@@ -232,17 +228,17 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
             </div>
           </div>
 
-          {/* ── Buttons ───────────────────────────────────────── */}
-          <div className="flex gap-1.5 mt-2.5">
+          {/* ── Buttons — Add to Cart + Buy Now একই row ────────── */}
+          <div className="flex items-center gap-1.5 mt-3 w-full">
             <button
               onClick={handleAddToCart}
               className={`
-                relative flex-1 min-w-0 h-8 flex items-center justify-center gap-1
-                text-[9px] sm:text-[10px] font-bold rounded-lg overflow-hidden
+                relative flex-1 min-w-0 h-9 flex items-center justify-center gap-1
+                text-[11px] font-bold rounded-lg overflow-hidden
                 transition-all duration-200 active:scale-95 shadow-sm
                 ${added
-                  ? "bg-green-500 text-white shadow-green-200"
-                  : "bg-brand-500 hover:bg-brand-600 text-white hover:shadow-brand-200 hover:shadow-md"
+                  ? "bg-green-500 text-white"
+                  : "bg-brand-500 hover:bg-brand-600 text-white hover:shadow-md"
                 }
               `}
             >
@@ -256,22 +252,22 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
                   }}
                 />
               )}
-              <ShoppingCart size={10} className="shrink-0" />
-              <span className="truncate">{added ? "Added ✓" : "Add to Cart"}</span>
+              <ShoppingCart size={12} className="shrink-0" />
+              <span className="truncate leading-none">{added ? "Added ✓" : "Add to Cart"}</span>
             </button>
 
             <Link
               href={`/products/${product.slug}`}
               className="
-                h-8 w-10 flex items-center justify-center gap-0.5
-                text-[9px] sm:text-[10px] font-bold rounded-lg whitespace-nowrap
+                h-9 flex items-center justify-center gap-1 px-3
+                text-[11px] font-bold rounded-lg whitespace-nowrap shrink-0
                 border-2 border-brand-400 text-brand-500
                 hover:bg-brand-500 hover:text-white hover:border-brand-500
-                transition-all duration-200 active:scale-95 shrink-0
+                transition-all duration-200 active:scale-95
               "
             >
-              <Zap size={10} className="shrink-0" />
-              Buy
+              <Zap size={12} className="shrink-0" />
+              <span>Buy Now</span>
             </Link>
           </div>
         </div>
