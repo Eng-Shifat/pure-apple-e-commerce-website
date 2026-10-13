@@ -80,12 +80,16 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
   }
 
   return (
-    /* badge এর জন্য উপরে space দিতে mt-4, overflow-visible যাতে badge দেখা যায় */
-    <div className="group relative flex flex-col mt-4" style={{ overflow: "visible" }}>
+    /*
+     * pt-4 দিয়ে badge-এর জন্য উপরে space।
+     * overflow-visible যাতে badge দেখা যায়।
+     * min-w-0 দিয়ে grid blowout বন্ধ করা হয়েছে।
+     */
+    <div className="group relative flex flex-col pt-4 min-w-0 w-full" style={{ overflow: "visible" }}>
 
       {/* ── Badge — card এর উপরে half-outside ───────────────── */}
       {product.badge && (
-        <div className="absolute z-30 left-3" style={{ top: "-14px" }}>
+        <div className="absolute z-30 left-3" style={{ top: "2px" }}>
           <span
             className="inline-block text-white text-[10px] font-extrabold px-2.5 py-[5px] rounded-full shadow-lg whitespace-nowrap tracking-wide"
             style={{ backgroundColor: product.badgeColor ?? "#FB5724" }}
@@ -96,15 +100,15 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
       )}
 
       {/* ── Card body ─────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-gray-100 hover:border-brand-300 hover:shadow-card-hover transition-all duration-300 flex flex-col flex-1 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 hover:border-orange-200 hover:shadow-[0_8px_30px_rgba(251,87,36,0.12)] transition-all duration-300 flex flex-col flex-1 overflow-hidden">
 
         {/* ── Image zone ───────────────────────────────────────── */}
-        <div className="relative bg-[#F7F8FA]" style={{ height: "200px" }}>
+        <div className="relative bg-gradient-to-br from-[#F7F8FA] to-[#F0F1F3]" style={{ height: "180px" }}>
 
           {/* Discount pill + wishlist — top right */}
           <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5">
             {discount && (
-              <span className="bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm leading-none">
+              <span className="bg-red-500 text-white text-[9px] font-extrabold px-2 py-[3px] rounded-full shadow-sm leading-none">
                 -{discount}%
               </span>
             )}
@@ -114,7 +118,7 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
               className={`w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-all duration-200 hover:scale-110 active:scale-95
                 ${wished
                   ? "bg-red-500 border-0"
-                  : "bg-white border border-gray-200 hover:border-red-300"
+                  : "bg-white/90 backdrop-blur-sm border border-gray-200 hover:border-red-300"
                 }`}
             >
               <Heart
@@ -135,25 +139,28 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
                 alt={product.name}
                 fill
                 sizes="(max-width: 768px) 50vw, 220px"
-                className="object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-lg"
+                className="object-contain group-hover:scale-[1.06] transition-transform duration-500 drop-shadow-lg"
               />
             </div>
           </Link>
         </div>
 
+        {/* ── Thin accent line under image ──────────────────────── */}
+        <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-orange-100 to-transparent" />
+
         {/* ── Info zone ─────────────────────────────────────────── */}
-        <div className="px-3 pt-3 pb-3 flex flex-col flex-1">
+        <div className="px-3 pt-2.5 pb-3 flex flex-col flex-1">
 
           {/* Brand label (optional) */}
           {product.brand && (
-            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-orange-400 mb-0.5">
               {product.brand}
             </p>
           )}
 
           {/* Name */}
           <Link href={`/products/${product.slug}`}>
-            <h3 className="text-gray-900 font-bold text-sm leading-snug hover:text-brand-500 transition-colors line-clamp-2">
+            <h3 className="text-gray-900 font-bold text-[13px] leading-snug hover:text-orange-500 transition-colors line-clamp-2">
               {product.name}
             </h3>
           </Link>
@@ -168,9 +175,7 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
             <ColorSwatches colors={colors} active={colorIdx} onSelect={setColorIdx} />
           )}
 
-          {/* Rating — removed */}
-
-          {/* Specs pills — screen · ram · camera একই row */}
+          {/* Specs pills */}
           {product.specs && (
             <div className="flex items-center flex-nowrap gap-1 mt-1.5 w-full min-w-0">
               {product.specs.screen && (
@@ -192,13 +197,13 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
           )}
 
           {/* ── Price block ───────────────────────────────────── */}
-          <div className="mt-2">
+          <div className="mt-auto pt-2">
             {product.showStartingFrom && (
               <p className="text-[9px] text-gray-400 mb-0.5 uppercase tracking-wide">Starting from</p>
             )}
             <div className="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
-              {/* Discounted / current price */}
-              <span className="text-gray-900 font-extrabold text-lg tracking-tight leading-none">
+              {/* Current price */}
+              <span className="text-gray-900 font-extrabold text-base tracking-tight leading-none">
                 ৳{product.price.toLocaleString("en-BD")}
               </span>
 
@@ -211,24 +216,24 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
 
               {/* Saved % */}
               {discount && (
-                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded leading-none">
-                  Save {discount}%
+                <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-[3px] rounded-full leading-none">
+                  -{discount}%
                 </span>
               )}
             </div>
           </div>
 
-          {/* ── Buttons — Add to Cart বড়, Buy Now ছোট ────────── */}
-          <div className="flex gap-1.5 mt-3 w-full">
+          {/* ── Buttons ────────────────────────────────────────── */}
+          <div className="flex gap-1.5 mt-2.5 w-full">
             <button
               onClick={handleAddToCart}
               className={`
                 relative flex-1 h-9 flex items-center justify-center gap-1
-                text-[10px] font-bold rounded-lg overflow-hidden
-                transition-all duration-200 active:scale-95 shadow-sm
+                text-[10px] font-bold rounded-xl overflow-hidden
+                transition-all duration-200 active:scale-95
                 ${added
-                  ? "bg-green-500 text-white"
-                  : "bg-brand-500 hover:bg-brand-600 text-white hover:shadow-md"
+                  ? "bg-green-500 text-white shadow-[0_4px_12px_rgba(34,197,94,0.35)]"
+                  : "bg-[#FB5724] hover:bg-[#e84e1f] text-white shadow-[0_4px_12px_rgba(251,87,36,0.30)] hover:shadow-[0_6px_16px_rgba(251,87,36,0.40)]"
                 }
               `}
             >
@@ -239,14 +244,14 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
             <Link
               href={`/products/${product.slug}`}
               className="
-                h-9 w-16 shrink-0 flex items-center justify-center gap-1
-                text-[10px] font-bold rounded-lg
-                border-2 border-brand-400 text-brand-500
-                hover:bg-brand-500 hover:text-white hover:border-brand-500
+                h-9 w-[52px] shrink-0 flex items-center justify-center gap-0.5
+                text-[10px] font-bold rounded-xl
+                border-2 border-[#FB5724]/70 text-[#FB5724]
+                hover:bg-[#FB5724] hover:text-white hover:border-[#FB5724]
                 transition-all duration-200 active:scale-95
               "
             >
-              <Zap size={12} className="shrink-0" />
+              <Zap size={11} className="shrink-0" />
               <span>Buy</span>
             </Link>
           </div>

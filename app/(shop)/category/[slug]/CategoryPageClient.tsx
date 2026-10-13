@@ -268,19 +268,23 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    /* overflow-x-hidden → cards grid কখনো page width ছাড়াবে না */
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+
       {/* Breadcrumb */}
-      <div className="px-4 py-2.5 flex items-center gap-1.5 text-xs text-gray-400 bg-white border-b border-gray-100">
-        <Link href="/" className="hover:text-orange-500 transition-colors">Home</Link>
-        <ChevronRight size={12} />
-        <span className="text-gray-700 font-medium">{label}</span>
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center gap-1.5 text-xs text-gray-400">
+          <Link href="/" className="hover:text-orange-500 transition-colors">Home</Link>
+          <ChevronRight size={12} />
+          <span className="text-gray-700 font-medium">{label}</span>
+        </div>
       </div>
 
       {/* Category Hero */}
-      <div className="bg-white px-4 pt-4 pb-4 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          {/* Icon — image if available, fallback emoji */}
-          <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center shrink-0">
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-4 flex items-center gap-3">
+          {/* Icon */}
+          <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
             {iconSrc ? (
               <Image
                 src={iconSrc}
@@ -298,81 +302,90 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
             <h1 className="text-xl font-extrabold text-gray-900">{label}</h1>
             <p className="text-xs text-gray-400 mt-0.5 truncate">{description}</p>
           </div>
-          <div className="shrink-0 bg-orange-50 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full">
+          <div className="shrink-0 bg-orange-50 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full border border-orange-100">
             {filtered.length} items
           </div>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white sticky top-0 z-30 border-b border-gray-100 px-4 py-2.5">
-        {/* Row 1: Price range chips */}
-        <div
-          className="flex gap-1.5 overflow-x-auto pb-2"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {PRICE_RANGES.map((r, i) => (
-            <button
-              key={i}
-              onClick={() => setPriceRange(i)}
-              className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all border flex-shrink-0
-                ${priceRange === i
-                  ? "border-orange-500 bg-orange-500 text-white shadow-sm"
-                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
-                }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+      <div className="bg-white sticky top-0 z-30 border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5">
+          {/* Row 1: Price range chips */}
+          <div
+            className="flex gap-1.5 overflow-x-auto pb-2"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {PRICE_RANGES.map((r, i) => (
+              <button
+                key={i}
+                onClick={() => setPriceRange(i)}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all border flex-shrink-0
+                  ${priceRange === i
+                    ? "border-orange-500 bg-orange-500 text-white shadow-sm"
+                    : "border-gray-200 bg-white text-gray-500 hover:border-orange-200 hover:text-orange-500"
+                  }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
 
-        {/* Row 2: Brand dropdown + Sort dropdown */}
-        <div className="flex items-center justify-between gap-2 pt-0.5">
-          {brands.length > 2 ? (
-            <BrandDropdown
-              brands={brands}
-              activeBrand={activeBrand}
-              onChange={setActiveBrand}
-            />
-          ) : (
-            <div />
-          )}
-          <SortDropdown sortBy={sortBy} onChange={setSortBy} />
+          {/* Row 2: Brand + Sort dropdowns — together on the right */}
+          <div className="flex items-center justify-end gap-2 pt-0.5">
+            {brands.length > 2 && (
+              <BrandDropdown
+                brands={brands}
+                activeBrand={activeBrand}
+                onChange={setActiveBrand}
+              />
+            )}
+            <SortDropdown sortBy={sortBy} onChange={setSortBy} />
+          </div>
         </div>
       </div>
 
       {/* Product Grid */}
-      {filtered.length === 0 ? (
-        <div className="py-16 text-center text-gray-400 px-4">
-          <p className="text-3xl mb-3">🔍</p>
-          <p className="font-semibold text-gray-600">কোনো product পাওয়া যায়নি</p>
-          <p className="text-sm mt-1">Filter পরিবর্তন করে আবার চেষ্টা করুন</p>
-          <button
-            onClick={() => { setActiveBrand("All"); setPriceRange(0); }}
-            className="mt-4 text-orange-500 text-sm font-semibold underline"
-          >
-            সব filter সরান
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 px-4 pt-4 pb-6 sm:grid-cols-3 lg:grid-cols-4 isolate">
-          {filtered.map((model) => (
-            <SharedProductCard
-              key={model.slug}
-              product={modelToShared(model)}
-              onAddToCart={(p) => {
-                addItem({
-                  id: p.id, name: p.name, variant: p.variant ?? "",
-                  price: p.price, original_price: p.originalPrice,
-                  rating: p.rating ?? 0, review_count: 0,
-                  image: p.image, slug: p.slug,
-                  badge: p.badge, badge_color: p.badgeColor,
-                } as never);
-              }}
-            />
-          ))}
-        </div>
-      )}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6 pb-8">
+        {filtered.length === 0 ? (
+          <div className="py-16 text-center text-gray-400">
+            <p className="text-3xl mb-3">🔍</p>
+            <p className="font-semibold text-gray-600">কোনো product পাওয়া যায়নি</p>
+            <p className="text-sm mt-1">Filter পরিবর্তন করে আবার চেষ্টা করুন</p>
+            <button
+              onClick={() => { setActiveBrand("All"); setPriceRange(0); }}
+              className="mt-4 text-orange-500 text-sm font-semibold underline"
+            >
+              সব filter সরান
+            </button>
+          </div>
+        ) : (
+          /*
+           * isolate → stacking context তৈরি করে badge z-index সঠিক রাখে।
+           * grid-cols-2 → default 2 col; sm: 3; lg: 4.
+           * gap-x-3 gap-y-6 → card-এর উপরের pt-4 (badge space) মিলিয়ে
+           *   vertical gap ঠিক দেখায়।
+           * w-full + min-w-0 on each cell → grid blowout বন্ধ।
+           */
+          <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 isolate">
+            {filtered.map((model) => (
+              <SharedProductCard
+                key={model.slug}
+                product={modelToShared(model)}
+                onAddToCart={(p) => {
+                  addItem({
+                    id: p.id, name: p.name, variant: p.variant ?? "",
+                    price: p.price, original_price: p.originalPrice,
+                    rating: p.rating ?? 0, review_count: 0,
+                    image: p.image, slug: p.slug,
+                    badge: p.badge, badge_color: p.badgeColor,
+                  } as never);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,614 +1,561 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import Image from "next/image";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
-  ChevronRight, SlidersHorizontal, X, ShoppingCart,
-  Heart, Zap, Star, BadgeCheck, RefreshCw, Search,
+  Search, RefreshCw, Package, ChevronDown,
+  Flame, Star, Eye, EyeOff, AlertCircle, CheckCircle,
+  Loader2, X, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
-import { useCartStore } from "@/store/cartStore";
-import type { Product } from "@/types";
 
-// ─── Data ────────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-type Condition = "brand-new" | "pre-owned";
-
-interface PhoneModel {
+interface Product {
+  id: string;
   name: string;
   slug: string;
-  startingPrice: number;
-  image: string;
+  category: string;
+  condition: "brand-new" | "pre-owned";
+  price: number;
+  original_price?: number;
   badge?: string;
-  badgeColor?: string;
-  rating?: number;
-  discount?: number;
-  brand: string;
+  badge_color?: string;
+  stock?: number;
+  rating: number;
+  review_count: number;
+  image: string;
+  is_featured: boolean;
+  is_hot_deal: boolean;
+  is_published: boolean;
 }
 
-const ALL_MODELS: PhoneModel[] = [
-  // ── Apple Brand New ──
-  { brand:"Apple", name:"iPhone 18 Pro Max", slug:"iphone-18-pro-max",    startingPrice:179999, image:"/images/products/iPhone16.webp", badge:"New",         badgeColor:"#7C3AED", rating:4.9 },
-  { brand:"Apple", name:"iPhone 18 Pro",     slug:"iphone-18-pro",        startingPrice:159999, image:"/images/products/iPhone16.webp", badge:"New",         badgeColor:"#7C3AED", rating:4.9 },
-  { brand:"Apple", name:"iPhone 17 Pro Max", slug:"iphone-17-pro-max",    startingPrice:154999, image:"/images/products/iPhone16.webp", badge:"Hot",         badgeColor:"#FB5724", rating:4.8, discount:5 },
-  { brand:"Apple", name:"iPhone 17 Pro",     slug:"iphone-17-pro",        startingPrice:134999, image:"/images/products/iPhone16.webp", rating:4.8, discount:5 },
-  { brand:"Apple", name:"iPhone 17",         slug:"iphone-17",            startingPrice:109999, image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 17 Air",     slug:"iphone-17-air",        startingPrice:119999, image:"/images/products/iPhone16.webp", badge:"Slim",        badgeColor:"#0284C7", rating:4.7 },
-  { brand:"Apple", name:"iPhone 16 Pro Max", slug:"iphone-16-pro-max",    startingPrice:139999, image:"/images/products/iPhone16.webp", rating:4.8, discount:8 },
-  { brand:"Apple", name:"iPhone 16 Pro",     slug:"iphone-16-pro",        startingPrice:119999, image:"/images/products/iPhone16.webp", badge:"Best Seller", badgeColor:"#4FAE53", rating:4.8, discount:8 },
-  { brand:"Apple", name:"iPhone 16",         slug:"iphone-16",            startingPrice:94999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 16e",        slug:"iphone-16e",           startingPrice:74999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  // ── Samsung Brand New ──
-  { brand:"Samsung", name:"Galaxy S25 Ultra", slug:"galaxy-s25-ultra",   startingPrice:174999, image:"/images/products/Samsung Galaxy S24.webp", badge:"New", badgeColor:"#7C3AED", rating:4.9 },
-  { brand:"Samsung", name:"Galaxy S25+",      slug:"galaxy-s25-plus",    startingPrice:139999, image:"/images/products/Samsung Galaxy S24.webp", badge:"New", badgeColor:"#7C3AED", rating:4.8 },
-  { brand:"Samsung", name:"Galaxy S25",       slug:"galaxy-s25",         startingPrice:119999, image:"/images/products/Samsung Galaxy S24.webp", rating:4.7 },
-  { brand:"Samsung", name:"Galaxy S24 Ultra", slug:"galaxy-s24-ultra",   startingPrice:154999, image:"/images/products/Samsung Galaxy S24.webp", badge:"Hot", badgeColor:"#FB5724", rating:4.8, discount:10 },
-  { brand:"Samsung", name:"Galaxy S24+",      slug:"galaxy-s24-plus",    startingPrice:119999, image:"/images/products/Samsung Galaxy S24.webp", rating:4.7, discount:10 },
-  { brand:"Samsung", name:"Galaxy S24",       slug:"galaxy-s24",         startingPrice:99999,  image:"/images/products/Samsung Galaxy S24.webp", badge:"Best Seller", badgeColor:"#4FAE53", rating:4.7, discount:9 },
-  { brand:"Samsung", name:"Galaxy A55",       slug:"galaxy-a55",         startingPrice:54999,  image:"/images/products/Samsung Galaxy S24.webp", rating:4.4 },
-  { brand:"Samsung", name:"Galaxy A35",       slug:"galaxy-a35",         startingPrice:39999,  image:"/images/products/Samsung Galaxy S24.webp", rating:4.3 },
-  // ── OnePlus ──
-  { brand:"OnePlus", name:"OnePlus 13",       slug:"oneplus-13",         startingPrice:109999, image:"/images/products/OnePlus 12.webp", badge:"New", badgeColor:"#7C3AED", rating:4.8 },
-  { brand:"OnePlus", name:"OnePlus 12",       slug:"oneplus-12",         startingPrice:89999,  image:"/images/products/OnePlus 12.webp", badge:"Hot", badgeColor:"#FB5724", rating:4.7, discount:8 },
-  { brand:"OnePlus", name:"OnePlus 12R",      slug:"oneplus-12r",        startingPrice:64999,  image:"/images/products/OnePlus 12.webp", rating:4.5 },
-  { brand:"OnePlus", name:"OnePlus Nord 4",   slug:"oneplus-nord-4",     startingPrice:44999,  image:"/images/products/OnePlus 12.webp", rating:4.4 },
-  { brand:"OnePlus", name:"OnePlus Nord CE4", slug:"oneplus-nord-ce4",   startingPrice:29999,  image:"/images/products/OnePlus 12.webp", rating:4.2 },
-  // ── Redmi ──
-  { brand:"Redmi", name:"Redmi Note 14 Pro+", slug:"redmi-note-14-pro-plus", startingPrice:44999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.5 },
-  { brand:"Redmi", name:"Redmi Note 14 Pro",  slug:"redmi-note-14-pro",      startingPrice:34999, image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Redmi", name:"Redmi Note 14",      slug:"redmi-note-14",          startingPrice:24999, image:"/images/products/iPhone16.webp", rating:4.3 },
-  { brand:"Redmi", name:"Redmi 14C",          slug:"redmi-14c",              startingPrice:14999, image:"/images/products/iPhone16.webp", rating:4.1 },
-  // ── Realme ──
-  { brand:"Realme", name:"Realme GT 7 Pro",  slug:"realme-gt-7-pro",  startingPrice:69999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.6 },
-  { brand:"Realme", name:"Realme 13 Pro+",   slug:"realme-13-pro-plus", startingPrice:44999, image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Realme", name:"Realme 13 Pro",    slug:"realme-13-pro",    startingPrice:34999, image:"/images/products/iPhone16.webp", rating:4.3 },
-  { brand:"Realme", name:"Realme C75",       slug:"realme-c75",       startingPrice:19999, image:"/images/products/iPhone16.webp", rating:4.1 },
-  // ── Nothing ──
-  { brand:"Nothing", name:"Nothing Phone 3",   slug:"nothing-phone-3",   startingPrice:89999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#111", rating:4.7 },
-  { brand:"Nothing", name:"Nothing Phone 2a+", slug:"nothing-phone-2a-plus", startingPrice:44999, image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Nothing", name:"Nothing Phone 2a",  slug:"nothing-phone-2a",  startingPrice:34999, image:"/images/products/iPhone16.webp", rating:4.4 },
-  // ── Motorola ──
-  { brand:"Motorola", name:"Motorola Edge 50 Ultra", slug:"moto-edge-50-ultra", startingPrice:79999, image:"/images/products/iPhone16.webp", badge:"Hot", badgeColor:"#FB5724", rating:4.6 },
-  { brand:"Motorola", name:"Motorola Edge 50 Pro",   slug:"moto-edge-50-pro",   startingPrice:54999, image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Motorola", name:"Moto G85",               slug:"moto-g85",           startingPrice:29999, image:"/images/products/iPhone16.webp", rating:4.2 },
-  // ── Vivo ──
-  { brand:"Vivo", name:"Vivo X200 Pro",  slug:"vivo-x200-pro",  startingPrice:109999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.7 },
-  { brand:"Vivo", name:"Vivo X200",      slug:"vivo-x200",      startingPrice:84999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Vivo", name:"Vivo V40 Pro",   slug:"vivo-v40-pro",   startingPrice:54999,  image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Vivo", name:"Vivo V40",       slug:"vivo-v40",       startingPrice:39999,  image:"/images/products/iPhone16.webp", rating:4.2 },
-  // ── Honor ──
-  { brand:"Honor", name:"Honor Magic 7 Pro", slug:"honor-magic-7-pro", startingPrice:99999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.7 },
-  { brand:"Honor", name:"Honor 200 Pro",     slug:"honor-200-pro",     startingPrice:69999, image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Honor", name:"Honor 200",         slug:"honor-200",         startingPrice:49999, image:"/images/products/iPhone16.webp", rating:4.3 },
-  // ── iQOO ──
-  { brand:"iQOO", name:"iQOO 13",       slug:"iqoo-13",       startingPrice:89999, image:"/images/products/iPhone16.webp", badge:"New", badgeColor:"#7C3AED", rating:4.8 },
-  { brand:"iQOO", name:"iQOO 12",       slug:"iqoo-12",       startingPrice:69999, image:"/images/products/iPhone16.webp", rating:4.6, discount:10 },
-  { brand:"iQOO", name:"iQOO Neo 9 Pro",slug:"iqoo-neo-9-pro",startingPrice:49999, image:"/images/products/iPhone16.webp", rating:4.5 },
-];
+type ToggleKey = "is_featured" | "is_hot_deal" | "is_published";
+type SortKey   = "name" | "price" | "stock" | "category";
 
-// Apple Pre-Owned
-const APPLE_PREOWNED: PhoneModel[] = [
-  { brand:"Apple", name:"iPhone 18 Pro Max", slug:"po-18-pro-max", startingPrice:149999, image:"/images/products/iPhone16.webp", badge:"Like New", badgeColor:"#4FAE53", rating:4.9 },
-  { brand:"Apple", name:"iPhone 18 Pro",     slug:"po-18-pro",     startingPrice:129999, image:"/images/products/iPhone16.webp", badge:"Like New", badgeColor:"#4FAE53", rating:4.9 },
-  { brand:"Apple", name:"iPhone 17 Pro Max", slug:"po-17-pro-max", startingPrice:114999, image:"/images/products/iPhone16.webp", rating:4.8 },
-  { brand:"Apple", name:"iPhone 17 Pro",     slug:"po-17-pro",     startingPrice:99999,  image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 17",         slug:"po-17",         startingPrice:84999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 17 Air",     slug:"po-17-air",     startingPrice:89999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 16 Pro Max", slug:"po-16-pro-max", startingPrice:104999, image:"/images/products/iPhone16.webp", badge:"Popular", badgeColor:"#FB5724", rating:4.8 },
-  { brand:"Apple", name:"iPhone 16 Pro",     slug:"po-16-pro",     startingPrice:89999,  image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 16",         slug:"po-16",         startingPrice:72999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 16e",        slug:"po-16e",        startingPrice:54999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 15 Pro Max", slug:"po-15-pro-max", startingPrice:89999,  image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 15 Pro",     slug:"po-15-pro",     startingPrice:74999,  image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 15",         slug:"po-15",         startingPrice:59999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 15 Plus",    slug:"po-15-plus",    startingPrice:64999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 14 Pro Max", slug:"po-14-pro-max", startingPrice:74999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 14 Pro",     slug:"po-14-pro",     startingPrice:62999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 14",         slug:"po-14",         startingPrice:49999,  image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Apple", name:"iPhone 14 Plus",    slug:"po-14-plus",    startingPrice:54999,  image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Apple", name:"iPhone 13 Pro Max", slug:"po-13-pro-max", startingPrice:59999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 13 Pro",     slug:"po-13-pro",     startingPrice:49999,  image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Apple", name:"iPhone 13",         slug:"po-13",         startingPrice:39999,  image:"/images/products/iPhone16.webp", rating:4.3 },
-  { brand:"Apple", name:"iPhone 12 Pro Max", slug:"po-12-pro-max", startingPrice:44999,  image:"/images/products/iPhone16.webp", rating:4.3 },
-  { brand:"Apple", name:"iPhone 12 Pro",     slug:"po-12-pro",     startingPrice:36999,  image:"/images/products/iPhone16.webp", rating:4.2 },
-  { brand:"Apple", name:"iPhone 12",         slug:"po-12",         startingPrice:29999,  image:"/images/products/iPhone16.webp", rating:4.1 },
-  { brand:"Apple", name:"iPhone 11 Pro Max", slug:"po-11-pro-max", startingPrice:34999,  image:"/images/products/iPhone16.webp", rating:4.2 },
-  { brand:"Apple", name:"iPhone 11 Pro",     slug:"po-11-pro",     startingPrice:27999,  image:"/images/products/iPhone16.webp", rating:4.1 },
-  { brand:"Apple", name:"iPhone 11",         slug:"po-11",         startingPrice:22999,  image:"/images/products/iPhone16.webp", rating:4.0 },
-  { brand:"Apple", name:"iPhone XS Max",     slug:"po-xs-max",     startingPrice:19999,  image:"/images/products/iPhone16.webp", rating:3.9 },
-  { brand:"Apple", name:"iPhone XS",         slug:"po-xs",         startingPrice:16999,  image:"/images/products/iPhone16.webp", rating:3.9 },
-  { brand:"Apple", name:"iPhone XR",         slug:"po-xr",         startingPrice:14999,  image:"/images/products/iPhone16.webp", rating:3.8 },
-  { brand:"Apple", name:"iPhone SE",         slug:"po-se",         startingPrice:11999,  image:"/images/products/iPhone16.webp", rating:3.7 },
-  { brand:"Apple", name:"iPhone 8",          slug:"po-8",          startingPrice:8999,   image:"/images/products/iPhone16.webp", rating:3.5 },
+const BADGE_PRESETS = [
+  { label: "Best Seller", color: "#4FAE53" },
+  { label: "Hot",         color: "#FB5724" },
+  { label: "New",         color: "#7C3AED" },
+  { label: "Hot Deal",    color: "#FB5724" },
+  { label: "Limited",     color: "#EF4444" },
+  { label: "Popular",     color: "#0284C7" },
 ];
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { label:"Apple",    logo:"/images/brands/apple-logo.png"   },
-  { label:"Samsung",  logo:"/images/brands/samsung-logo.png" },
-  { label:"OnePlus",  logo:"/images/brands/oneplus-logo.png" },
-  { label:"Redmi",    logo:"/images/brands/Xiaomi-logo.png"  },
-  { label:"Realme",   logo:"/images/brands/realme-logo.png"  },
-  { label:"Nothing",  logo:"/images/brands/nothing.png"      },
-  { label:"Motorola", logo:"/images/brands/Motorolla.jpeg"   },
-  { label:"Vivo",     logo:"/images/brands/vivo.png"         },
-  { label:"Honor",    logo:"/images/brands/honor.svg"        },
-  { label:"iQOO",     logo:"/images/brands/iqoo.png"         },
+  "All","apple","samsung","google","oneplus",
+  "redmi","realme","vivo","iqoo","honor","motorola","nothing",
 ];
 
-const PRICE_RANGES = [
-  { label:"Under ৳30,000",    min:0,      max:29999  },
-  { label:"৳30,000 – ৳60,000", min:30000,  max:60000  },
-  { label:"৳60,000 – ৳1 Lakh", min:60001,  max:100000 },
-  { label:"Above ৳1 Lakh",    min:100001, max:Infinity},
-];
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-type SortKey = "featured" | "price-asc" | "price-desc" | "rating";
+function safeImg(src: string) {
+  if (!src || src.startsWith("file:")) return "/images/Phone/iphone/iPhone 16/iPhone_16.webp";
+  return src;
+}
 
-// ─── Model Card ───────────────────────────────────────────────────────────────
+function capFirst(s: string) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+}
 
-function ModelCard({ model, isPreOwned }: { model: PhoneModel; isPreOwned: boolean }) {
-  const [wished, setWished] = useState(false);
-  const [added,  setAdded]  = useState(false);
-  const addItem = useCartStore(s => s.addItem);
+// ─── Toggle Switch ────────────────────────────────────────────────────────────
 
-  function handleAdd() {
-    const p: Product = {
-      id: model.slug, name: model.name, variant: "", price: model.startingPrice,
-      rating: model.rating ?? 0, review_count: 0, image: model.image, slug: model.slug,
-      badge: model.badge, badge_color: model.badgeColor,
-    };
-    addItem(p);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+function Toggle({ checked, onChange, loading }: { checked: boolean; onChange: () => void; loading?: boolean }) {
+  return (
+    <button
+      onClick={onChange}
+      disabled={loading}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 ${
+        checked
+          ? "bg-gradient-to-r from-orange-500 to-orange-400 focus:ring-orange-400"
+          : "bg-gray-200 focus:ring-gray-300"
+      }`}
+    >
+      <span className={`inline-flex h-4 w-4 items-center justify-center transform rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? "translate-x-6" : "translate-x-1"}`}>
+        {loading && <Loader2 size={9} className="animate-spin text-orange-400" />}
+      </span>
+    </button>
+  );
+}
+
+// ─── Badge Pill ───────────────────────────────────────────────────────────────
+
+function BadgeCell({ badge, badgeColor, onSave }: { badge?: string; badgeColor?: string; onSave: (b: string, c: string) => Promise<void> }) {
+  const [open,   setOpen]   = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function pick(label: string, color: string) {
+    setSaving(true);
+    await onSave(label, color);
+    setSaving(false);
+    setOpen(false);
   }
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col">
-      {/* Image */}
-      <div className="relative bg-[#F7F8FA] overflow-hidden" style={{ height: "180px" }}>
-        {model.badge && (
-          <span className="absolute top-2.5 left-2.5 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm"
-            style={{ backgroundColor: model.badgeColor ?? "#FB5724" }}>
-            {model.badge}
+    <div className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1 group"
+      >
+        {badge ? (
+          <span className="inline-flex items-center gap-1 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: badgeColor ?? "#FB5724" }}>
+            {badge}
+            <ChevronDown size={9} className="opacity-70" />
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-400 border border-dashed border-gray-300 px-2.5 py-1 rounded-full hover:border-orange-300 hover:text-orange-400 transition-colors">
+            + Badge
+            <ChevronDown size={9} />
           </span>
         )}
+      </button>
 
-        <div className="absolute top-2.5 right-2.5 z-10 flex flex-col items-end gap-1.5">
-          {model.discount && (
-            <span className="bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm">
-              -{model.discount}%
-            </span>
-          )}
-          <button onClick={() => setWished(w => !w)}
-            className={`w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 active:scale-95
-              ${wished ? "bg-red-500" : "bg-white border border-gray-200 hover:border-red-300"}`}>
-            <Heart size={13} className={wished ? "fill-white text-white" : "text-gray-400 group-hover:text-red-400 transition-colors"} />
-          </button>
-        </div>
-
-        <Link href={`/products/${model.slug}`} className="absolute inset-0 flex items-center justify-center p-5">
-          <div className="relative w-full h-full">
-            <Image src={model.image} alt={model.name} fill sizes="200px"
-              className="object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-lg" />
+      {open && (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-8 z-30 bg-white border border-gray-200 rounded-2xl shadow-xl p-2 min-w-[170px]">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 py-1">Select Badge</p>
+            {saving ? (
+              <div className="py-3 flex justify-center">
+                <Loader2 size={16} className="animate-spin text-orange-400" />
+              </div>
+            ) : (
+              <>
+                {BADGE_PRESETS.map(p => (
+                  <button key={p.label} onClick={() => pick(p.label, p.color)}
+                    className="flex items-center gap-2.5 w-full px-2 py-1.5 hover:bg-gray-50 rounded-xl transition-colors">
+                    <span className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: p.color }}>{p.label}</span>
+                  </button>
+                ))}
+                <div className="border-t border-gray-100 mt-1 pt-1">
+                  <button onClick={() => pick("", "")}
+                    className="w-full text-left text-[11px] text-gray-400 hover:text-red-400 px-2 py-1.5 rounded-xl hover:bg-red-50 transition-colors flex items-center gap-1.5">
+                    <X size={11} /> Remove badge
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        </Link>
-      </div>
+        </>
+      )}
+    </div>
+  );
+}
 
-      {/* Info */}
-      <div className="px-3 pt-2.5 pb-3 flex flex-col flex-1">
-        <Link href={`/products/${model.slug}`}>
-          <h3 className="text-gray-900 font-bold text-[13px] leading-snug hover:text-orange-500 transition-colors line-clamp-1">
-            {model.name}
-          </h3>
-        </Link>
+// ─── Inline Edit ──────────────────────────────────────────────────────────────
 
-        {model.rating && (
-          <div className="flex items-center gap-1 mt-0.5">
-            <Star size={10} className="fill-yellow-400 text-yellow-400" />
-            <span className="text-[10px] font-semibold text-gray-600">{model.rating}</span>
-          </div>
-        )}
+function InlineEdit({ value, type = "text", onSave, prefix }: {
+  value: string | number;
+  type?: "text" | "number";
+  onSave: (v: string) => Promise<void>;
+  prefix?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [val,     setVal]     = useState(String(value));
+  const [saving,  setSaving]  = useState(false);
 
-        {isPreOwned && (
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {["Like New","Excellent","Good"].map(g => (
-              <span key={g} className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-green-50 text-green-700">{g}</span>
-            ))}
-          </div>
-        )}
+  async function save() {
+    if (val === String(value)) { setEditing(false); return; }
+    setSaving(true);
+    await onSave(val);
+    setSaving(false);
+    setEditing(false);
+  }
 
-        <div className="mt-2">
-          <p className="text-[10px] text-gray-400">Starting from</p>
-          <span className="text-gray-900 font-extrabold text-[15px] tracking-tight">
-            ৳{model.startingPrice.toLocaleString("en-BD")}
-          </span>
-        </div>
+  if (!editing) {
+    return (
+      <button onClick={() => { setVal(String(value)); setEditing(true); }}
+        className="group flex items-center gap-1 text-left hover:text-orange-600 transition-colors">
+        <span className="font-semibold text-gray-800 text-sm">
+          {prefix}{type === "number" && prefix === "৳" ? Number(value).toLocaleString("en-BD") : value}
+        </span>
+        <span className="opacity-0 group-hover:opacity-100 text-orange-400 transition-opacity">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </span>
+      </button>
+    );
+  }
 
-        <div className="grid grid-cols-[1fr_auto] gap-1.5 mt-2.5">
-          <button onClick={handleAdd}
-            className={`h-8 flex items-center justify-center gap-1.5 text-[11px] font-semibold px-3 rounded-lg transition-all active:scale-95 shadow-sm
-              ${added ? "bg-green-500 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"}`}>
-            <ShoppingCart size={12} className="shrink-0" />
-            {added ? "Added!" : "Select"}
-          </button>
-          <Link href={`/products/${model.slug}`}
-            className="h-8 flex items-center justify-center gap-1 text-[11px] font-semibold px-3 rounded-lg border-2 border-orange-200 text-orange-500 hover:bg-orange-50 transition-all">
-            <Zap size={11} className="shrink-0" />
-            Buy
-          </Link>
-        </div>
-      </div>
+  return (
+    <div className="flex items-center gap-1">
+      <input autoFocus type={type} value={val}
+        onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+        className="w-24 border-2 border-orange-400 rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-orange-200 font-semibold"
+      />
+      {saving
+        ? <Loader2 size={13} className="animate-spin text-orange-500 shrink-0" />
+        : <>
+            <button onClick={save} className="w-6 h-6 rounded-lg bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-colors shrink-0">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+            <button onClick={() => setEditing(false)} className="w-6 h-6 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0">
+              <X size={10} />
+            </button>
+          </>
+      }
     </div>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function ProductsPage() {
-  const [condition,       setCondition]       = useState<Condition>("brand-new");
-  const [activeCategory,  setActiveCategory]  = useState("Apple");
-  const [sidebarOpen,     setSidebarOpen]     = useState(false);
-  const [search,          setSearch]          = useState("");
-  const [sortKey,         setSortKey]         = useState<SortKey>("featured");
-  const [priceFilters,    setPriceFilters]    = useState<boolean[]>([false,false,false,false]);
+export default function AdminProductsPage() {
+  const [products,  setProducts]  = useState<Product[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [search,    setSearch]    = useState("");
+  const [category,  setCategory]  = useState("All");
+  const [toast,     setToast]     = useState<{ msg: string; ok: boolean } | null>(null);
+  const [sortKey,   setSortKey]   = useState<SortKey>("category");
+  const [sortAsc,   setSortAsc]   = useState(true);
+  const [toggling,  setToggling]  = useState<Record<string, boolean>>({});
 
-  // Toggle a price range checkbox
-  function togglePrice(i: number) {
-    setPriceFilters(prev => prev.map((v, idx) => idx === i ? !v : v));
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/products");
+      const d   = await res.json();
+      setProducts(d.products ?? []);
+    } catch {
+      showToast("Failed to load products", false);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  function showToast(msg: string, ok: boolean) {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 2200);
   }
 
-  // Derive the active price ranges
-  const activePriceRanges = PRICE_RANGES.filter((_, i) => priceFilters[i]);
+  async function patch(id: string, payload: Record<string, unknown>) {
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, ...d.product } : p));
+      showToast("Saved ✓", true);
+    } catch {
+      showToast("Save failed ✗", false);
+    }
+  }
 
-  // Source pool — brand-new uses ALL_MODELS, pre-owned only has Apple list (extend as needed)
-  const pool = useMemo(() => {
-    if (condition === "pre-owned") return APPLE_PREOWNED.filter(m => m.brand === activeCategory);
-    return ALL_MODELS.filter(m => m.brand === activeCategory);
-  }, [condition, activeCategory]);
+  async function toggle(id: string, key: ToggleKey, current: boolean) {
+    setToggling(t => ({ ...t, [`${id}-${key}`]: true }));
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, [key]: !current } : p));
+    await patch(id, { [key]: !current });
+    setToggling(t => ({ ...t, [`${id}-${key}`]: false }));
+  }
 
-  // Apply search + price filter + sort
-  const filtered = useMemo(() => {
-    let list = pool;
-
-    // Search
-    if (search.trim()) {
+  // ── Filter + Sort ──
+  const displayed = products
+    .filter(p => {
       const q = search.toLowerCase();
-      list = list.filter(m => m.name.toLowerCase().includes(q));
-    }
-
-    // Price range
-    if (activePriceRanges.length > 0) {
-      list = list.filter(m =>
-        activePriceRanges.some(r => m.startingPrice >= r.min && m.startingPrice <= r.max)
+      return (
+        (!q || p.name.toLowerCase().includes(q) || p.slug.includes(q)) &&
+        (category === "All" || p.category === category)
       );
-    }
-
-    // Sort
-    return [...list].sort((a, b) => {
-      if (sortKey === "price-asc")  return a.startingPrice - b.startingPrice;
-      if (sortKey === "price-desc") return b.startingPrice - a.startingPrice;
-      if (sortKey === "rating")     return (b.rating ?? 0) - (a.rating ?? 0);
-      return 0; // featured — original order
+    })
+    .sort((a, b) => {
+      let diff = 0;
+      if (sortKey === "name")     diff = a.name.localeCompare(b.name);
+      if (sortKey === "price")    diff = a.price - b.price;
+      if (sortKey === "stock")    diff = (a.stock ?? 0) - (b.stock ?? 0);
+      if (sortKey === "category") diff = a.category.localeCompare(b.category);
+      return sortAsc ? diff : -diff;
     });
-  }, [pool, search, activePriceRanges, sortKey]);
 
-  // When switching brand, reset filters
-  function handleBrandClick(brand: string) {
-    setActiveCategory(brand);
-    setPriceFilters([false,false,false,false]);
-    setSearch("");
-    setSidebarOpen(false);
+  function handleSort(col: SortKey) {
+    if (sortKey === col) setSortAsc(a => !a);
+    else { setSortKey(col); setSortAsc(true); }
   }
 
-  // When switching condition, reset filters
-  function handleConditionSwitch(c: Condition) {
-    setCondition(c);
-    setActiveCategory("Apple");
-    setPriceFilters([false,false,false,false]);
-    setSearch("");
+  function SortIcon({ col }: { col: SortKey }) {
+    if (sortKey !== col) return <ArrowUpDown size={11} className="text-gray-300" />;
+    return sortAsc ? <ArrowUp size={11} className="text-orange-500" /> : <ArrowDown size={11} className="text-orange-500" />;
   }
+
+  const stats = {
+    total:       products.length,
+    published:   products.filter(p => p.is_published).length,
+    unpublished: products.filter(p => !p.is_published).length,
+    popular:     products.filter(p => p.is_featured).length,
+    hotDeals:    products.filter(p => p.is_hot_deal).length,
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
 
-      {/* ── Page Header ── */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
-            <Link href="/" className="hover:text-orange-500 transition-colors">Home</Link>
-            <ChevronRight size={12} />
-            <span className="text-gray-700 font-medium">Smartphones</span>
-            <ChevronRight size={12} />
-            <span className="text-orange-500 font-medium">{activeCategory}</span>
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold border animate-in fade-in slide-in-from-top-2 duration-300 ${
+          toast.ok ? "bg-white border-green-200 text-green-700" : "bg-white border-red-200 text-red-600"
+        }`}>
+          {toast.ok ? <CheckCircle size={16} className="text-green-500" /> : <AlertCircle size={16} className="text-red-400" />}
+          {toast.msg}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          STICKY HEADER ZONE (never scrolls)
+      ══════════════════════════════════════════════════ */}
+      <div className="flex-shrink-0 bg-gray-50 px-4 sm:px-6 lg:px-8 pt-6 pb-0">
+
+        {/* Page title + actions */}
+        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Products</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Real-time Supabase data — click to edit inline</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={fetchProducts}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-orange-300 hover:text-orange-500 transition-all shadow-sm">
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+            <Link href="/admin/products/new"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-95 text-white text-sm font-bold transition-all shadow-md shadow-orange-200">
+              <span className="text-lg leading-none">+</span>
+              <span>Add Product</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+          {[
+            { label: "Total Products", val: stats.total,       color: "text-gray-900",  bg: "bg-white",         border: "border-gray-100",  icon: "📦" },
+            { label: "Published",      val: stats.published,   color: "text-green-600", bg: "bg-green-50",      border: "border-green-100", icon: "✅" },
+            { label: "Unpublished",    val: stats.unpublished, color: "text-red-500",   bg: "bg-red-50",        border: "border-red-100",   icon: "🚫" },
+            { label: "Popular",        val: stats.popular,     color: "text-orange-500",bg: "bg-orange-50",     border: "border-orange-100",icon: "⭐" },
+            { label: "Hot Deals",      val: stats.hotDeals,    color: "text-red-500",   bg: "bg-red-50",        border: "border-red-100",   icon: "🔥" },
+          ].map(s => (
+            <div key={s.label} className={`${s.bg} rounded-2xl border ${s.border} px-4 py-3.5 flex items-center gap-3`}>
+              <span className="text-xl">{s.icon}</span>
+              <div>
+                <p className="text-[11px] text-gray-400 font-medium leading-none mb-1">{s.label}</p>
+                <p className={`text-2xl font-extrabold leading-none ${s.color}`}>{s.val}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Filter bar */}
+        <div className="flex flex-wrap items-center gap-2.5 mb-4">
+          {/* Search */}
+          <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100 transition-all shadow-sm">
+            <Search size={14} className="text-gray-400 shrink-0" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search products…"
+              className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent" />
+            {search && (
+              <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500 transition-colors">
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-                {activeCategory} Smartphones
-              </h1>
-              <p className="text-gray-400 text-sm mt-0.5">{filtered.length} models available</p>
-            </div>
+          {/* Category */}
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 shadow-sm">
+            <SlidersHorizontal size={13} className="text-gray-400" />
+            <select value={category} onChange={e => setCategory(e.target.value)}
+              className="text-sm text-gray-700 bg-transparent outline-none cursor-pointer capitalize">
+              {CATEGORIES.map(c => (
+                <option key={c} value={c}>{c === "All" ? "All Categories" : capFirst(c)}</option>
+              ))}
+            </select>
+          </div>
 
-            {/* Condition toggle */}
-            <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-1">
-              <button onClick={() => handleConditionSwitch("brand-new")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all
-                  ${condition === "brand-new" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
-                <BadgeCheck size={15} className={condition === "brand-new" ? "text-orange-500" : "text-gray-400"} />
-                Brand New
-              </button>
-              <button onClick={() => handleConditionSwitch("pre-owned")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all
-                  ${condition === "pre-owned" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
-                <RefreshCw size={14} className={condition === "pre-owned" ? "text-green-500" : "text-gray-400"} />
-                Pre-Owned
-              </button>
+          <span className="text-xs text-gray-400 font-medium ml-auto">
+            {displayed.length} / {products.length} products
+          </span>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mb-0 pb-3 border-b border-gray-200">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <Star size={12} className="text-orange-500 fill-orange-500" /> Popular = Homepage popular section
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <Flame size={12} className="text-red-500 fill-red-100" /> Hot Deal = Homepage deals section
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <Eye size={12} className="text-green-600" /> Published = visible in shop
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 italic">
+            ✏️ Click price / stock / badge to edit inline
+          </div>
+        </div>
+
+        {/* ── Sticky Table Header Row ── */}
+        <div className="bg-white border-x border-t border-gray-200 rounded-t-2xl mt-4">
+          <div className="grid items-center text-[11px] font-bold uppercase tracking-wider text-gray-400 px-4 py-3 border-b-2 border-gray-100"
+            style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 90px 90px 90px 70px" }}>
+            <button onClick={() => handleSort("name")} className="flex items-center gap-1.5 hover:text-gray-700 transition-colors text-left">
+              <span>Product</span> <SortIcon col="name" />
+            </button>
+            <span>Badge</span>
+            <button onClick={() => handleSort("price")} className="flex items-center gap-1.5 hover:text-gray-700 transition-colors">
+              <span>Price</span> <SortIcon col="price" />
+            </button>
+            <button onClick={() => handleSort("stock")} className="flex items-center gap-1.5 hover:text-gray-700 transition-colors">
+              <span>Stock</span> <SortIcon col="stock" />
+            </button>
+            <div className="flex flex-col items-center gap-0.5">
+              <Star size={11} className="text-orange-400 fill-orange-400" />
+              <span>Popular</span>
             </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <Flame size={11} className="text-red-400" />
+              <span>Hot Deal</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <Eye size={11} className="text-green-500" />
+              <span>Published</span>
+            </div>
+            <span className="text-center">Actions</span>
           </div>
         </div>
       </div>
 
-      {/* Pre-owned trust bar */}
-      {condition === "pre-owned" && (
-        <div className="bg-green-600 text-white">
-          <div className="max-w-7xl mx-auto px-4 py-2.5">
-            <div className="flex items-center justify-center flex-wrap gap-x-6 gap-y-1 text-xs font-medium">
-              <span>✅ 100% Genuine Devices</span>
-              <span className="hidden sm:block opacity-40">|</span>
-              <span>🔍 30-Point Quality Check</span>
-              <span className="hidden sm:block opacity-40">|</span>
-              <span>🛡️ 6-Month Warranty</span>
-              <span className="hidden sm:block opacity-40">|</span>
-              <span>🔄 7-Day Return</span>
+      {/* ══════════════════════════════════════════════════
+          SCROLLABLE TABLE BODY
+      ══════════════════════════════════════════════════ */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="bg-white border-x border-b border-gray-200 rounded-b-2xl overflow-hidden">
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400">
+              <Loader2 size={28} className="animate-spin text-orange-400" />
+              <p className="text-sm font-medium">Loading from Supabase…</p>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Body ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex gap-6">
-
-          {/* ── Sidebar ── */}
-          {sidebarOpen && (
-            <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-          )}
-
-          <aside className={`
-            fixed lg:static top-0 left-0 h-full lg:h-auto z-50 lg:z-auto
-            w-64 lg:w-56 xl:w-60 shrink-0
-            bg-white lg:bg-transparent
-            transform transition-transform duration-300
-            ${sidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"}
-            overflow-y-auto lg:overflow-visible p-4 lg:p-0
-          `}>
-            {/* Mobile close */}
-            <div className="flex items-center justify-between mb-4 lg:hidden">
-              <span className="font-bold text-gray-900">Filters</span>
-              <button onClick={() => setSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200">
-                <X size={16} />
-              </button>
+          ) : displayed.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+              <Package size={36} className="mb-3 text-gray-200" />
+              <p className="text-sm font-semibold">No products found</p>
+              <p className="text-xs mt-1 text-gray-300">Try adjusting the search or filter</p>
             </div>
+          ) : (
+            displayed.map((p, idx) => {
+              const isOdd = idx % 2 !== 0;
+              return (
+                <div key={p.id}
+                  className={`grid items-center px-4 py-3 border-b border-gray-50 hover:bg-orange-50/40 transition-colors duration-150 ${
+                    isOdd ? "bg-gray-50/40" : "bg-white"
+                  } ${!p.is_published ? "opacity-50" : ""}`}
+                  style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 90px 90px 90px 70px" }}>
 
-            {/* Brand list */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
-              <div className="px-4 py-3 border-b border-gray-50">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Phone Brands</h3>
-              </div>
-              <ul>
-                {CATEGORIES.map(cat => (
-                  <li key={cat.label}>
-                    <button onClick={() => handleBrandClick(cat.label)}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors
-                        ${activeCategory === cat.label
-                          ? "bg-orange-50 text-orange-600 border-r-2 border-orange-500"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}>
-                      <span className="flex items-center gap-2.5">
-                        <span className="relative w-5 h-5 shrink-0">
-                          <Image src={cat.logo} alt={cat.label} fill className="object-contain" sizes="20px" />
+                  {/* Product */}
+                  <div className="flex items-center gap-3 min-w-0 pr-2">
+                    <div className="w-11 h-11 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={safeImg(p.image)}
+                        alt={p.name}
+                        className="w-full h-full object-contain p-1"
+                        onError={e => { (e.target as HTMLImageElement).src = "/images/Phone/iphone/iPhone 16/iPhone_16.webp"; }}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={p.name}>{p.name}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className="text-[10px] font-semibold text-gray-400 capitalize">{p.category}</span>
+                        <span className="w-1 h-1 rounded-full bg-gray-300" />
+                        <span className={`text-[10px] font-semibold ${p.condition === "brand-new" ? "text-blue-500" : "text-green-600"}`}>
+                          {p.condition === "brand-new" ? "Brand New" : "Pre-Owned"}
                         </span>
-                        {cat.label}
-                      </span>
-                      {activeCategory === cat.label && <ChevronRight size={14} className="text-orange-400" />}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Condition grade (pre-owned only) */}
-            {condition === "pre-owned" && (
-              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
-                <div className="px-4 py-3 border-b border-gray-50">
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Condition Grade</h3>
-                </div>
-                <div className="p-3 space-y-1.5">
-                  {[
-                    { label:"Like New",  desc:"99% perfect condition",    color:"bg-green-100 text-green-700" },
-                    { label:"Excellent", desc:"Minor signs of use",       color:"bg-blue-100 text-blue-700"  },
-                    { label:"Good",      desc:"Visible wear, functional", color:"bg-yellow-100 text-yellow-700" },
-                  ].map(g => (
-                    <label key={g.label} className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-gray-50 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="mt-0.5 w-3.5 h-3.5 accent-orange-500" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{g.label}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">{g.desc}</p>
                       </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Price range — FUNCTIONAL */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Price Range</h3>
-                {priceFilters.some(Boolean) && (
-                  <button onClick={() => setPriceFilters([false,false,false,false])}
-                    className="text-[10px] text-orange-500 font-semibold hover:underline">
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div className="p-4 space-y-2.5">
-                {PRICE_RANGES.map((range, i) => (
-                  <label key={range.label} className="flex items-center gap-2.5 cursor-pointer group select-none">
-                    <input
-                      type="checkbox"
-                      checked={priceFilters[i]}
-                      onChange={() => togglePrice(i)}
-                      className="w-4 h-4 accent-orange-500 rounded cursor-pointer"
-                    />
-                    <span className={`text-sm transition-colors ${priceFilters[i] ? "text-orange-600 font-semibold" : "text-gray-600 group-hover:text-gray-900"}`}>
-                      {range.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              {/* Live count indicator */}
-              {priceFilters.some(Boolean) && (
-                <div className="px-4 pb-3">
-                  <p className="text-xs text-orange-500 font-medium">
-                    {filtered.length} result{filtered.length !== 1 ? "s" : ""} found
-                  </p>
-                </div>
-              )}
-            </div>
-          </aside>
-
-          {/* ── Main Content ── */}
-          <div className="flex-1 min-w-0">
-
-            {/* Toolbar */}
-            <div className="flex items-center gap-3 mb-5 flex-wrap">
-              {/* Mobile filter button */}
-              <button onClick={() => setSidebarOpen(true)}
-                className="lg:hidden flex items-center gap-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:border-orange-300 transition-all">
-                <SlidersHorizontal size={15} />
-                Filters
-                {priceFilters.some(Boolean) && (
-                  <span className="w-4 h-4 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {priceFilters.filter(Boolean).length}
-                  </span>
-                )}
-              </button>
-
-              {/* Search */}
-              <div className="flex items-center gap-2 flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-3 py-2 focus-within:border-orange-400 transition-colors">
-                <Search size={14} className="text-gray-400 shrink-0" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder={`Search ${activeCategory} models…`}
-                  className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent min-w-0"
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="text-gray-400 hover:text-gray-600">
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-
-              {/* Sort */}
-              <select
-                value={sortKey}
-                onChange={e => setSortKey(e.target.value as SortKey)}
-                className="text-sm text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-orange-400 cursor-pointer shrink-0"
-              >
-                <option value="featured">Sort: Featured</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Top Rated</option>
-              </select>
-            </div>
-
-            {/* Active filter chips */}
-            {(priceFilters.some(Boolean) || search) && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {priceFilters.map((on, i) => on && (
-                  <span key={i} className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-3 py-1 rounded-full">
-                    {PRICE_RANGES[i].label}
-                    <button onClick={() => togglePrice(i)} className="hover:text-orange-800">
-                      <X size={11} />
-                    </button>
-                  </span>
-                ))}
-                {search && (
-                  <span className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-3 py-1 rounded-full">
-                    &ldquo;{search}&rdquo;
-                    <button onClick={() => setSearch("")} className="hover:text-orange-800">
-                      <X size={11} />
-                    </button>
-                  </span>
-                )}
-                <button onClick={() => { setPriceFilters([false,false,false,false]); setSearch(""); }}
-                  className="text-xs text-gray-400 hover:text-gray-600 underline">
-                  Clear all
-                </button>
-              </div>
-            )}
-
-            {/* Section label */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold
-                ${condition === "brand-new"
-                  ? "bg-orange-50 text-orange-600 border border-orange-200"
-                  : "bg-green-50 text-green-700 border border-green-200"}`}>
-                {condition === "brand-new"
-                  ? <><BadgeCheck size={13} /> Brand New — {activeCategory}</>
-                  : <><RefreshCw size={12} /> Pre-Owned — {activeCategory}</>}
-              </div>
-              <span className="text-xs text-gray-400">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
-            </div>
-
-            {/* Grid */}
-            {filtered.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-4xl mb-3">🔍</p>
-                <p className="text-gray-500 font-semibold">No models found</p>
-                <p className="text-gray-400 text-sm mt-1">Try adjusting your filters or search term.</p>
-                <button onClick={() => { setPriceFilters([false,false,false,false]); setSearch(""); }}
-                  className="mt-4 text-sm text-orange-500 font-semibold hover:underline">
-                  Clear all filters
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                {filtered.map(model => (
-                  <ModelCard key={model.slug} model={model} isPreOwned={condition === "pre-owned"} />
-                ))}
-              </div>
-            )}
-
-            {/* Pre-owned trust section */}
-            {condition === "pre-owned" && filtered.length > 0 && (
-              <div className="mt-10 bg-gradient-to-br from-green-50 to-white border border-green-200 rounded-2xl p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
-                    <BadgeCheck size={22} className="text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">Why Buy Pre-Owned from Pure Apple?</h3>
-                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                      Every pre-owned device goes through a rigorous 30-point inspection. Graded honestly — what you see is what you get. Backed by 6-month warranty and 7-day hassle-free returns.
-                    </p>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {["Verified Genuine","6-Month Warranty","7-Day Return","Expert Inspected"].map(tag => (
-                        <span key={tag} className="text-[11px] font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">{tag}</span>
-                      ))}
                     </div>
                   </div>
+
+                  {/* Badge */}
+                  <div>
+                    <BadgeCell
+                      badge={p.badge}
+                      badgeColor={p.badge_color}
+                      onSave={(badge, badge_color) => patch(p.id, { badge: badge || null, badge_color: badge_color || null })}
+                    />
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <InlineEdit
+                      value={p.price}
+                      type="number"
+                      prefix="৳"
+                      onSave={v => patch(p.id, { price: Number(v) })}
+                    />
+                    {p.original_price ? (
+                      <p className="text-[10px] text-gray-400 line-through mt-0.5">৳{p.original_price.toLocaleString("en-BD")}</p>
+                    ) : null}
+                  </div>
+
+                  {/* Stock */}
+                  <div>
+                    <InlineEdit
+                      value={p.stock ?? 0}
+                      type="number"
+                      onSave={v => patch(p.id, { stock: Number(v) })}
+                    />
+                    {(p.stock ?? 0) === 0 ? (
+                      <span className="inline-block mt-0.5 text-[9px] font-bold text-red-500 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded-full">
+                        Out of stock
+                      </span>
+                    ) : (
+                      <span className="inline-block mt-0.5 text-[9px] font-semibold text-green-600 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded-full">
+                        In stock
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Popular */}
+                  <div className="flex justify-center">
+                    <Toggle
+                      checked={p.is_featured}
+                      loading={toggling[`${p.id}-is_featured`]}
+                      onChange={() => toggle(p.id, "is_featured", p.is_featured)}
+                    />
+                  </div>
+
+                  {/* Hot Deal */}
+                  <div className="flex justify-center">
+                    <Toggle
+                      checked={p.is_hot_deal}
+                      loading={toggling[`${p.id}-is_hot_deal`]}
+                      onChange={() => toggle(p.id, "is_hot_deal", p.is_hot_deal)}
+                    />
+                  </div>
+
+                  {/* Published */}
+                  <div className="flex flex-col items-center gap-1">
+                    <Toggle
+                      checked={p.is_published}
+                      loading={toggling[`${p.id}-is_published`]}
+                      onChange={() => toggle(p.id, "is_published", p.is_published)}
+                    />
+                    {!p.is_published && (
+                      <span className="flex items-center gap-0.5 text-[9px] text-gray-400">
+                        <EyeOff size={9} /> Hidden
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex justify-center">
+                    <Link href={`/admin/products/${p.id}/edit`}
+                      className="text-xs font-bold text-orange-500 hover:text-orange-700 hover:underline underline-offset-2 transition-colors whitespace-nowrap">
+                      Edit →
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

@@ -30,11 +30,13 @@ export async function PUT(
   const supabase = getSupabase();
   const body = await req.json();
 
+  // ← is_hot_deal, is_published, is_featured যোগ করা হয়েছে
   const allowed = [
     "name", "variant", "price", "original_price", "rating", "review_count",
     "image", "slug", "badge", "badge_color",
     "spec_screen", "spec_ram", "spec_camera",
-    "is_featured", "category", "condition", "is_available", "stock",
+    "is_featured", "is_hot_deal", "is_published",   // ← নতুন
+    "category", "condition", "is_available", "stock",
     "product_code", "colors", "storage_variants",
     "emi_available", "whatsapp_number",
   ];
