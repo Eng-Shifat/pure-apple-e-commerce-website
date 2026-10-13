@@ -4,21 +4,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ProductCard, { Product } from "./ProductCard";
 import { useCartStore } from "@/store/cartStore";
-import { phonesBySlugs, toCardProduct } from "@/lib/phoneCatalog";
+import { phonesBySlugs, toCardProduct, PHONES } from "@/lib/phoneCatalog";
 
 const POPULAR_SLUGS = [
   "iphone-16-pro",
-  "galaxy-s26-ultra",
+  "iphone-17-pro-max",
+  "galaxy-s25-ultra",
+  "samsung-galaxy-s24-ultra",
   "google-pixel-9",
-  "oneplus-12",
   "google-pixel-10-pro",
+  "oneplus-12",
+  "vivo-x200-pro",
 ];
 
 const FALLBACK: Product[] = phonesBySlugs(POPULAR_SLUGS).map(toCardProduct);
 
-// Supabase row (snake_case) → ProductCard-এর shape
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function fromApi(r: any): Product {
+  // catalog থেকে colors data নিয়ে আসো — API তে colors নাও থাকতে পারে
+  const catalogPhone = PHONES.find((p) => p.slug === r.slug);
+
   return {
     id: String(r.id),
     name: r.name ?? "",
@@ -31,10 +36,13 @@ function fromApi(r: any): Product {
     slug: r.slug ?? "",
     badge: r.badge ?? undefined,
     badgeColor: r.badge_color ?? r.badgeColor ?? undefined,
+    storage: catalogPhone?.storage,
+    // catalog থেকে colors নাও যাতে color swatches + image change কাজ করে
+    colors: catalogPhone?.colors ?? undefined,
     specs: {
-      screen: r.spec_screen ?? r.specs?.screen,
-      ram: r.spec_ram ?? r.specs?.ram,
-      camera: r.spec_camera ?? r.specs?.camera,
+      screen: r.spec_screen ?? catalogPhone?.specs?.screen,
+      ram: r.spec_ram ?? catalogPhone?.specs?.ram,
+      camera: r.spec_camera ?? catalogPhone?.specs?.camera,
     },
   };
 }
@@ -81,13 +89,13 @@ export default function PopularProducts() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="rounded-2xl bg-gray-100 animate-pulse" style={{ height: "340px" }} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-2xl bg-gray-100 animate-pulse" style={{ height: "360px" }} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-3">
             {products.map(p => <ProductCard key={p.id} product={p} onAddToCart={handleAddToCart} />)}
           </div>
         )}

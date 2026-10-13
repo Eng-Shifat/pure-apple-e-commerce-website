@@ -7,6 +7,8 @@ import ShopByBrand from "@/components/shop/ShopByBrand";
 import BestDeals from "@/components/shop/BestDeals";
 import Newsletter from "@/components/shop/Newsletter";
 import PhoneSeriesSection from "@/components/shop/PhoneSeriesSection";
+import Link from "next/link";
+import Image from "next/image";
 
 export const metadata = {
   title: "Pure Apple – Better Tech, Brighter Tomorrow",
@@ -26,6 +28,26 @@ export default function HomePage() {
       <PopularProducts />
       <PromoBanner />
       <PhoneSeriesSection />
+
+      {/* ── Best Deals Banner ── */}
+      <section className="bg-gray-50 px-4 sm:px-6 lg:px-8 pb-2">
+        <div className="max-w-7xl mx-auto">
+          <Link
+            href="/products?deals=true"
+            className="block relative rounded-2xl overflow-hidden"
+            style={{ aspectRatio: "16/4" }}
+          >
+            <Image
+              src="/images/banners/deals-banner.webp"
+              alt="Best Deals Banner"
+              fill
+              className="object-cover object-center"
+              priority
+            />
+          </Link>
+        </div>
+      </section>
+
       <BestDeals />
       <Newsletter />
     </main>
