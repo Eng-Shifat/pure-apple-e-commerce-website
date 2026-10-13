@@ -139,7 +139,7 @@ export default function SplashScreen() {
           box-shadow: -24px 0 48px rgba(15, 23, 42, 0.06);
           transition: transform 0.9s cubic-bezier(0.7, 0, 0.25, 1);
         }
-        .pa-center { display: flex; flex-direction: column; align-items: center; }
+        .pa-center { display: flex; flex-direction: column; align-items: center; margin: auto; }
 
         .pa-glow {
           position: absolute; width: min(560px, 110vw); aspect-ratio: 1; border-radius: 50%;
