@@ -1,22 +1,33 @@
 "use client";
 
 // app/(shop)/category/[slug]/CategoryPageClient.tsx
-// ─────────────────────────────────────────────────────────────
-// Client wrapper — handles Coming Soon popup + filters
-// ─────────────────────────────────────────────────────────────
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ChevronRight, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import ComingSoonModal from "@/components/shop/ComingSoonModal";
 import SharedProductCard, { type SharedProduct } from "@/components/shop/SharedProductCard";
 import { PHONES, type ColorVariant, type BrandKey } from "@/lib/phoneCatalog";
 
-// ─── Product data ──────────────────────────────────────────────
-// iPhone & Android share the same PhoneModel pool from products/page.tsx
-// Other categories have their own product arrays
+// ── Icon image map (same images as MobileCategories) ──────────
+const ICON_MAP: Record<string, string> = {
+  android:     "/icon/android.png",
+  iphone:      "/icon/iPhone.png",
+  charger:     "/icon/Charger.png",
+  speaker:     "/icon/speaker.png",
+  earbuds:     "/icon/ear buds.png",
+  powerbank:   "/icon/power-bank.png",
+  cables:      "/icon/cable.png",
+  accessories: "/icon/accessories.png",
+};
 
+// CSS filter → brand orange (#FB5724)
+const BRAND_FILTER =
+  "brightness(0) saturate(100%) invert(42%) sepia(97%) saturate(631%) hue-rotate(342deg) brightness(98%) contrast(97%)";
+
+// ─── Product data ──────────────────────────────────────────────
 interface PhoneModel {
   name: string;
   slug: string;
@@ -31,13 +42,11 @@ interface PhoneModel {
   storage?: string;
 }
 
-// Re-use the same data from your existing products page
 const BRAND_LABEL: Record<BrandKey, string> = {
   apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi", realme: "Realme",
   google: "Google", vivo: "Vivo", iqoo: "iQOO", honor: "Honor", motorola: "Motorola", nothing: "Nothing",
 };
 
-// সব phone এখন lib/phoneCatalog.ts থেকে আসে (color অনুযায়ী ছবি সহ)
 const ALL_PHONES: PhoneModel[] = PHONES.map((p) => ({
   brand: BRAND_LABEL[p.brand],
   name: p.name,
@@ -52,50 +61,42 @@ const ALL_PHONES: PhoneModel[] = PHONES.map((p) => ({
   storage: p.storage,
 }));
 
-// Products for non-phone categories
-// (Replace with real DB fetch later)
 const OTHER_PRODUCTS: Record<string, PhoneModel[]> = {
   charger: [
-    { brand: "Anker",  name: "Anker 65W GaN Charger",  slug: "anker-65w-gan",  startingPrice: 3500,  image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
-    { brand: "Baseus", name: "Baseus 100W PD Charger",  slug: "baseus-100w",    startingPrice: 4200,  image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.7 },
-    { brand: "Apple",  name: "Apple 20W USB-C",         slug: "apple-20w-usbc", startingPrice: 2800,  image: "/images/products/iPhone16.webp", rating: 4.5 },
-    { brand: "Xiaomi", name: "Xiaomi 120W HyperCharge", slug: "xiaomi-120w",    startingPrice: 3200,  image: "/images/products/iPhone16.webp", badge: "New",  badgeColor: "#7C3AED", rating: 4.6 },
+    { brand: "Anker",  name: "Anker 65W GaN Charger",   slug: "anker-65w-gan",   startingPrice: 3500,  image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
+    { brand: "Baseus", name: "Baseus 100W PD Charger",   slug: "baseus-100w",     startingPrice: 4200,  image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.7 },
+    { brand: "Apple",  name: "Apple 20W USB-C",          slug: "apple-20w-usbc",  startingPrice: 2800,  image: "/images/products/iPhone16.webp", rating: 4.5 },
+    { brand: "Xiaomi", name: "Xiaomi 120W HyperCharge",  slug: "xiaomi-120w",     startingPrice: 3200,  image: "/images/products/iPhone16.webp", badge: "New",  badgeColor: "#7C3AED", rating: 4.6 },
   ],
   speaker: [
-    { brand: "JBL",  name: "JBL Charge 5",      slug: "jbl-charge-5",    startingPrice: 18000, image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.7 },
-    { brand: "Sony", name: "Sony SRS-XB43",      slug: "sony-srs-xb43",   startingPrice: 25000, image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
-    { brand: "JBL",  name: "JBL Flip 6",         slug: "jbl-flip-6",      startingPrice: 12000, image: "/images/products/iPhone16.webp", rating: 4.6 },
-    { brand: "Sony", name: "Sony SRS-XE200",      slug: "sony-srs-xe200",  startingPrice: 9500,  image: "/images/products/iPhone16.webp", rating: 4.4 },
+    { brand: "JBL",  name: "JBL Charge 5",   slug: "jbl-charge-5",  startingPrice: 18000, image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.7 },
+    { brand: "Sony", name: "Sony SRS-XB43",  slug: "sony-srs-xb43", startingPrice: 25000, image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
+    { brand: "JBL",  name: "JBL Flip 6",     slug: "jbl-flip-6",    startingPrice: 12000, image: "/images/products/iPhone16.webp", rating: 4.6 },
+    { brand: "Sony", name: "Sony SRS-XE200", slug: "sony-srs-xe200",startingPrice: 9500,  image: "/images/products/iPhone16.webp", rating: 4.4 },
   ],
   earbuds: [
-    { brand: "Apple",   name: "AirPods Pro 2nd Gen",   slug: "airpods-pro-2",     startingPrice: 38000, image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.9 },
-    { brand: "Samsung", name: "Galaxy Buds2 Pro",       slug: "galaxy-buds2-pro",  startingPrice: 18000, image: "/images/products/iPhone16.webp", rating: 4.6 },
-    { brand: "OnePlus", name: "OnePlus Buds Pro 2",     slug: "oneplus-buds-pro-2", startingPrice: 14000, image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.5 },
-    { brand: "JBL",     name: "JBL Tune Flex",          slug: "jbl-tune-flex",     startingPrice: 6500,  image: "/images/products/iPhone16.webp", rating: 4.3 },
+    { brand: "Apple",   name: "AirPods Pro 2nd Gen", slug: "airpods-pro-2",     startingPrice: 38000, image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.9 },
+    { brand: "Samsung", name: "Galaxy Buds2 Pro",    slug: "galaxy-buds2-pro",  startingPrice: 18000, image: "/images/products/iPhone16.webp", rating: 4.6 },
+    { brand: "OnePlus", name: "OnePlus Buds Pro 2",  slug: "oneplus-buds-pro-2",startingPrice: 14000, image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.5 },
+    { brand: "JBL",     name: "JBL Tune Flex",       slug: "jbl-tune-flex",     startingPrice: 6500,  image: "/images/products/iPhone16.webp", rating: 4.3 },
   ],
   powerbank: [
-    { brand: "Anker",   name: "Anker 20000mAh 65W",     slug: "anker-pb-20k",      startingPrice: 5500,  image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
-    { brand: "Baseus",  name: "Baseus 30000mAh 65W",    slug: "baseus-pb-30k",     startingPrice: 6800,  image: "/images/products/iPhone16.webp", badge: "New",  badgeColor: "#7C3AED", rating: 4.7 },
-    { brand: "Xiaomi",  name: "Xiaomi 10000mAh 22.5W",  slug: "xiaomi-pb-10k",     startingPrice: 2200,  image: "/images/products/iPhone16.webp", rating: 4.5 },
+    { brand: "Anker",  name: "Anker 20000mAh 65W",    slug: "anker-pb-20k",  startingPrice: 5500,  image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
+    { brand: "Baseus", name: "Baseus 30000mAh 65W",   slug: "baseus-pb-30k", startingPrice: 6800,  image: "/images/products/iPhone16.webp", badge: "New",  badgeColor: "#7C3AED", rating: 4.7 },
+    { brand: "Xiaomi", name: "Xiaomi 10000mAh 22.5W", slug: "xiaomi-pb-10k", startingPrice: 2200,  image: "/images/products/iPhone16.webp", rating: 4.5 },
   ],
   cables: [
-    { brand: "Anker",  name: "Anker USB-C to USB-C 2m", slug: "anker-usbc-2m",     startingPrice: 1200,  image: "/images/products/iPhone16.webp", badge: "Best Seller", badgeColor: "#4FAE53", rating: 4.7 },
-    { brand: "Apple",  name: "Apple Lightning 2m",       slug: "apple-lightning-2m", startingPrice: 2500, image: "/images/products/iPhone16.webp", badge: "Original",    badgeColor: "#1d1d1f", rating: 4.6 },
-    { brand: "Baseus", name: "Baseus 100W USB-C 3m",     slug: "baseus-usbc-100w",  startingPrice: 1800,  image: "/images/products/iPhone16.webp", rating: 4.5 },
+    { brand: "Anker",  name: "Anker USB-C to USB-C 2m", slug: "anker-usbc-2m",     startingPrice: 1200, image: "/images/products/iPhone16.webp", badge: "Best Seller", badgeColor: "#4FAE53", rating: 4.7 },
+    { brand: "Apple",  name: "Apple Lightning 2m",       slug: "apple-lightning-2m",startingPrice: 2500, image: "/images/products/iPhone16.webp", badge: "Original",    badgeColor: "#1d1d1f", rating: 4.6 },
+    { brand: "Baseus", name: "Baseus 100W USB-C 3m",     slug: "baseus-usbc-100w",  startingPrice: 1800, image: "/images/products/iPhone16.webp", rating: 4.5 },
   ],
   accessories: [
-    { brand: "Spigen",  name: "Spigen iPhone 16 Case",    slug: "spigen-ip16-case",  startingPrice: 1800, image: "/images/products/iPhone16.webp", badge: "Hot", badgeColor: "#FB5724", rating: 4.7 },
-    { brand: "ZAGG",    name: "ZAGG Glass Screen Guard",   slug: "zagg-glass",        startingPrice: 2200, image: "/images/products/iPhone16.webp", rating: 4.5 },
-    { brand: "ESR",     name: "ESR Magsafe Case",          slug: "esr-magsafe",       startingPrice: 1500, image: "/images/products/iPhone16.webp", badge: "New", badgeColor: "#7C3AED", rating: 4.4 },
-    { brand: "Anker",   name: "Anker MagSafe Charger",     slug: "anker-magsafe",     startingPrice: 3200, image: "/images/products/iPhone16.webp", rating: 4.6 },
+    { brand: "Spigen", name: "Spigen iPhone 16 Case",  slug: "spigen-ip16-case", startingPrice: 1800, image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.7 },
+    { brand: "ZAGG",   name: "ZAGG Glass Screen Guard", slug: "zagg-glass",       startingPrice: 2200, image: "/images/products/iPhone16.webp", rating: 4.5 },
+    { brand: "ESR",    name: "ESR Magsafe Case",        slug: "esr-magsafe",      startingPrice: 1500, image: "/images/products/iPhone16.webp", badge: "New",  badgeColor: "#7C3AED", rating: 4.4 },
+    { brand: "Anker",  name: "Anker MagSafe Charger",   slug: "anker-magsafe",    startingPrice: 3200, image: "/images/products/iPhone16.webp", rating: 4.6 },
   ],
 };
-
-// ── Brand filter options per category ─────────────────────────
-function getBrands(slug: string, products: PhoneModel[]): string[] {
-  const brands = [...new Set(products.map((p) => p.brand))];
-  return ["All", ...brands];
-}
 
 // ── Price ranges ───────────────────────────────────────────────
 const PRICE_RANGES = [
@@ -106,7 +107,7 @@ const PRICE_RANGES = [
   { label: "৳1L এর উপরে",    min: 100001, max: Infinity  },
 ];
 
-// ── Product Card ───────────────────────────────────────────────
+// ── modelToShared ──────────────────────────────────────────────
 function modelToShared(model: PhoneModel): SharedProduct {
   const originalPrice = model.discount
     ? Math.round(model.startingPrice / (1 - model.discount / 100))
@@ -128,8 +129,7 @@ function modelToShared(model: PhoneModel): SharedProduct {
   };
 }
 
-// ── Main Client Component ──────────────────────────────────────
-
+// ── Props ──────────────────────────────────────────────────────
 interface Props {
   slug: string;
   label: string;
@@ -138,28 +138,115 @@ interface Props {
   isEnabled: boolean;
 }
 
+// ── BrandDropdown ──────────────────────────────────────────────
+function BrandDropdown({
+  brands,
+  activeBrand,
+  onChange,
+}: {
+  brands: string[];
+  activeBrand: string;
+  onChange: (b: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 shadow-sm hover:border-orange-300 transition-colors"
+      >
+        {activeBrand === "All" ? "সব Brand" : activeBrand}
+        <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl z-40 min-w-[140px] overflow-hidden">
+          {brands.map((b) => (
+            <button
+              key={b}
+              onClick={() => { onChange(b); setOpen(false); }}
+              className={`w-full text-left px-4 py-2.5 text-xs font-medium border-b last:border-b-0 border-gray-50 transition-colors
+                ${activeBrand === b
+                  ? "bg-orange-50 text-orange-600 font-semibold"
+                  : "text-gray-700 hover:bg-gray-50"
+                }`}
+            >
+              {b === "All" ? "সব Brand" : b}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── SortDropdown ───────────────────────────────────────────────
+function SortDropdown({
+  sortBy,
+  onChange,
+}: {
+  sortBy: string;
+  onChange: (v: "featured" | "price-asc" | "price-desc") => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const OPTIONS = [
+    { key: "featured",   label: "Featured" },
+    { key: "price-asc",  label: "দাম: কম → বেশি" },
+    { key: "price-desc", label: "দাম: বেশি → কম" },
+  ];
+  const current = OPTIONS.find((o) => o.key === sortBy)?.label ?? "Featured";
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 shadow-sm hover:border-orange-300 transition-colors"
+      >
+        <SlidersHorizontal size={13} className="text-orange-500" />
+        {current}
+        <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute top-full right-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl z-40 min-w-[160px] overflow-hidden">
+          {OPTIONS.map((o) => (
+            <button
+              key={o.key}
+              onClick={() => { onChange(o.key as "featured" | "price-asc" | "price-desc"); setOpen(false); }}
+              className={`w-full text-left px-4 py-2.5 text-xs font-medium border-b last:border-b-0 border-gray-50 transition-colors
+                ${sortBy === o.key
+                  ? "bg-orange-50 text-orange-600 font-semibold"
+                  : "text-gray-700 hover:bg-gray-50"
+                }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────
 export default function CategoryPageClient({ slug, label, icon, description, isEnabled }: Props) {
   const [showComingSoon, setShowComingSoon] = useState(!isEnabled);
   const [activeBrand,    setActiveBrand]    = useState("All");
-  const addItem = useCartStore((s) => s.addItem);
   const [priceRange,     setPriceRange]     = useState(0);
   const [sortBy,         setSortBy]         = useState<"featured" | "price-asc" | "price-desc">("featured");
-  const [showFilters,    setShowFilters]     = useState(false);
+  const addItem = useCartStore((s) => s.addItem);
 
-  // Get products based on slug
+  const iconSrc = ICON_MAP[slug];
+
   const allProducts = useMemo(() => {
-    if (slug === "iphone") {
-      return ALL_PHONES.filter((p) => p.brand === "Apple");
-    }
-    if (slug === "android") {
-      return ALL_PHONES.filter((p) => p.brand !== "Apple");
-    }
+    if (slug === "iphone")  return ALL_PHONES.filter((p) => p.brand === "Apple");
+    if (slug === "android") return ALL_PHONES.filter((p) => p.brand !== "Apple");
     return OTHER_PRODUCTS[slug] ?? [];
   }, [slug]);
 
-  const brands = useMemo(() => getBrands(slug, allProducts), [slug, allProducts]);
+  // Distinct brands for the dropdown
+  const brands = useMemo(() => {
+    const b = [...new Set(allProducts.map((p) => p.brand))];
+    return ["All", ...b];
+  }, [allProducts]);
 
-  // Filter + sort
   const filtered = useMemo(() => {
     let list = [...allProducts];
     if (activeBrand !== "All") list = list.filter((p) => p.brand === activeBrand);
@@ -170,109 +257,89 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
     return list;
   }, [allProducts, activeBrand, priceRange, sortBy]);
 
-  // If disabled → show Coming Soon overlay
   if (!isEnabled || showComingSoon) {
     return (
       <ComingSoonModal
         categoryLabel={label}
         categoryIcon={icon}
-        onClose={() => {
-          // If user closes it, go back
-          if (typeof window !== "undefined") window.history.back();
-        }}
+        onClose={() => { if (typeof window !== "undefined") window.history.back(); }}
       />
     );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
-      <div className="px-4 py-2.5 flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 border-b border-gray-100">
+      <div className="px-4 py-2.5 flex items-center gap-1.5 text-xs text-gray-400 bg-white border-b border-gray-100">
         <Link href="/" className="hover:text-orange-500 transition-colors">Home</Link>
         <ChevronRight size={12} />
         <span className="text-gray-700 font-medium">{label}</span>
       </div>
 
       {/* Category Hero */}
-      <div className="px-4 pt-4 pb-3">
+      <div className="bg-white px-4 pt-4 pb-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl shrink-0">
-            {icon}
+          {/* Icon — image if available, fallback emoji */}
+          <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center shrink-0">
+            {iconSrc ? (
+              <Image
+                src={iconSrc}
+                alt={label}
+                width={36}
+                height={36}
+                className="object-contain"
+                style={{ filter: BRAND_FILTER }}
+              />
+            ) : (
+              <span className="text-2xl">{icon}</span>
+            )}
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-xl font-extrabold text-gray-900">{label}</h1>
-            <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+            <p className="text-xs text-gray-400 mt-0.5 truncate">{description}</p>
           </div>
-          <div className="ml-auto bg-orange-50 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full">
+          <div className="shrink-0 bg-orange-50 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full">
             {filtered.length} items
           </div>
         </div>
       </div>
 
-      {/* Brand Filter Tabs */}
-      {brands.length > 2 && (
-        <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-2 px-4 pb-3 min-w-max">
-            {brands.map((brand) => (
-              <button
-                key={brand}
-                onClick={() => setActiveBrand(brand)}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all
-                  ${activeBrand === brand
-                    ? "bg-orange-500 text-white shadow-sm shadow-orange-200"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}>
-                {brand}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Filter Bar */}
-      <div className="px-4 pb-3 flex items-center gap-2 justify-between">
-        {/* Price filter */}
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-1">
+      <div className="bg-white sticky top-0 z-30 border-b border-gray-100 px-4 py-2.5">
+        {/* Row 1: Price range chips */}
+        <div
+          className="flex gap-1.5 overflow-x-auto pb-2"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {PRICE_RANGES.map((r, i) => (
             <button
               key={i}
               onClick={() => setPriceRange(i)}
-              className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all border
+              className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all border flex-shrink-0
                 ${priceRange === i
-                  ? "border-orange-500 bg-orange-50 text-orange-600"
-                  : "border-gray-200 text-gray-500 hover:border-gray-300"
-                }`}>
+                  ? "border-orange-500 bg-orange-500 text-white shadow-sm"
+                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                }`}
+            >
               {r.label}
             </button>
           ))}
         </div>
 
-        {/* Sort */}
-        <button
-          onClick={() => setShowFilters((v) => !v)}
-          className="shrink-0 w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors">
-          <SlidersHorizontal size={16} className="text-gray-600" />
-        </button>
-      </div>
-
-      {/* Sort Dropdown */}
-      {showFilters && (
-        <div className="mx-4 mb-3 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg">
-          {[
-            { key: "featured",   label: "Featured" },
-            { key: "price-asc",  label: "দাম: কম থেকে বেশি" },
-            { key: "price-desc", label: "দাম: বেশি থেকে কম" },
-          ].map((s) => (
-            <button
-              key={s.key}
-              onClick={() => { setSortBy(s.key as typeof sortBy); setShowFilters(false); }}
-              className={`w-full text-left px-4 py-3 text-sm border-b last:border-b-0 border-gray-100 transition-colors
-                ${sortBy === s.key ? "bg-orange-50 text-orange-600 font-semibold" : "text-gray-700 hover:bg-gray-50"}`}>
-              {s.label}
-            </button>
-          ))}
+        {/* Row 2: Brand dropdown + Sort dropdown */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          {brands.length > 2 ? (
+            <BrandDropdown
+              brands={brands}
+              activeBrand={activeBrand}
+              onChange={setActiveBrand}
+            />
+          ) : (
+            <div />
+          )}
+          <SortDropdown sortBy={sortBy} onChange={setSortBy} />
         </div>
-      )}
+      </div>
 
       {/* Product Grid */}
       {filtered.length === 0 ? (
@@ -282,12 +349,13 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
           <p className="text-sm mt-1">Filter পরিবর্তন করে আবার চেষ্টা করুন</p>
           <button
             onClick={() => { setActiveBrand("All"); setPriceRange(0); }}
-            className="mt-4 text-orange-500 text-sm font-semibold underline">
+            className="mt-4 text-orange-500 text-sm font-semibold underline"
+          >
             সব filter সরান
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 px-4 pb-6 sm:grid-cols-3 lg:grid-cols-4 pt-3">
+        <div className="grid grid-cols-2 gap-3 px-4 pt-4 pb-6 sm:grid-cols-3 lg:grid-cols-4 isolate">
           {filtered.map((model) => (
             <SharedProductCard
               key={model.slug}

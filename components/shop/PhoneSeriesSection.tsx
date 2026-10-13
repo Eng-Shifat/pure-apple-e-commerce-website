@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { BRAND_SERIES, phonesByBrand, type CatalogPhone } from "@/lib/phoneCatalog";
 import SharedProductCard, { type SharedProduct } from "./SharedProductCard";
 
@@ -47,6 +48,66 @@ function toShared(p: CatalogPhone): SharedProduct {
 }
 
 /* ─────────────────────────────────────────────
+   ANIMATED TITLE — slides in from left on scroll into view
+───────────────────────────────────────────── */
+function AnimatedSeriesTitle({
+  seriesName,
+  accentColor,
+}: {
+  seriesName: string;
+  accentColor: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.4 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const words = seriesName.split(" ");
+  const first = words[0];
+  const rest  = words.slice(1).join(" ");
+
+  return (
+    <div ref={ref} className="flex items-center gap-2.5 overflow-hidden">
+      {/* Colored bar — grows in */}
+      <span
+        className="h-5 rounded-full flex-shrink-0 transition-all duration-500"
+        style={{
+          backgroundColor: accentColor,
+          width: visible ? "4px" : "0px",
+          opacity: visible ? 1 : 0,
+        }}
+      />
+
+      {/* Title slides in */}
+      <div
+        className="transition-all duration-500 ease-out"
+        style={{
+          transform: visible ? "translateX(0)" : "translateX(-18px)",
+          opacity: visible ? 1 : 0,
+        }}
+      >
+        <h3 className="font-extrabold text-[15px] sm:text-base text-gray-900 leading-tight">
+          <span style={{ color: accentColor }}>{first}</span>
+          {rest && <span> {rest}</span>}
+        </h3>
+        <p className="text-[11px] text-gray-400 mt-0.5 hidden sm:block">
+          {/* product count rendered by SeriesBlock */}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    SINGLE SERIES BLOCK
 ───────────────────────────────────────────── */
 const DESKTOP_VISIBLE = 10;
@@ -64,20 +125,16 @@ function SeriesBlock({ series }: { series: PhoneSeries }) {
         className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-3.5 rounded-t-2xl"
         style={{ backgroundColor: series.accentBg }}
       >
-        <div className="flex items-center gap-2.5">
-          <span
-            className="w-1 h-5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: series.accentColor }}
+        {/* Animated title */}
+        <div className="flex items-center gap-0">
+          <AnimatedSeriesTitle
+            seriesName={series.seriesName}
+            accentColor={series.accentColor}
           />
-          <div>
-            <h3 className="font-extrabold text-[15px] sm:text-base text-gray-900 leading-tight">
-              <span style={{ color: series.accentColor }}>{series.seriesName.split(" ")[0]}</span>{" "}
-              <span>{series.seriesName.split(" ").slice(1).join(" ")}</span>
-            </h3>
-            <p className="text-[11px] text-gray-400 mt-0.5 hidden sm:block">
-              {series.products.length} {series.products.length === 1 ? "model" : "models"} available
-            </p>
-          </div>
+          {/* models count right of title */}
+          <span className="text-[11px] text-gray-400 ml-2 hidden sm:inline">
+            · {series.products.length} model{series.products.length !== 1 ? "s" : ""}
+          </span>
         </div>
 
         <Link

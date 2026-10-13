@@ -129,12 +129,18 @@ function MiniCard({ p }: { p: Product }) {
 }
 
 export default function Navbar() {
-  const [mobileOpen,   setMobileOpen]   = useState(false);
-  const [shopOpen,     setShopOpen]     = useState(false);
-  const [catOpen,      setCatOpen]      = useState(false);
-  const [searchOpen,   setSearchOpen]   = useState(false);
-  const [searchQuery,  setSearchQuery]  = useState("");
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileOpen,           setMobileOpen]           = useState(false);
+  const [shopOpen,             setShopOpen]             = useState(false);
+  const [catOpen,              setCatOpen]              = useState(false);
+  const [searchOpen,           setSearchOpen]           = useState(false);
+  const [searchQuery,          setSearchQuery]          = useState("");
+  const [userMenuOpen,         setUserMenuOpen]         = useState(false);
+  const [desktopSearchFocused, setDesktopSearchFocused] = useState(false);
+
+  const SEARCH_SUGGESTIONS = [
+    "iPhone 16 Pro", "Samsung Galaxy S25", "OnePlus 13",
+    "Charger", "Earbuds", "Power Bank", "Accessories",
+  ];
 
   // Hover state
   const [shopHover,    setShopHover]    = useState(false);
@@ -477,13 +483,51 @@ export default function Navbar() {
                 {searchOpen ? <X size={18} /> : <Search size={18} />}
               </button>
 
-              <form onSubmit={handleSearch}
-                className="hidden md:flex items-center gap-2 w-64 lg:w-80 border border-gray-200 rounded-full px-4 py-2 bg-white/80 hover:border-brand-300 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
-                <input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search products…"
-                  className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none" />
-                <button type="submit" aria-label="Search" className="text-gray-400 hover:text-brand-500"><Search size={16} /></button>
-              </form>
+              <div className="hidden md:block relative w-64 lg:w-80">
+                <form onSubmit={handleSearch}
+                  className="flex items-center gap-2 border border-gray-200 rounded-full px-4 py-2 bg-white/80 hover:border-brand-300 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onFocus={() => setDesktopSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setDesktopSearchFocused(false), 150)}
+                    placeholder="Search products…"
+                    className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
+                  />
+                  {searchQuery && (
+                    <button type="button" onClick={() => setSearchQuery("")} className="text-gray-300 hover:text-gray-500">
+                      <X size={14} />
+                    </button>
+                  )}
+                  <button type="submit" aria-label="Search" className="text-gray-400 hover:text-brand-500"><Search size={16} /></button>
+                </form>
+                {/* Suggestions dropdown */}
+                {desktopSearchFocused && (
+                  <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                    <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      {searchQuery.trim() ? "Suggestions" : "Popular"}
+                    </p>
+                    <ul className="pb-2">
+                      {(searchQuery.trim()
+                        ? SEARCH_SUGGESTIONS.filter(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
+                        : SEARCH_SUGGESTIONS
+                      ).map(s => (
+                        <li key={s}>
+                          <button
+                            type="button"
+                            onMouseDown={() => { router.push(`/products?q=${encodeURIComponent(s)}`); setSearchQuery(""); setDesktopSearchFocused(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 text-left transition-colors"
+                          >
+                            <Search size={13} className="text-gray-300 shrink-0" />
+                            {s}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
 
               <Link href="/wishlist" className="hidden md:flex p-2 rounded-lg text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
                 <Heart size={18} />

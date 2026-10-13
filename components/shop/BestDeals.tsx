@@ -7,7 +7,6 @@ import { phonesBySlugs, toCardProduct } from "@/lib/phoneCatalog";
 
 const DEAL_SLUGS = ["iphone-15", "galaxy-s25", "google-pixel-8", "oneplus-11r"];
 
-// "Best Deals" section-এ discount % badge দেখানো হয়
 const dealProducts: Product[] = phonesBySlugs(DEAL_SLUGS).map((p) => {
   const card = toCardProduct(p);
   const pct = card.originalPrice
@@ -29,26 +28,36 @@ export default function BestDeals() {
   }
 
   return (
-    <section className="bg-gray-50 py-8 md:py-12">
+    <section className="bg-gray-50 pt-8 md:pt-12 pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-end justify-between mb-7">
+        <div className="flex items-end justify-between mb-5">
           <div>
             <h2 className="text-gray-900 text-2xl font-bold">Best Deals</h2>
-            <p className="text-gray-400 text-sm mt-1">
-              Top offers. Limited time only.
-            </p>
+            <p className="text-gray-400 text-sm mt-1">Top offers. Limited time only.</p>
           </div>
           <Link
             href="/products?deals=true"
-            className="text-brand-600 text-sm font-medium hover:underline flex items-center gap-1"
+            className="text-brand-600 text-sm font-medium hover:underline flex items-center gap-1 whitespace-nowrap"
           >
             View All →
           </Link>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Mobile: single-row horizontal scroll */}
+        <div
+          className="flex gap-3 overflow-x-auto sm:hidden pb-4"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {dealProducts.map((product) => (
+            <div key={product.id} className="flex-shrink-0 w-[175px]">
+              <ProductCard product={product} onAddToCart={handleAddToCart} />
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: 4-column grid */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
           {dealProducts.map((product) => (
             <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
           ))}

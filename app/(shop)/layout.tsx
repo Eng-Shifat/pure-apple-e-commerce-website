@@ -10,9 +10,9 @@ export default function ShopLayout({
   return (
     <>
       <Navbar />
-      {/* extra bottom space on mobile so the fixed tab bar never covers content */}
-      <div className="pb-20 md:pb-0">
-        {children}
+      {children}
+      {/* pb-20 on footer wrapper so fixed MobileBottomNav never covers the footer */}
+      <div className="pb-20 md:pb-0 bg-dark-hero">
         <Footer />
       </div>
       <MobileBottomNav />
