@@ -1,48 +1,77 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LayoutGrid, Search, ShoppingCart, User, X, ArrowRight } from "lucide-react";
+import {
+  Home, LayoutGrid, Search, ShoppingCart, User,
+  X, ArrowRight, LogOut, Package, Settings,
+  Mail, Lock, Eye, EyeOff, Loader2,
+} from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { PHONES } from "@/lib/phoneCatalog";
 
-const SUGGESTIONS = [
+// ── Product search data (name + slug for instant suggestions) ──────────────
+const SEARCH_CATALOG = PHONES.map((p) => ({
+  name: p.name,
+  brand: p.brand,
+  slug: p.slug,
+  image: p.colors[0]?.image ?? "",
+  price: p.price,
+}));
+
+// Popular fallback suggestions (no query)
+const POPULAR = [
   "iPhone 16 Pro", "Samsung Galaxy S25", "OnePlus 13",
-  "Charger", "Earbuds", "Power Bank", "Accessories",
+  "Charger", "Earbuds", "Power Bank",
 ];
 
 export default function MobileBottomNav() {
-  const pathname = usePathname() || "/";
-  const router = useRouter();
-  const user = useAuthStore((s) => s.user);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const pathname   = usePathname() || "/";
+  const router     = useRouter();
+  const user       = useAuthStore((s) => s.user);
+  const login      = useAuthStore((s) => s.login);
+  const logout     = useAuthStore((s) => s.logout);
+
+  // Overlay states
+  const [searchOpen,  setSearchOpen]  = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  // Search state
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const accountHref = user ? "/orders" : "/login";
+  // Login form state (shown inside account overlay when not logged in)
+  const [loginEmail,    setLoginEmail]    = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showPassword,  setShowPassword]  = useState(false);
+  const [loginLoading,  setLoginLoading]  = useState(false);
+  const [loginError,    setLoginError]    = useState("");
+
   const accountActive =
     pathname.startsWith("/orders") ||
-    pathname.startsWith("/login") ||
+    pathname.startsWith("/login")  ||
     pathname.startsWith("/register");
 
-  // Focus input when search overlay opens
+  // ── Focus search input when overlay opens ────────────────────────────────
   useEffect(() => {
     if (searchOpen) setTimeout(() => inputRef.current?.focus(), 80);
   }, [searchOpen]);
 
-  // Close on Escape
+  // ── ESC key closes any overlay ───────────────────────────────────────────
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") closeSearch(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { closeSearch(); closeAccount(); }
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  function closeSearch() {
-    setSearchOpen(false);
-    setQuery("");
-  }
+  function closeSearch()  { setSearchOpen(false);  setQuery(""); }
+  function closeAccount() { setAccountOpen(false); setLoginError(""); }
 
-  function handleSubmit(e: React.FormEvent) {
+  // ── Search submit → /products?q=... ─────────────────────────────────────
+  function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (query.trim()) {
       router.push(`/products?q=${encodeURIComponent(query.trim())}`);
@@ -50,47 +79,80 @@ export default function MobileBottomNav() {
     }
   }
 
-  const filtered = query.trim()
-    ? SUGGESTIONS.filter(s => s.toLowerCase().includes(query.toLowerCase()))
-    : SUGGESTIONS;
+  // ── Instant product suggestions filtered from catalog ────────────────────
+  const productSuggestions = useMemo(() => {
+    if (!query.trim()) return [];
+    const q = query.toLowerCase();
+    return SEARCH_CATALOG.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.brand.toLowerCase().includes(q)
+    ).slice(0, 6);
+  }, [query]);
 
-  // Left 2, Search center, Right 2
+  // ── Login handler ─────────────────────────────────────────────────────────
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+    try {
+      const result = await login(loginEmail, loginPassword);
+      if (!result.ok) {
+        setLoginError(result.error ?? "Login failed. Please try again.");
+      } else {
+        closeAccount();
+        router.push(result.role === "admin" ? "/admin" : "/orders");
+      }
+    } catch {
+      setLoginError("Something went wrong. Please try again.");
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  // ── Logout ────────────────────────────────────────────────────────────────
+  async function handleLogout() {
+    await logout(); // authStore.logout() already calls supabase.auth.signOut()
+    closeAccount();
+    router.push("/");
+  }
+
+  // ── Nav items ─────────────────────────────────────────────────────────────
   const LEFT_ITEMS = [
-    { label: "Home",       href: "/",                        icon: Home,       match: (p: string) => p === "/" },
+    { label: "Home",       href: "/",                         icon: Home,       match: (p: string) => p === "/" },
     { label: "Categories", href: "/products?view=categories", icon: LayoutGrid, match: (p: string) => p.startsWith("/products") && !p.includes("/products/") },
   ];
   const RIGHT_ITEMS = [
-    { label: "Cart",    href: "/cart",      icon: ShoppingCart, match: (p: string) => p.startsWith("/cart") || p.startsWith("/checkout") },
-    { label: "Account", href: accountHref,  icon: User,         match: () => accountActive },
+    { label: "Cart",    href: "/cart", icon: ShoppingCart, match: (p: string) => p.startsWith("/cart") || p.startsWith("/checkout") },
   ];
 
   return (
     <>
-      {/* ── Search Overlay ── */}
+      {/* ════════════════════════════════════════════
+          SEARCH OVERLAY
+      ════════════════════════════════════════════ */}
       {searchOpen && (
         <div className="md:hidden fixed inset-0 z-[60] flex flex-col">
-          {/* Dim backdrop */}
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeSearch} />
+
+          {/* Panel */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={closeSearch}
-          />
-
-          {/* Search panel slides up from bottom */}
-          <div className="relative mt-auto bg-white rounded-t-3xl shadow-2xl px-4 pt-4 pb-8"
-               style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom))" }}>
-
+            className="relative mt-auto bg-white rounded-t-3xl shadow-2xl px-4 pt-4"
+            style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+          >
             {/* Handle */}
             <div className="mx-auto w-10 h-1 rounded-full bg-gray-200 mb-4" />
 
-            {/* Input row */}
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+            {/* Input */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
               <div className="flex-1 flex items-center gap-2 bg-gray-100 rounded-2xl px-4 py-3">
                 <Search size={16} className="text-brand-500 shrink-0" />
                 <input
                   ref={inputRef}
                   type="search"
                   value={query}
-                  onChange={e => setQuery(e.target.value)}
+                  onChange={(e) => setQuery(e.target.value)}
                   placeholder="iPhone, Samsung, Accessories..."
                   className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
                 />
@@ -108,36 +170,250 @@ export default function MobileBottomNav() {
               </button>
             </form>
 
-            {/* Suggestions */}
-            <div className="mt-4">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
-                {query.trim() ? "Suggestions" : "Popular Searches"}
-              </p>
-              <ul className="space-y-0.5">
-                {filtered.length > 0 ? filtered.map(s => (
-                  <li key={s}>
+            {/* ── Product suggestions (real products → product detail page) ── */}
+            <div className="mt-3 max-h-64 overflow-y-auto">
+              {query.trim() ? (
+                productSuggestions.length > 0 ? (
+                  <>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Products</p>
+                    <ul className="space-y-0.5">
+                      {productSuggestions.map((p) => (
+                        <li key={p.slug}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              router.push(`/products/${p.slug}`);
+                              closeSearch();
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-50 text-left transition-colors group"
+                          >
+                            {/* Thumbnail */}
+                            {p.image && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={p.image}
+                                alt={p.name}
+                                className="w-9 h-9 object-contain rounded-lg bg-gray-50 border border-gray-100 shrink-0"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 font-medium truncate group-hover:text-brand-600">
+                                {p.name}
+                              </p>
+                              <p className="text-xs text-gray-400 capitalize">{p.brand} · ৳{p.price.toLocaleString("en-BD")}</p>
+                            </div>
+                            <ArrowRight size={13} className="text-gray-300 group-hover:text-brand-400 shrink-0" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    {/* Also show "See all results" */}
                     <button
                       type="button"
-                      onClick={() => { router.push(`/products?q=${encodeURIComponent(s)}`); closeSearch(); }}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-brand-50 text-left transition-colors group"
+                      onClick={() => {
+                        router.push(`/products?q=${encodeURIComponent(query.trim())}`);
+                        closeSearch();
+                      }}
+                      className="mt-2 w-full text-center text-sm text-brand-500 font-semibold py-2.5 rounded-xl hover:bg-brand-50 transition-colors"
                     >
-                      <div className="flex items-center gap-3">
-                        <Search size={13} className="text-gray-300" />
-                        <span className="text-sm text-gray-700 group-hover:text-brand-600">{s}</span>
-                      </div>
-                      <ArrowRight size={13} className="text-gray-300 group-hover:text-brand-400" />
+                      See all results for &ldquo;{query}&rdquo; →
                     </button>
-                  </li>
-                )) : (
-                  <p className="text-sm text-gray-400 text-center py-4">No results for &ldquo;{query}&rdquo;</p>
-                )}
-              </ul>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-4">
+                    No products found for &ldquo;{query}&rdquo;
+                  </p>
+                )
+              ) : (
+                <>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
+                    Popular Searches
+                  </p>
+                  <ul className="space-y-0.5">
+                    {POPULAR.map((s) => (
+                      <li key={s}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            router.push(`/products?q=${encodeURIComponent(s)}`);
+                            closeSearch();
+                          }}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-brand-50 text-left transition-colors group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Search size={13} className="text-gray-300" />
+                            <span className="text-sm text-gray-700 group-hover:text-brand-600">{s}</span>
+                          </div>
+                          <ArrowRight size={13} className="text-gray-300 group-hover:text-brand-400" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Bottom Nav Bar ── */}
+      {/* ════════════════════════════════════════════
+          ACCOUNT OVERLAY
+      ════════════════════════════════════════════ */}
+      {accountOpen && (
+        <div className="md:hidden fixed inset-0 z-[60] flex flex-col">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeAccount} />
+
+          {/* Panel */}
+          <div
+            className="relative mt-auto bg-white rounded-t-3xl shadow-2xl px-4 pt-4"
+            style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+          >
+            {/* Handle */}
+            <div className="mx-auto w-10 h-1 rounded-full bg-gray-200 mb-4" />
+
+            {user ? (
+              /* ── Logged-in dashboard ── */
+              <div>
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-12 h-12 rounded-full bg-brand-500/10 flex items-center justify-center">
+                    <User size={22} className="text-brand-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 truncate">{user.name ?? user.email?.split("@")[0]}</p>
+                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  </div>
+                  <button onClick={closeAccount} className="text-gray-400 hover:text-gray-600 p-1">
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Menu items */}
+                <div className="space-y-1">
+                  <Link
+                    href="/orders"
+                    onClick={closeAccount}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                  >
+                    <Package size={18} className="text-gray-400 group-hover:text-brand-500" />
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-brand-600">My Orders</span>
+                    <ArrowRight size={14} className="ml-auto text-gray-300 group-hover:text-brand-400" />
+                  </Link>
+
+                  <Link
+                    href="/cart"
+                    onClick={closeAccount}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                  >
+                    <ShoppingCart size={18} className="text-gray-400 group-hover:text-brand-500" />
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-brand-600">My Cart</span>
+                    <ArrowRight size={14} className="ml-auto text-gray-300 group-hover:text-brand-400" />
+                  </Link>
+
+                  <Link
+                    href="/checkout"
+                    onClick={closeAccount}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                  >
+                    <Settings size={18} className="text-gray-400 group-hover:text-brand-500" />
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-brand-600">Settings</span>
+                    <ArrowRight size={14} className="ml-auto text-gray-300 group-hover:text-brand-400" />
+                  </Link>
+                </div>
+
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-100 text-red-500 hover:bg-red-50 transition-colors text-sm font-semibold"
+                >
+                  <LogOut size={15} />
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              /* ── Login form ── */
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-extrabold text-gray-900">Sign In</h2>
+                  <button onClick={closeAccount} className="text-gray-400 hover:text-gray-600 p-1">
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-3">
+                  {/* Email */}
+                  <div className="flex items-center gap-3 bg-gray-100 rounded-2xl px-4 py-3">
+                    <Mail size={16} className="text-gray-400 shrink-0" />
+                    <input
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      placeholder="Email address"
+                      required
+                      className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="flex items-center gap-3 bg-gray-100 rounded-2xl px-4 py-3">
+                    <Lock size={16} className="text-gray-400 shrink-0" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="Password"
+                      required
+                      className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+
+                  {/* Error */}
+                  {loginError && (
+                    <p className="text-xs text-red-500 px-1">{loginError}</p>
+                  )}
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    disabled={loginLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-[.98] text-white font-bold py-3.5 rounded-2xl transition-all disabled:opacity-60"
+                  >
+                    {loginLoading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      "Sign In"
+                    )}
+                  </button>
+                </form>
+
+                {/* Register link */}
+                <p className="text-center text-sm text-gray-400 mt-4">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    href="/register"
+                    onClick={closeAccount}
+                    className="text-brand-500 font-semibold hover:underline"
+                  >
+                    Register
+                  </Link>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════
+          BOTTOM NAV BAR
+      ════════════════════════════════════════════ */}
       <nav
         className="md:hidden fixed inset-x-0 bottom-0 z-50"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
@@ -148,16 +424,21 @@ export default function MobileBottomNav() {
 
           {/* Left items */}
           {LEFT_ITEMS.map((it) => {
-            const Icon = it.icon;
+            const Icon  = it.icon;
             const active = it.match(pathname);
             return (
               <li key={it.label} className="flex-1">
-                <Link href={it.href}
-                  className="relative flex flex-col items-center justify-center gap-0.5 py-2 w-full active:scale-90 transition-transform duration-150">
+                <Link
+                  href={it.href}
+                  className="relative flex flex-col items-center justify-center gap-0.5 py-2 w-full active:scale-90 transition-transform duration-150"
+                >
                   {active && <span className="absolute inset-x-1 inset-y-0.5 rounded-2xl bg-brand-500/10" />}
                   <span className="relative">
-                    <Icon size={21} strokeWidth={active ? 2.3 : 1.7}
-                      className={`transition-all duration-300 ${active ? "text-brand-500 -translate-y-px" : "text-gray-400"}`} />
+                    <Icon
+                      size={21}
+                      strokeWidth={active ? 2.3 : 1.7}
+                      className={`transition-all duration-300 ${active ? "text-brand-500 -translate-y-px" : "text-gray-400"}`}
+                    />
                     {active && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-500" />}
                   </span>
                   <span className={`relative text-[10px] font-medium tracking-wide transition-colors duration-300 ${active ? "text-brand-500 font-semibold" : "text-gray-400"}`}>
@@ -168,13 +449,12 @@ export default function MobileBottomNav() {
             );
           })}
 
-          {/* ── Center Search Button (prominent, like apps) ── */}
+          {/* ── Center Search button ── */}
           <li className="flex-none px-2">
             <button
               onClick={() => setSearchOpen(true)}
               className="relative flex flex-col items-center justify-center active:scale-90 transition-transform duration-150"
             >
-              {/* Elevated circle */}
               <span className="flex items-center justify-center w-12 h-12 rounded-full bg-brand-500 shadow-lg shadow-brand-500/40 -mt-5">
                 <Search size={22} strokeWidth={2} className="text-white" />
               </span>
@@ -182,18 +462,23 @@ export default function MobileBottomNav() {
             </button>
           </li>
 
-          {/* Right items */}
+          {/* Right items (Cart) */}
           {RIGHT_ITEMS.map((it) => {
-            const Icon = it.icon;
+            const Icon  = it.icon;
             const active = it.match(pathname);
             return (
               <li key={it.label} className="flex-1">
-                <Link href={it.href}
-                  className="relative flex flex-col items-center justify-center gap-0.5 py-2 w-full active:scale-90 transition-transform duration-150">
+                <Link
+                  href={it.href}
+                  className="relative flex flex-col items-center justify-center gap-0.5 py-2 w-full active:scale-90 transition-transform duration-150"
+                >
                   {active && <span className="absolute inset-x-1 inset-y-0.5 rounded-2xl bg-brand-500/10" />}
                   <span className="relative">
-                    <Icon size={21} strokeWidth={active ? 2.3 : 1.7}
-                      className={`transition-all duration-300 ${active ? "text-brand-500 -translate-y-px" : "text-gray-400"}`} />
+                    <Icon
+                      size={21}
+                      strokeWidth={active ? 2.3 : 1.7}
+                      className={`transition-all duration-300 ${active ? "text-brand-500 -translate-y-px" : "text-gray-400"}`}
+                    />
                     {active && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-500" />}
                   </span>
                   <span className={`relative text-[10px] font-medium tracking-wide transition-colors duration-300 ${active ? "text-brand-500 font-semibold" : "text-gray-400"}`}>
@@ -203,6 +488,27 @@ export default function MobileBottomNav() {
               </li>
             );
           })}
+
+          {/* ── Account button (opens overlay) ── */}
+          <li className="flex-1">
+            <button
+              onClick={() => setAccountOpen(true)}
+              className="relative flex flex-col items-center justify-center gap-0.5 py-2 w-full active:scale-90 transition-transform duration-150"
+            >
+              {accountActive && <span className="absolute inset-x-1 inset-y-0.5 rounded-2xl bg-brand-500/10" />}
+              <span className="relative">
+                <User
+                  size={21}
+                  strokeWidth={accountActive ? 2.3 : 1.7}
+                  className={`transition-all duration-300 ${accountActive ? "text-brand-500 -translate-y-px" : "text-gray-400"}`}
+                />
+                {accountActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-500" />}
+              </span>
+              <span className={`relative text-[10px] font-medium tracking-wide transition-colors duration-300 ${accountActive ? "text-brand-500 font-semibold" : "text-gray-400"}`}>
+                Account
+              </span>
+            </button>
+          </li>
 
         </ul>
       </nav>

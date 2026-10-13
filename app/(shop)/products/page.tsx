@@ -164,9 +164,12 @@ function ProductsPageInner() {
     const brand = SLUG_TO_BRAND[categoryParam.toLowerCase()];
     // If no param or unrecognized → default to "All"
     setActiveCategory(brand ?? "All");
+    // Sync ?q= search query from URL (set by MobileBottomNav / MobileSearchBar)
+    const qParam = searchParams.get("q") ?? "";
+    setSearch(qParam);
   }, [searchParams]);
   const [sidebarOpen,     setSidebarOpen]     = useState(false);
-  const [search,          setSearch]          = useState("");
+  const [search,          setSearch]          = useState(searchParams.get("q") ?? "");
   const [sortKey,         setSortKey]         = useState<SortKey>("featured");
   const [priceFilters,    setPriceFilters]    = useState<boolean[]>([false,false,false,false]);
   const [brandsVisible,   setBrandsVisible]   = useState(false);

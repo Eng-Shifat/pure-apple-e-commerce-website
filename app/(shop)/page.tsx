@@ -1,6 +1,5 @@
 import HeroSlider from "@/components/shop/HeroSlider";
 import MobileCategoryStrip from "@/components/shop/MobileCategoryStrip";
-import MobileSearchBar from "@/components/shop/MobileSearchBar";
 import MobileCategories from "@/components/shop/MobileCategories";
 import PopularProducts from "@/components/shop/PopularProducts";
 import PromoBanner from "@/components/shop/PromoBanner";
@@ -20,7 +19,6 @@ export default function HomePage() {
   return (
     <main>
       <div className="bg-gray-50 pb-1 md:bg-transparent md:pb-0">
-        <MobileSearchBar />
         <MobileCategoryStrip />
         <HeroSlider />
       </div>
