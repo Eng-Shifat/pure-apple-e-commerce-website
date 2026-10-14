@@ -38,6 +38,7 @@ export async function PUT(
     "is_featured", "is_hot_deal", "is_published",   // ← নতুন
     "category", "condition", "is_available", "stock",
     "product_code", "colors", "storage_variants",
+    "storage_prices", "region_prices", "regions",
     "emi_available", "whatsapp_number",
   ];
 

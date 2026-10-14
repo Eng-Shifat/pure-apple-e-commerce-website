@@ -29,6 +29,9 @@ interface ProductFormProps {
     product_code?: string;
     colors?: string;
     storage_variants?: string;
+    storage_prices?: string;
+    region_prices?: string;
+    regions?: string;
     emi_available?: boolean;
     whatsapp_number?: string;
   };
@@ -92,6 +95,37 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   const [storageVariants,  setStorageVariants]  = useState<string[]>(parseArr(initialData.storage_variants));
   const [colorInput,       setColorInput]       = useState("");
   const [storageInput,     setStorageInput]     = useState("");
+
+  // Storage Prices: { "256GB": 174999, "512GB": 194999 }
+  const [storagePrices, setStoragePrices] = useState<Record<string, string>>(() => {
+    if (!initialData.storage_prices) return {};
+    try { const p = JSON.parse(initialData.storage_prices); return Object.fromEntries(Object.entries(p).map(([k, v]) => [k, String(v)])); }
+    catch { return {}; }
+  });
+
+  // Region list + prices: { "HK": 0, "JP": -2000 }
+  const [regionList,   setRegionList]   = useState<string[]>(
+    initialData.regions ? initialData.regions.split(",").map((r) => r.trim()).filter(Boolean) : []
+  );
+  const [regionPrices, setRegionPrices] = useState<Record<string, string>>(() => {
+    if (!initialData.region_prices) return {};
+    try { const p = JSON.parse(initialData.region_prices); return Object.fromEntries(Object.entries(p).map(([k, v]) => [k, String(v)])); }
+    catch { return {}; }
+  });
+  const [regionInput, setRegionInput] = useState("");
+
+  const REGION_PRESETS = ["HK", "JP", "US", "UK", "SG", "AU", "AE"];
+
+  function addRegion(r: string) {
+    const val = r.trim().toUpperCase();
+    if (!val || regionList.includes(val)) return;
+    setRegionList((prev) => [...prev, val]);
+    setRegionInput("");
+  }
+  function removeRegion(r: string) {
+    setRegionList((prev) => prev.filter((x) => x !== r));
+    setRegionPrices((prev) => { const n = { ...prev }; delete n[r]; return n; });
+  }
 
   const [form, setForm] = useState({
     name:            initialData.name            ?? "",
@@ -185,6 +219,13 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         ...form,
         colors:           colors.length > 0 ? JSON.stringify(colors) : null,
         storage_variants: storageVariants.length > 0 ? JSON.stringify(storageVariants) : null,
+        storage_prices:   Object.keys(storagePrices).length > 0
+          ? JSON.stringify(Object.fromEntries(Object.entries(storagePrices).map(([k, v]) => [k, Number(v)])))
+          : null,
+        region_prices:    Object.keys(regionPrices).length > 0
+          ? JSON.stringify(Object.fromEntries(Object.entries(regionPrices).map(([k, v]) => [k, Number(v)])))
+          : null,
+        regions:          regionList.length > 0 ? regionList.join(",") : null,
       }),
     });
     const data = await res.json();
@@ -297,9 +338,11 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         {colors.length === 0 && <p className="text-xs text-gray-400">No colors added — color selector won't show on product page.</p>}
       </section>
 
-      {/* ── Storage ── */}
+      {/* ── Storage + Pricing ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">💾 Storage Variants</h2>
+        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">💾 Storage Variants & Pricing</h2>
+        <p className="text-xs text-gray-400">প্রতিটা storage এর জন্য আলাদা price set করুন। Storage select করলে product page এ price automatically update হবে।</p>
+
         {/* Presets */}
         <div className="flex flex-wrap gap-2">
           {STORAGE_PRESETS.map((s) => (
@@ -310,23 +353,89 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             >{s}</button>
           ))}
         </div>
+
         {/* Custom input */}
         <div className="flex gap-2">
           <input value={storageInput} onChange={(e) => setStorageInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addStorage(storageInput); }}} placeholder="Custom storage e.g. 3TB…" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           <button type="button" onClick={() => addStorage(storageInput)} className="px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 flex items-center gap-1"><Plus size={14}/> Add</button>
         </div>
-        {/* Selected tags */}
+
+        {/* Storage + Price table */}
         {storageVariants.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-[1fr_1fr_auto] bg-gray-50 border-b border-gray-100 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+              <span>Storage</span>
+              <span>Cash Price (৳)</span>
+              <span></span>
+            </div>
             {storageVariants.map((s) => (
-              <span key={s} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full">
-                {s}
-                <button type="button" onClick={() => removeStorage(s)} className="hover:text-red-500"><X size={11}/></button>
-              </span>
+              <div key={s} className="grid grid-cols-[1fr_1fr_auto] items-center px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                <span className="text-sm font-bold text-gray-800">{s}</span>
+                <input
+                  type="number"
+                  value={storagePrices[s] ?? ""}
+                  onChange={(e) => setStoragePrices((prev) => ({ ...prev, [s]: e.target.value }))}
+                  placeholder="e.g. 174999"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mr-3"
+                />
+                <button type="button" onClick={() => removeStorage(s)} className="text-gray-300 hover:text-red-400 transition-colors ml-2">
+                  <Trash2 size={14}/>
+                </button>
+              </div>
             ))}
           </div>
         )}
         {storageVariants.length === 0 && <p className="text-xs text-gray-400">No storage variants — storage selector won't show on product page.</p>}
+      </section>
+
+      {/* ── Region + Pricing ── */}
+      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">🌍 Region & Price Adjustment</h2>
+        <p className="text-xs text-gray-400">Region select করলে base storage price এর সাথে এই amount যোগ/বিয়োগ হবে। HK সবচেয়ে সস্তা হলে HK = 0, JP একটু কম হলে JP = -2000।</p>
+
+        {/* Region presets */}
+        <div className="flex flex-wrap gap-2">
+          {REGION_PRESETS.map((r) => (
+            <button key={r} type="button"
+              onClick={() => addRegion(r)}
+              disabled={regionList.includes(r)}
+              className={`text-xs px-3 py-1.5 rounded-full border font-bold transition-all ${regionList.includes(r) ? "bg-gray-800 text-white border-gray-800" : "border-gray-200 text-gray-600 hover:border-gray-400"}`}
+            >{r}</button>
+          ))}
+        </div>
+
+        {/* Custom region input */}
+        <div className="flex gap-2">
+          <input value={regionInput} onChange={(e) => setRegionInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRegion(regionInput); }}} placeholder="Custom region e.g. EU…" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+          <button type="button" onClick={() => addRegion(regionInput)} className="px-4 py-2.5 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 flex items-center gap-1"><Plus size={14}/> Add</button>
+        </div>
+
+        {/* Region + Price delta table */}
+        {regionList.length > 0 && (
+          <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-[80px_1fr_auto] bg-gray-50 border-b border-gray-100 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+              <span>Region</span>
+              <span>Price Adjustment (৳) — 0 = base price, -2000 = ২০০০ কম, +5000 = ৫০০০ বেশি</span>
+              <span></span>
+            </div>
+            {regionList.map((r) => (
+              <div key={r} className="grid grid-cols-[80px_1fr_auto] items-center px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                <span className="text-sm font-extrabold text-gray-800">{r}</span>
+                <input
+                  type="number"
+                  value={regionPrices[r] ?? "0"}
+                  onChange={(e) => setRegionPrices((prev) => ({ ...prev, [r]: e.target.value }))}
+                  placeholder="0"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mr-3"
+                />
+                <button type="button" onClick={() => removeRegion(r)} className="text-gray-300 hover:text-red-400 transition-colors ml-2">
+                  <Trash2 size={14}/>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {regionList.length === 0 && <p className="text-xs text-gray-400">No regions added — region selector won't show on product page.</p>}
       </section>
 
       {/* ── Product Image ── */}

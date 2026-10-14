@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
     spec_screen, spec_ram, spec_camera,
     is_featured, category, condition, stock,
     product_code, colors, storage_variants,
+    storage_prices, region_prices, regions,
     emi_available, whatsapp_number,
   } = body;
 
@@ -99,6 +100,9 @@ export async function POST(req: NextRequest) {
     product_code: product_code ?? null,
     colors: colors ?? null,
     storage_variants: storage_variants ?? null,
+    storage_prices:   storage_prices   ?? null,
+    region_prices:    region_prices    ?? null,
+    regions:          regions          ?? null,
     emi_available: emi_available ?? false,
     whatsapp_number: whatsapp_number ?? null,
     created_at: new Date().toISOString(),

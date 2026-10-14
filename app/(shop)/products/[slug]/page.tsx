@@ -107,7 +107,7 @@ function StickyCartBar({
           {/* Price */}
           <div className="shrink-0 text-right hidden sm:block">
             <p className="text-xs text-gray-400">Total</p>
-            <p className="text-sm font-extrabold text-gray-900">৳{(product.price * qty).toLocaleString("en-BD")}</p>
+            <p className="text-sm font-extrabold text-gray-900">৳{(displayPrice * qty).toLocaleString("en-BD")}</p>
           </div>
 
           {/* Added badge */}
@@ -152,6 +152,7 @@ export default function ProductDetailPage() {
   const [activeTab,   setActiveTab]   = useState<"specs"|"description"|"reviews">("specs");
   const [selColor,    setSelColor]    = useState<string>("");
   const [selStorage,  setSelStorage]  = useState<string>("");
+  const [selRegion,   setSelRegion]   = useState<string>("");
   const [catalogPhone, setCatalogPhone] = useState<CatalogPhone | null>(null);
 
   const addItem = useCartStore((s) => s.addItem);
@@ -172,7 +173,8 @@ export default function ProductDetailPage() {
         setProduct(found ?? (fromCatalog ? catalogToProduct(fromCatalog) : null));
         if (fromCatalog) {
           setSelColor(fromCatalog.colors[0].name);
-          setSelStorage(fromCatalog.storage);
+          setSelStorage(fromCatalog.storageVariants?.[0] ?? fromCatalog.storage);
+          setSelRegion(fromCatalog.regions?.[0] ?? "HK");
           setActiveImg(0);
           setRelated(
             PHONES.filter((x) => x.brand === fromCatalog.brand && x.slug !== slug).slice(0, 8).map(catalogToProduct)
@@ -181,8 +183,10 @@ export default function ProductDetailPage() {
         if (found) {
           const colors = parseArr(found.colors);
           const storages = parseArr(found.storage_variants);
+          const regions = found.regions ? found.regions.split(",").map((r) => r.trim()) : [];
           if (colors.length)   setSelColor(colors[0]);
           if (storages.length) setSelStorage(storages[0]);
+          if (regions.length)  setSelRegion(regions[0]);
           if (found.category) {
             fetch(`/api/products?category=${encodeURIComponent(found.category)}&available=true`)
               .then((r) => r.json())
@@ -200,7 +204,8 @@ export default function ProductDetailPage() {
         setCatalogPhone(c);
         setProduct(catalogToProduct(c));
         setSelColor(c.colors[0].name);
-        setSelStorage(c.storage);
+        setSelStorage(c.storageVariants?.[0] ?? c.storage);
+        setSelRegion(c.regions?.[0] ?? "HK");
         setRelated(PHONES.filter((x) => x.brand === c.brand && x.slug !== slug).slice(0, 8).map(catalogToProduct));
       })
       .finally(() => setLoading(false));
@@ -216,8 +221,39 @@ export default function ProductDetailPage() {
     const idx = catalogPhone?.colors.findIndex((c) => c.name === name) ?? -1;
     if (idx >= 0) setActiveImg(idx);
   }
-  const colors         = parseArr(product?.colors);
-  const storageVariants = parseArr(product?.storage_variants);
+  const colors = catalogPhone
+    ? catalogPhone.colors.map((c) => c.name)
+    : parseArr(product?.colors);
+
+  const storageVariants = catalogPhone?.storageVariants
+    ?? (product?.storage_variants ? parseArr(product.storage_variants) : []);
+
+  const regionList: string[] = catalogPhone?.regions
+    ?? (product?.regions ? product.regions.split(",").map((r) => r.trim()) : []);
+
+  // ── Dynamic price based on selected storage + region ──
+  const computedPrice = (() => {
+    if (catalogPhone?.storagePrices) {
+      const base = catalogPhone.storagePrices[selStorage] ?? catalogPhone.price;
+      const delta = catalogPhone.regionPrices?.[selRegion] ?? 0;
+      return base + delta;
+    }
+    if (product?.storage_prices) {
+      try {
+        const sp: Record<string, number> = JSON.parse(product.storage_prices);
+        const base = sp[selStorage] ?? product.price;
+        const rp: Record<string, number> = product.region_prices ? JSON.parse(product.region_prices) : {};
+        const delta = rp[selRegion] ?? 0;
+        return base + delta;
+      } catch { /* fall through */ }
+    }
+    return product?.price ?? 0;
+  })();
+
+  const displayPrice    = computedPrice;
+  const displayOriginal = product?.original_price
+    ? Math.round(product.original_price * (computedPrice / (product.price || 1)))
+    : undefined;
 
   const handleAddToCart = useCallback(() => {
     if (!product) return;
@@ -269,8 +305,8 @@ export default function ProductDetailPage() {
     );
   }
 
-  const discount  = product.original_price ? Math.round(((product.original_price - product.price) / product.original_price) * 100) : null;
-  const savings   = product.original_price ? product.original_price - product.price : null;
+  const discount  = displayOriginal ? Math.round(((displayOriginal - displayPrice) / displayOriginal) * 100) : null;
+  const savings   = displayOriginal ? displayOriginal - displayPrice : null;
   const inStock   = product.is_available !== false;
   const stockCount = product.stock ?? null;
 
@@ -377,10 +413,10 @@ export default function ProductDetailPage() {
             <div className="mt-4 p-4 bg-brand-50 rounded-2xl border border-brand-100">
               <div className="flex items-center gap-2 text-xs text-gray-500 mb-1 font-semibold">Cash Price</div>
               <div className="flex items-end gap-3 flex-wrap">
-                <span className="text-3xl font-extrabold text-gray-900 tracking-tight">৳{product.price.toLocaleString("en-BD")}</span>
-                {product.original_price && (
+                <span className="text-3xl font-extrabold text-gray-900 tracking-tight">৳{displayPrice.toLocaleString("en-BD")}</span>
+                {displayOriginal && (
                   <>
-                    <span className="text-lg line-through text-gray-400">৳{product.original_price.toLocaleString("en-BD")}</span>
+                    <span className="text-lg line-through text-gray-400">৳{displayOriginal.toLocaleString("en-BD")}</span>
                     <span className="text-sm font-bold text-green-700 bg-green-100 px-2.5 py-0.5 rounded-lg">৳{savings?.toLocaleString("en-BD")} OFF</span>
                   </>
                 )}
@@ -412,14 +448,70 @@ export default function ProductDetailPage() {
 
             {/* ── Storage Selector ── */}
             {storageVariants.length > 0 && (
-              <div className="mt-4">
-                <p className="text-sm font-bold text-gray-700 mb-2">Storage:</p>
+              <div className="mt-4 p-3.5 bg-white border border-gray-100 rounded-2xl">
+                <p className="text-sm font-bold text-gray-700 mb-2.5">Storage:</p>
                 <div className="flex flex-wrap gap-2">
-                  {storageVariants.map((s) => (
-                    <button key={s} type="button" onClick={() => setSelStorage(s)}
-                      className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${selStorage===s ? "border-gray-900 text-gray-900 bg-gray-100" : "border-gray-200 text-gray-500 hover:border-gray-400"}`}
-                    >{s}</button>
-                  ))}
+                  {storageVariants.map((s) => {
+                    const sp = catalogPhone?.storagePrices?.[s];
+                    const regionDelta = catalogPhone?.regionPrices?.[selRegion] ?? 0;
+                    const spWithRegion = sp !== undefined ? sp + regionDelta : undefined;
+                    const isSelected = selStorage === s;
+                    return (
+                      <button key={s} type="button" onClick={() => setSelStorage(s)}
+                        className={`flex flex-col items-center px-3.5 py-2.5 rounded-xl border-2 transition-all min-w-[72px]
+                          ${isSelected
+                            ? "border-[#FB5724] bg-orange-50 shadow-[0_2px_8px_rgba(251,87,36,0.15)]"
+                            : "border-gray-200 text-gray-500 hover:border-orange-200 bg-white"
+                          }`}
+                      >
+                        <span className={`text-sm font-extrabold ${isSelected ? "text-[#FB5724]" : "text-gray-700"}`}>{s}</span>
+                        {spWithRegion !== undefined && (
+                          <span className={`text-[10px] font-semibold mt-0.5 ${isSelected ? "text-orange-500" : "text-gray-400"}`}>
+                            ৳{spWithRegion.toLocaleString("en-BD")}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Region Selector ── */}
+            {regionList.length > 0 && (
+              <div className="mt-3 p-3.5 bg-white border border-gray-100 rounded-2xl">
+                <p className="text-sm font-bold text-gray-700 mb-2.5">
+                  Region:
+                  <span className="ml-2 text-[11px] font-normal text-gray-400">প্রতিটি region-এর price আলাদা</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {regionList.map((r) => {
+                    const base = catalogPhone?.storagePrices?.[selStorage] ?? displayPrice;
+                    const delta = catalogPhone?.regionPrices?.[r] ?? 0;
+                    const rp = (() => {
+                      if (product?.region_prices) {
+                        try { const rpr: Record<string, number> = JSON.parse(product.region_prices); return rpr[r] ?? 0; }
+                        catch { return 0; }
+                      }
+                      return delta;
+                    })();
+                    const rPrice = base + rp;
+                    const isSelected = selRegion === r;
+                    return (
+                      <button key={r} type="button" onClick={() => setSelRegion(r)}
+                        className={`flex flex-col items-center px-4 py-2.5 rounded-xl border-2 transition-all min-w-[64px]
+                          ${isSelected
+                            ? "border-gray-800 bg-gray-800 shadow-sm"
+                            : "border-gray-200 bg-white hover:border-gray-400"
+                          }`}
+                      >
+                        <span className={`text-sm font-extrabold ${isSelected ? "text-white" : "text-gray-700"}`}>{r}</span>
+                        <span className={`text-[10px] font-semibold mt-0.5 ${isSelected ? "text-gray-300" : "text-gray-400"}`}>
+                          ৳{rPrice.toLocaleString("en-BD")}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -526,8 +618,8 @@ export default function ProductDetailPage() {
                     { label:"Camera",             value: product.spec_camera || "—" },
                     { label:"Available Colors",   value: colors.length ? colors.join(", ") : "—" },
                     { label:"Storage Options",    value: storageVariants.length ? storageVariants.join(", ") : "—" },
-                    { label:"Price",              value: `৳${product.price.toLocaleString("en-BD")}` },
-                    { label:"Original Price",     value: product.original_price ? `৳${product.original_price.toLocaleString("en-BD")}` : "—" },
+                    { label:"Price",              value: `৳${displayPrice.toLocaleString("en-BD")}` },
+                    { label:"Original Price",     value: displayOriginal ? `৳${displayOriginal.toLocaleString("en-BD")}` : "—" },
                     { label:"Discount",           value: discount ? `${discount}%` : "—" },
                     { label:"EMI",                value: product.emi_available ? "Available" : "Not Available" },
                     { label:"Availability",       value: inStock ? `In Stock${stockCount ? ` (${stockCount} units)` : ""}` : "Out of Stock" },

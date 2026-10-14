@@ -19,8 +19,20 @@ export interface Product {
   is_available?: boolean;
   stock?: number;
   product_code?: string;
-  colors?: string;        // JSON string: ["Black","Burgundy","Glacier","Silver"]
+  colors?: string;           // JSON string: ["Black","Burgundy","Glacier","Silver"]
   storage_variants?: string; // JSON string: ["128GB","256GB","512GB","1TB"]
+  /**
+   * JSON string: { "256GB": 174999, "512GB": 194999, "1TB": 224999 }
+   * Key = storage label, Value = cash price for that storage
+   */
+  storage_prices?: string;
+  /**
+   * JSON string: { "HK": 0, "JP": -5000, "US": 2000 }
+   * Key = region code, Value = price delta (+/-) from base storage price
+   */
+  region_prices?: string;
+  /** comma-separated region codes available: "HK,JP,US" */
+  regions?: string;
   emi_available?: boolean;
   whatsapp_number?: string;
   created_at?: string;
@@ -34,6 +46,7 @@ export interface CartItem {
   product: Product;
   selected_color?: string;
   selected_storage?: string;
+  selected_region?: string;
 }
 
 export interface Order {

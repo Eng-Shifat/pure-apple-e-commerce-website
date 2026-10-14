@@ -15,8 +15,8 @@ export interface CatalogPhone {
   id: string;
   brand: BrandKey;
   name: string;
-  storage: string;
-  price: number;
+  storage: string;          // default/base storage variant
+  price: number;            // base price (matches storagePrices[storage] for default variant)
   originalPrice?: number;
   rating: number;
   reviewCount: number;
@@ -26,6 +26,22 @@ export interface CatalogPhone {
   specs: { screen: string; ram: string; camera: string };
   colors: ColorVariant[];
   gallery?: string[];
+  /** All storage options: ["256GB","512GB","1TB","2TB"] */
+  storageVariants?: string[];
+  /**
+   * Price per storage — key = storage label, value = cash price (BDT)
+   * Apple Gadget price থেকে ~500–1000 কম রাখা হয়েছে
+   * { "256GB": 174999, "512GB": 194999, "1TB": 224999, "2TB": 254999 }
+   */
+  storagePrices?: Record<string, number>;
+  /** Available region codes: ["HK","JP","US","UK"] */
+  regions?: string[];
+  /**
+   * Price delta per region from base storage price
+   * Positive = more expensive, negative = cheaper
+   * { "HK": 0, "JP": -3000, "US": 5000 }
+   */
+  regionPrices?: Record<string, number>;
 }
 
 export type BrandKey =
@@ -71,13 +87,36 @@ export const PHONES: CatalogPhone[] = [
     slug: "iphone-18-pro-max", badge: "New", badgeColor: "#7C3AED",
     specs: { screen: "6.9″", ram: "12GB", camera: "48 MP" },
     colors: [
-      { name: "Sky Blue", hex: "#A9C4DE", image: "/images/Phone/iphone/iPhone 18/iPhone 18 pro max/iPhone_18_Pro_Max.webp" },
+      { name: "Sky Blue",  hex: "#A9C4DE", image: "/images/Phone/iphone/iPhone 18/iPhone 18 pro max/iPhone_18_Pro_Max.webp" },
+      { name: "Black",     hex: "#1c1c1e", image: "/images/Phone/iphone/iPhone 18/iPhone 18 pro max/iPhone_18_Pro_Max.webp" },
+      { name: "Burgundy",  hex: "#6D2B3D", image: "/images/Phone/iphone/iPhone 18/iPhone 18 pro max/iPhone_18_Pro_Max.webp" },
+      { name: "Silver",    hex: "#E8E8E8", image: "/images/Phone/iphone/iPhone 18/iPhone 18 pro max/iPhone_18_Pro_Max.webp" },
     ],
+    // Storage variants — Apple Gadget price থেকে ~500 কম
+    storageVariants: ["256GB", "512GB", "1TB", "2TB"],
+    storagePrices: {
+      "256GB": 174999,  // AG: ~175,500
+      "512GB": 194999,  // AG: ~195,500
+      "1TB":   224999,  // AG: ~225,500
+      "2TB":   254999,  // AG: ~255,500
+    },
+    // Region variants — HK সবচেয়ে সস্তা, US সবচেয়ে দামি
+    regions: ["HK", "JP", "US", "UK"],
+    regionPrices: {
+      "HK":  0,      // base price (cheapest)
+      "JP": -2000,   // JP সামান্য কম
+      "US":  8000,   // US duty বেশি
+      "UK":  6000,   // UK duty
+    },
   },
   {
     id: "a2", brand: "apple", name: "iPhone 17 Pro Max", storage: "256GB",
     price: 154999, originalPrice: 164999, rating: 4.8, reviewCount: 980,
     slug: "iphone-17-pro-max", badge: "Hot", badgeColor: "#FB5724",
+    storageVariants: ["256GB", "512GB", "1TB"],
+    storagePrices: { "256GB": 154999, "512GB": 174999, "1TB": 204999 },
+    regions: ["HK", "JP", "US"],
+    regionPrices: { "HK": 0, "JP": -2000, "US": 7000 },
     specs: { screen: "6.9″", ram: "12GB", camera: "48 MP" },
     colors: [
       { name: "Desert Titanium", hex: "#B79A7C", image: "/images/Phone/iphone/iPhone 17/iPhone 17 pro max/iPhone_17_Pro_Max.webp" },
