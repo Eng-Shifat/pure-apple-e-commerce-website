@@ -75,9 +75,9 @@ function RelatedCard({ p }: { p: Product }) {
 
 // ── Sticky Cart Bar ──
 function StickyCartBar({
-  product, qty, selColor, selStorage, onDismiss,
+  product, qty, selColor, selStorage, price, onDismiss,
 }: {
-  product: Product; qty: number; selColor: string; selStorage: string; onDismiss: () => void;
+  product: Product; qty: number; selColor: string; selStorage: string; price: number; onDismiss: () => void;
 }) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50" style={{ animation: "slideUp 0.25s ease-out" }}>
@@ -107,7 +107,7 @@ function StickyCartBar({
           {/* Price */}
           <div className="shrink-0 text-right hidden sm:block">
             <p className="text-xs text-gray-400">Total</p>
-            <p className="text-sm font-extrabold text-gray-900">৳{(displayPrice * qty).toLocaleString("en-BD")}</p>
+            <p className="text-sm font-extrabold text-gray-900">৳{(price * qty).toLocaleString("en-BD")}</p>
           </div>
 
           {/* Added badge */}
@@ -662,6 +662,7 @@ export default function ProductDetailPage() {
             qty={qty}
             selColor={selColor}
             selStorage={selStorage}
+            price={displayPrice}
             onDismiss={() => setShowCartBar(false)}
           />
         )}
