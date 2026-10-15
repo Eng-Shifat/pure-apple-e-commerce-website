@@ -192,14 +192,14 @@ export default function HeroSlider() {
 
         {/* ═════════ RIGHT (30%): 2 rows — 3D phone (top) + side banner (bottom) ═════════ */}
         {/*
-          MOBILE: side-by-side equal cols (grid-cols-2), each with a fixed square-ish aspect ratio.
-          DESKTOP (lg): single column, 2 equal rows that fill the full height of the left banner.
+          MOBILE: side-by-side equal cols (grid-cols-2), both use aspect-[3/2].
+          DESKTOP (lg): single column, 2 equal rows filling the full height of the left banner.
         */}
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-3 lg:grid-rows-2 min-w-0 lg:h-full">
 
           {/* Row 1 – 3D phone */}
           <div
-            className="relative overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-square lg:aspect-auto"
+            className="relative overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[16/9] lg:aspect-auto"
             style={{
               background: "linear-gradient(145deg, #0d1f06 0%, #0a1503 40%, #1f0e02 100%)",
             }}
@@ -226,7 +226,7 @@ export default function HeroSlider() {
           {/* Row 2 – side banner: changes in sync with main slider */}
           <Link
             href={activeBanner.href}
-            className="group relative block overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-square lg:aspect-auto"
+            className="group relative block overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[16/9] lg:aspect-auto"
             style={{ background: "#f8f4ef" }}
           >
             {SIDE_BANNERS.map((b, i) => (
