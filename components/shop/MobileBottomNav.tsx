@@ -8,8 +8,24 @@ import {
   X, ArrowRight, LogOut, Package, Settings,
   Mail, Lock, Eye, EyeOff, Loader2,
 } from "lucide-react";
+import Image from "next/image";
 import { useAuthStore } from "@/store/authStore";
 import { PHONES } from "@/lib/phoneCatalog";
+
+// ── Category list for the overlay ─────────────────────────────
+const CATEGORIES = [
+  { slug: "iphone",      name: "iPhone",      icon: "/icon/iPhone.png",      brand: "apple"   },
+  { slug: "android",     name: "Android",     icon: "/icon/android.png",     brand: null      },
+  { slug: "charger",     name: "Charger",     icon: "/icon/Charger.png",     brand: null      },
+  { slug: "earbuds",     name: "Ear Buds",    icon: "/icon/ear buds.png",    brand: null      },
+  { slug: "powerbank",   name: "Power Bank",  icon: "/icon/power-bank.png",  brand: null      },
+  { slug: "cables",      name: "Cables",      icon: "/icon/cable.png",       brand: null      },
+  { slug: "speaker",     name: "Speaker",     icon: "/icon/speaker.png",     brand: null      },
+  { slug: "accessories", name: "Accessories", icon: "/icon/accessories.png", brand: null      },
+];
+
+const BRAND_FILTER =
+  "brightness(0) saturate(100%) invert(42%) sepia(97%) saturate(631%) hue-rotate(342deg) brightness(98%) contrast(97%)";
 
 // ── Product search data (name + slug for instant suggestions) ──────────────
 const SEARCH_CATALOG = PHONES.map((p) => ({
@@ -34,8 +50,10 @@ export default function MobileBottomNav() {
   const logout     = useAuthStore((s) => s.logout);
 
   // Overlay states
-  const [searchOpen,  setSearchOpen]  = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
+  const [searchOpen,     setSearchOpen]     = useState(false);
+  const [accountOpen,    setAccountOpen]    = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [catsVisible,    setCatsVisible]    = useState(false); // animation trigger
 
   // Search state
   const [query, setQuery] = useState("");
@@ -61,7 +79,7 @@ export default function MobileBottomNav() {
   // ── ESC key closes any overlay ───────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { closeSearch(); closeAccount(); }
+      if (e.key === "Escape") { closeSearch(); closeAccount(); closeCategories(); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -69,6 +87,16 @@ export default function MobileBottomNav() {
 
   function closeSearch()  { setSearchOpen(false);  setQuery(""); }
   function closeAccount() { setAccountOpen(false); setLoginError(""); }
+
+  function openCategories() {
+    setCategoriesOpen(true);
+    // Small delay so the DOM mounts first, then trigger the animation
+    setTimeout(() => setCatsVisible(true), 20);
+  }
+  function closeCategories() {
+    setCatsVisible(false);
+    setTimeout(() => setCategoriesOpen(false), 300);
+  }
 
   // ── Search submit → /products?q=... ─────────────────────────────────────
   function handleSearchSubmit(e: React.FormEvent) {
@@ -119,8 +147,7 @@ export default function MobileBottomNav() {
 
   // ── Nav items ─────────────────────────────────────────────────────────────
   const LEFT_ITEMS = [
-    { label: "Home",       href: "/",                         icon: Home,       match: (p: string) => p === "/" },
-    { label: "Categories", href: "/products?view=categories", icon: LayoutGrid, match: (p: string) => p.startsWith("/products") && !p.includes("/products/") },
+    { label: "Home", href: "/", icon: Home, match: (p: string) => p === "/" },
   ];
   const RIGHT_ITEMS = [
     { label: "Cart",    href: "/cart", icon: ShoppingCart, match: (p: string) => p.startsWith("/cart") || p.startsWith("/checkout") },
@@ -412,6 +439,89 @@ export default function MobileBottomNav() {
       )}
 
       {/* ════════════════════════════════════════════
+          CATEGORIES OVERLAY
+      ════════════════════════════════════════════ */}
+      {categoriesOpen && (
+        <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end">
+          {/* Backdrop */}
+          <div
+            className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${catsVisible ? "opacity-100" : "opacity-0"}`}
+            onClick={closeCategories}
+          />
+
+          {/* Panel */}
+          <div
+            className={`relative bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out ${catsVisible ? "translate-y-0" : "translate-y-full"}`}
+            style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+          >
+            {/* Handle */}
+            <div className="mx-auto w-10 h-1 rounded-full bg-gray-200 mt-3 mb-4" />
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 mb-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-500 mb-0.5">Browse</p>
+                <h2 className="text-[18px] font-extrabold tracking-tight text-gray-900">Shop by Category</h2>
+              </div>
+              <button
+                onClick={closeCategories}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Category Grid — cards fly up with staggered animation */}
+            <div className="grid grid-cols-4 gap-3 px-4">
+              {CATEGORIES.map((cat, i) => {
+                const href = cat.brand
+                  ? `/products?brand=${cat.brand}`
+                  : `/category/${cat.slug}`;
+                return (
+                  <Link
+                    key={cat.slug}
+                    href={href}
+                    onClick={closeCategories}
+                    className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-brand-100 bg-gradient-to-b from-white to-orange-50 py-4 px-1 shadow-sm active:scale-95 transition-all duration-200 hover:border-brand-300 hover:shadow-md"
+                    style={{
+                      opacity: catsVisible ? 1 : 0,
+                      transform: catsVisible ? "translateY(0)" : "translateY(24px)",
+                      transition: `opacity 0.3s ease ${i * 40}ms, transform 0.3s ease ${i * 40}ms`,
+                    }}
+                  >
+                    <span className="w-8 h-8 flex items-center justify-center">
+                      <Image
+                        src={cat.icon}
+                        alt={cat.name}
+                        width={28}
+                        height={28}
+                        className="object-contain"
+                        style={{ filter: BRAND_FILTER }}
+                      />
+                    </span>
+                    <span className="text-[10px] font-bold text-center leading-tight text-gray-800">
+                      {cat.name}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* View All link */}
+            <div className="px-4 mt-4">
+              <Link
+                href="/products"
+                onClick={closeCategories}
+                className="flex items-center justify-center gap-1.5 w-full py-3 rounded-2xl border border-brand-200 text-brand-500 text-sm font-semibold hover:bg-brand-50 transition-colors"
+              >
+                View All Products <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════
           BOTTOM NAV BAR
       ════════════════════════════════════════════ */}
       <nav
@@ -448,6 +558,27 @@ export default function MobileBottomNav() {
               </li>
             );
           })}
+
+          {/* Categories button */}
+          <li className="flex-1">
+            <button
+              onClick={openCategories}
+              className="relative flex flex-col items-center justify-center gap-0.5 py-2 w-full active:scale-90 transition-transform duration-150"
+            >
+              {categoriesOpen && <span className="absolute inset-x-1 inset-y-0.5 rounded-2xl bg-brand-500/10" />}
+              <span className="relative">
+                <LayoutGrid
+                  size={21}
+                  strokeWidth={categoriesOpen ? 2.3 : 1.7}
+                  className={`transition-all duration-300 ${categoriesOpen ? "text-brand-500 -translate-y-px" : "text-gray-400"}`}
+                />
+                {categoriesOpen && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-500" />}
+              </span>
+              <span className={`relative text-[10px] font-medium tracking-wide transition-colors duration-300 ${categoriesOpen ? "text-brand-500 font-semibold" : "text-gray-400"}`}>
+                Categories
+              </span>
+            </button>
+          </li>
 
           {/* ── Center Search button ── */}
           <li className="flex-none px-2">

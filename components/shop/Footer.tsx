@@ -61,31 +61,6 @@ export default function Footer() {
   return (
     <footer className="bg-dark-hero text-white">
 
-      {/* ── Newsletter Banner ─────────────────────────────────── */}
-      <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <p className="text-white font-bold text-base">
-                অফার মিস করতে চান না? 🔥
-              </p>
-              <p className="text-gray-400 text-xs mt-0.5">
-                সাবস্ক্রাইব করুন — exclusive deals সবার আগে পাবেন।
-              </p>
-            </div>
-            <div className="flex w-full sm:w-auto gap-2">
-              <input
-                type="email"
-                placeholder="আপনার email লিখুন..."
-                className="flex-1 sm:w-64 bg-white/10 border border-white/15 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-[#FB5724]/60 transition-colors"
-              />
-              <button className="shrink-0 bg-[#FB5724] hover:bg-[#e84e1f] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all duration-200 hover:shadow-[0_4px_14px_rgba(251,87,36,0.4)] flex items-center gap-1.5">
-                Subscribe <ArrowRight size={13} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* ── Main Grid ─────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-10 pb-0">
@@ -263,19 +238,16 @@ export default function Footer() {
         </div>
 
         {/* ── Bottom Bar ─────────────────────────────────────── */}
-        <div className="py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-gray-500 text-[11px]">
-            © 2026 Pure Apple. All rights reserved.
-          </p>
-
-          <div className="flex items-center gap-3">
+        <div className="py-5 flex flex-col items-center gap-3 text-center">
+          {/* Links row */}
+          <div className="flex items-center gap-4">
             <Link
               href="/privacy"
               className="text-gray-500 text-[11px] hover:text-[#FB5724] transition-colors"
             >
               Privacy Policy
             </Link>
-            <span className="text-white/10">|</span>
+            <span className="w-px h-3 bg-white/15 inline-block" />
             <Link
               href="/terms"
               className="text-gray-500 text-[11px] hover:text-[#FB5724] transition-colors"
@@ -284,8 +256,12 @@ export default function Footer() {
             </Link>
           </div>
 
+          {/* Divider */}
+          <div className="w-full h-px bg-white/5" />
+
+          {/* Copyright + credit */}
           <p className="text-gray-600 text-[10px]">
-            Developed by{" "}
+            © 2026 Pure Apple. All rights reserved. | Developed by{" "}
             <span className="text-[#FB5724] font-bold tracking-wide">FDIT</span>
           </p>
         </div>
