@@ -522,7 +522,10 @@ export default function Navbar() {
                 <button type="submit" aria-label="Search" className="text-gray-400 hover:text-brand-500"><Search size={16} /></button>
               </form>
 
-              <Link href="/wishlist" className="relative hidden md:flex p-2 rounded-lg text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
+
+
+              {/* Wishlist — visible on mobile too */}
+              <Link href="/wishlist" className="relative flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-white/60 md:bg-transparent text-gray-700 md:text-gray-800 hover:text-brand-600 hover:bg-brand-50 transition-colors">
                 <Heart size={18} />
                 {wishCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">

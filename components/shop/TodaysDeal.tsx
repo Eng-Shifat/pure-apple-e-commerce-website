@@ -178,7 +178,7 @@ function DealCard({ deal }: { deal: DealProduct }) {
           )}
 
           {/* Product image */}
-          <Link href={`/products/${deal.slug}#deal`} className="group relative z-0">
+          <Link href="/todays-deal" className="group relative z-0">
             <Image
               src={deal.image}
               alt={deal.name}
@@ -214,7 +214,7 @@ function DealCard({ deal }: { deal: DealProduct }) {
 
           {/* Name */}
           <Link
-            href={`/products/${deal.slug}#deal`}
+            href="/todays-deal"
             className="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight hover:text-orange-600 transition-colors"
           >
             {deal.name}
@@ -275,7 +275,7 @@ function DealCard({ deal }: { deal: DealProduct }) {
               {added ? "Added ✓" : "Add to Cart"}
             </button>
             <Link
-              href={`/products/${deal.slug}#deal`}
+              href="/todays-deal"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm bg-white border border-gray-200 text-gray-700 hover:border-orange-300 hover:text-orange-600 transition-all"
             >
               View Details
@@ -358,10 +358,10 @@ export default function TodaysDeal() {
             </p>
           </div>
           <Link
-            href={`/products/${deal.slug}#deal`}
+            href="/todays-deal"
             className="text-brand-600 text-sm font-medium hover:underline flex items-center gap-1 whitespace-nowrap"
           >
-            View Product →
+            View All Deals →
           </Link>
         </div>
 
