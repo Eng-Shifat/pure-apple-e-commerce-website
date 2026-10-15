@@ -507,16 +507,7 @@ export default function MobileBottomNav() {
               })}
             </div>
 
-            {/* View All link */}
-            <div className="px-4 mt-4">
-              <Link
-                href="/products"
-                onClick={closeCategories}
-                className="flex items-center justify-center gap-1.5 w-full py-3 rounded-2xl border border-brand-200 text-brand-500 text-sm font-semibold hover:bg-brand-50 transition-colors"
-              >
-                View All Products <ArrowRight size={14} />
-              </Link>
-            </div>
+
           </div>
         </div>
       )}
@@ -526,7 +517,7 @@ export default function MobileBottomNav() {
       ════════════════════════════════════════════ */}
       <nav
         className="md:hidden fixed inset-x-0 bottom-0 z-50"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        style={{ paddingBottom: "env(safe-area-inset-bottom)", touchAction: "manipulation" }}
       >
         <div className="absolute inset-0 bg-white/85 backdrop-blur-2xl border-t border-gray-200/80 shadow-[0_-4px_24px_rgba(0,0,0,0.09)]" />
 
