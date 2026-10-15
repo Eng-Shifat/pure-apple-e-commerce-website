@@ -9,7 +9,7 @@ import { useState } from "react";
 
 export default function WishlistPage() {
   const { items, removeItem, clear } = useWishlistStore();
-  const { addItem } = useCartStore() as ReturnType<typeof useCartStore>;
+  const { addItem } = useCartStore();
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
   function handleAddToCart(product: (typeof items)[0]) {

@@ -26,6 +26,14 @@ export interface CatalogPhone {
   specs: { screen: string; ram: string; camera: string };
   colors: ColorVariant[];
   gallery?: string[];
+  /** Multiple storage options e.g. ["128GB","256GB","512GB"] */
+  storageVariants?: string[];
+  /** Region options e.g. ["HK","JP","BD"] */
+  regions?: string[];
+  /** Price per storage variant e.g. { "128GB": 149999, "256GB": 169999 } */
+  storagePrices?: Record<string, number>;
+  /** Price delta per region e.g. { "JP": 5000, "BD": 0 } */
+  regionPrices?: Record<string, number>;
 }
 
 export type BrandKey =
