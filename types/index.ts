@@ -37,6 +37,9 @@ export interface Product {
   whatsapp_number?: string;
   created_at?: string;
   updated_at?: string;
+  is_today_deal?: boolean;
+  deal_price?: number;
+  deal_ends_at?: string | null;
 }
 
 export interface CartItem {

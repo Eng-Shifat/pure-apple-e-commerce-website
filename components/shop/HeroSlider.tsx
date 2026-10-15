@@ -36,8 +36,6 @@ const slides = [
 ];
 
 // ── Side Banners (cycle in the single bottom-right slot) ────────
-// Add more banners here — they change in sync with the main slider (one per slide).
-// Each banner needs: src (public/images/hero/), href, alt.
 const SIDE_BANNERS = [
   {
     src: "/images/hero/side-banner.webp",
@@ -58,8 +56,6 @@ export default function HeroSlider() {
   const [current,   setCurrent]   = useState(0);
   const [animating, setAnimating] = useState(false);
 
-  // Side banner index is always derived from the main slide index,
-  // so both change at exactly the same moment.
   const bannerIdx = current % SIDE_BANNERS.length;
 
   const nextAt = useRef(Date.now() + AUTO_MS);
@@ -134,7 +130,6 @@ export default function HeroSlider() {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-4 pb-1">
-      {/* Exact same grid as before: banner 70% left + right column 30% with 2 rows */}
       <div className="grid gap-2 lg:grid-cols-[7fr_3fr] lg:gap-3">
 
         {/* ═════════ LEFT (70%): main banner ═════════ */}
@@ -196,12 +191,15 @@ export default function HeroSlider() {
         {/* ═════════ end LEFT ═════════ */}
 
         {/* ═════════ RIGHT (30%): 2 rows — 3D phone (top) + side banner (bottom) ═════════ */}
-        {/* LAYOUT UNCHANGED from original — only the bottom banner now cycles */}
+        {/*
+          MOBILE: side-by-side equal cols (grid-cols-2), each with a fixed square-ish aspect ratio.
+          DESKTOP (lg): single column, 2 equal rows that fill the full height of the left banner.
+        */}
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-3 lg:grid-rows-2 min-w-0 lg:h-full">
 
-          {/* Row 1 – 3D phone (unchanged) */}
+          {/* Row 1 – 3D phone */}
           <div
-            className="relative overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
+            className="relative overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-square lg:aspect-auto"
             style={{
               background: "linear-gradient(145deg, #0d1f06 0%, #0a1503 40%, #1f0e02 100%)",
             }}
@@ -228,7 +226,7 @@ export default function HeroSlider() {
           {/* Row 2 – side banner: changes in sync with main slider */}
           <Link
             href={activeBanner.href}
-            className="group relative block overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
+            className="group relative block overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-square lg:aspect-auto"
             style={{ background: "#f8f4ef" }}
           >
             {SIDE_BANNERS.map((b, i) => (
@@ -239,7 +237,7 @@ export default function HeroSlider() {
                 fill
                 quality={90}
                 sizes="(min-width: 1280px) 360px, (min-width: 1024px) 30vw, 50vw"
-                className={`object-cover transition-all duration-700 ease-in-out group-hover:scale-[1.03] ${
+                className={`object-cover object-center transition-all duration-700 ease-in-out group-hover:scale-[1.03] ${
                   i === bannerIdx % SIDE_BANNERS.length ? "opacity-100" : "opacity-0"
                 }`}
               />

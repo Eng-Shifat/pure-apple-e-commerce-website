@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
   ShoppingCart, Zap, Heart, ChevronRight,
   Shield, RefreshCw, Truck, BadgeCheck, Minus, Plus,
-  Share2, Check, ChevronLeft, Package, Tag, MessageCircle, CreditCard, X,
+  Share2, Check, ChevronLeft, Package, Tag, MessageCircle, CreditCard, X, Timer,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import type { Product } from "@/types";
@@ -126,6 +126,104 @@ function StickyCartBar({
   );
 }
 
+// ── Deal Banner shown on product page when product is today's deal ──────────
+function useDealCountdown(endsAt: string | null) {
+  const calc = () => {
+    if (!endsAt) return null;
+    const diff = new Date(endsAt).getTime() - Date.now();
+    if (diff <= 0) return { h: 0, m: 0, s: 0, expired: true };
+    const totalSec = Math.floor(diff / 1000);
+    return { h: Math.floor(totalSec / 3600), m: Math.floor((totalSec % 3600) / 60), s: totalSec % 60, expired: false };
+  };
+  const [time, setTime] = useState(calc);
+  useEffect(() => {
+    if (!endsAt) return;
+    const id = setInterval(() => setTime(calc()), 1000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endsAt]);
+  return time;
+}
+function padN(n: number) { return String(n).padStart(2, "0"); }
+
+function DealBanner({ id, dealPrice, regularPrice, dealEndsAt }: {
+  id?: string;
+  dealPrice: number;
+  regularPrice: number;
+  dealEndsAt: string | null;
+}) {
+  const time = useDealCountdown(dealEndsAt);
+  const discount = regularPrice > dealPrice
+    ? Math.round(((regularPrice - dealPrice) / regularPrice) * 100)
+    : null;
+
+  return (
+    <div
+      id={id}
+      className="mb-7 rounded-2xl overflow-hidden border border-orange-200 shadow-sm"
+      style={{ background: "linear-gradient(135deg, #fff4ec 0%, #fffdf5 100%)" }}
+    >
+      <div className="flex flex-wrap items-center gap-4 px-5 py-4">
+        {/* Flash icon + label */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-orange-500 shadow-md shadow-orange-200">
+            <Zap size={18} className="text-white fill-white" />
+          </span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-orange-500 leading-none">Flash Offer</p>
+            <p className="text-sm font-extrabold text-gray-900 leading-tight">Today&apos;s Deal</p>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="hidden sm:block w-px h-10 bg-orange-200" />
+
+        {/* Price block */}
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="text-2xl font-extrabold text-orange-500">৳{dealPrice.toLocaleString("en-BD")}</span>
+          {regularPrice > dealPrice && (
+            <span className="text-sm text-gray-400 line-through">৳{regularPrice.toLocaleString("en-BD")}</span>
+          )}
+          {discount && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+              <Tag size={10} /> Save {discount}%
+            </span>
+          )}
+        </div>
+
+        {/* Timer */}
+        {dealEndsAt && time && !time.expired && (
+          <>
+            <div className="hidden sm:block w-px h-10 bg-orange-200" />
+            <div className="flex items-center gap-1.5">
+              <Timer size={13} className="text-orange-500 shrink-0" />
+              <span className="text-[11px] font-semibold text-gray-500">Ends in</span>
+              {[padN(time.h), padN(time.m), padN(time.s)].map((u, i) => (
+                <span key={i} className="flex items-center gap-0.5">
+                  <span className="inline-flex items-center justify-center w-8 h-7 rounded-lg bg-gray-900 text-white font-mono text-xs font-extrabold shadow-sm">{u}</span>
+                  {i < 2 && <span className="text-gray-500 font-bold text-xs">:</span>}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+
+        {dealEndsAt && time?.expired && (
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full ml-auto">
+            <Timer size={12} /> Deal Ended
+          </span>
+        )}
+
+        {/* Right label */}
+        <div className="ml-auto shrink-0 hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-orange-600 bg-orange-100 border border-orange-200 px-3 py-1.5 rounded-full">
+          <Zap size={11} className="fill-orange-500 text-orange-500" />
+          This product is part of today&apos;s special deal
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN PAGE ────────────────────────────────────────────
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -144,6 +242,7 @@ export default function ProductDetailPage() {
   const [selStorage,  setSelStorage]  = useState<string>("");
   const [selRegion,   setSelRegion]   = useState<string>("");
   const [catalogPhone, setCatalogPhone] = useState<CatalogPhone | null>(null);
+  const [dealInfo, setDealInfo] = useState<{ deal_price: number; deal_ends_at: string | null } | null>(null);
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -170,6 +269,11 @@ export default function ProductDetailPage() {
             PHONES.filter((x) => x.brand === fromCatalog.brand && x.slug !== slug).slice(0, 8).map(catalogToProduct)
           );
         }
+        // Check if this product is a today's deal
+        if (found?.is_today_deal && found.deal_price) {
+          setDealInfo({ deal_price: found.deal_price, deal_ends_at: found.deal_ends_at ?? null });
+        }
+
         if (found) {
           const colors = parseArr(found.colors);
           const storages = parseArr(found.storage_variants);
@@ -336,6 +440,16 @@ export default function ProductDetailPage() {
           <ChevronRight size={12}/>
           <span className="text-gray-700 font-medium line-clamp-1">{product.name}</span>
         </nav>
+
+        {/* ── Today's Deal Banner ── */}
+        {dealInfo && (
+          <DealBanner
+            id="deal"
+            dealPrice={dealInfo.deal_price}
+            regularPrice={product?.price ?? 0}
+            dealEndsAt={dealInfo.deal_ends_at}
+          />
+        )}
 
         {/* ── Main Grid ── */}
         <div className="grid md:grid-cols-2 gap-8 lg:gap-14 items-start">
