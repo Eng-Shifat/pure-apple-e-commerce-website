@@ -4,6 +4,7 @@ import PopularProducts from "@/components/shop/PopularProducts";
 import PromoBanner from "@/components/shop/PromoBanner";
 import ShopByBrand from "@/components/shop/ShopByBrand";
 import BestDeals from "@/components/shop/BestDeals";
+import TodaysDeal from "@/components/shop/TodaysDeal";
 import PhoneSeriesSection from "@/components/shop/PhoneSeriesSection";
 import Link from "next/link";
 import Image from "next/image";
@@ -25,6 +26,9 @@ export default function HomePage() {
       <PopularProducts />
       <PromoBanner />
       <PhoneSeriesSection />
+
+      {/* ── Today's Deal ── (shows only when admin has set an active deal) */}
+      <TodaysDeal />
 
       {/* ── Best Deals Banner ── */}
       <section className="bg-gray-50 px-4 sm:px-6 lg:px-8 pb-2">

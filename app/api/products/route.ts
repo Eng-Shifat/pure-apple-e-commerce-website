@@ -38,15 +38,16 @@ export async function GET(req: NextRequest) {
   const supabase = getSupabase();
   const { searchParams } = new URL(req.url);
 
-  const featured   = searchParams.get("featured");
-  const category   = searchParams.get("category");
-  const condition  = searchParams.get("condition");
-  const deals      = searchParams.get("deals");
-  const badge      = searchParams.get("badge");      // exact badge value
-  const q          = searchParams.get("q");
-  const available  = searchParams.get("available");
-  const slug       = searchParams.get("slug");
-  const limit      = searchParams.get("limit");
+  const featured    = searchParams.get("featured");
+  const category    = searchParams.get("category");
+  const condition   = searchParams.get("condition");
+  const deals       = searchParams.get("deals");
+  const badge       = searchParams.get("badge");
+  const q           = searchParams.get("q");
+  const available   = searchParams.get("available");
+  const slug        = searchParams.get("slug");
+  const limit       = searchParams.get("limit");
+  const today_deal  = searchParams.get("today_deal"); // NEW: today's deal filter
 
   let query = supabase
     .from("products")
@@ -56,13 +57,19 @@ export async function GET(req: NextRequest) {
   if (featured === "true")  query = query.eq("is_featured", true);
   if (category)             query = query.eq("category", category);
   if (condition)            query = query.eq("condition", condition);
-  // deals=true → any product that has a badge (admin-tagged deals)
   if (deals === "true")     query = query.not("badge", "is", null).neq("badge", "");
   if (badge)                query = query.eq("badge", badge);
   if (available === "true") query = query.eq("is_available", true);
   if (q)                    query = query.ilike("name", `%${q}%`);
   if (slug)                 query = query.eq("slug", slug);
   if (limit)                query = query.limit(Number(limit));
+
+  // today_deal=true → is_today_deal active AND (deal_ends_at is null OR deal_ends_at > now)
+  if (today_deal === "true") {
+    query = query
+      .eq("is_today_deal", true)
+      .or("deal_ends_at.is.null,deal_ends_at.gt." + new Date().toISOString());
+  }
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -83,6 +90,8 @@ export async function POST(req: NextRequest) {
     product_code, colors, storage_variants,
     storage_prices, region_prices, regions,
     emi_available, whatsapp_number,
+    // Today's deal fields
+    is_today_deal, deal_price, deal_ends_at,
   } = body;
 
   if (!name || !price || !slug || !image) {
@@ -110,6 +119,10 @@ export async function POST(req: NextRequest) {
     regions:          regions          ?? null,
     emi_available: emi_available ?? false,
     whatsapp_number: whatsapp_number ?? null,
+    // Today's deal
+    is_today_deal: is_today_deal ?? false,
+    deal_price:    deal_price ? Number(deal_price) : null,
+    deal_ends_at:  deal_ends_at ?? null,
     created_at: new Date().toISOString(),
   }]).select().single();
 

@@ -7,15 +7,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import PhoneModelLazy from "./PhoneModelLazy";
 
-// ── Models (put the .glb files in public/models/) ──────────────
+// ── Models ──────────────────────────────────────────────────────
 const MODEL_A = "/models/apple-iphone-duo.glb";
 const MODEL_B = "/models/iphone.glb";
 
-// ── Slides ─────────────────────────────────────────────────────
-// Each slide = one banner (left, 70%) + one 3D model (right column, top row).
-// (cardBadge / cardPrice… are no longer shown in the 3D box – only cardName is used, for alt text & the page <h1>.)
-// Banners live in public/images/hero/ (size 1808 × 870 px works best).
-// To add a slide: copy one block, change the banner / model / card text.
+// ── Main Slides ─────────────────────────────────────────────────
 const slides = [
   {
     id: 1,
@@ -39,25 +35,35 @@ const slides = [
   },
 ];
 
-// Banner in the right column, under the 3D phone.
-// To change it: replace public/images/hero/side-banner.webp (16:9, e.g. 1200 × 675 px) and edit href/alt below.
-const SIDE_BANNER = {
-  src: "/images/hero/side-banner.webp",
-  href: "/products?deals=true",
-  alt: "Special offers – Pure Apple Mobile & Gadget Shop",
-};
+// ── Side Banners (cycle in the single bottom-right slot) ────────
+// Add more banners here — they change in sync with the main slider (one per slide).
+// Each banner needs: src (public/images/hero/), href, alt.
+const SIDE_BANNERS = [
+  {
+    src: "/images/hero/side-banner.webp",
+    href: "/products?deals=true",
+    alt: "Special offers – Pure Apple Mobile & Gadget Shop",
+  },
+  {
+    src: "/images/hero/side-banner-2.webp",
+    href: "/#todays-deal",
+    alt: "Hot Deal – Pure Apple Mobile & Gadget Shop",
+  },
+];
 
-const AUTO_MS = 6000; // normal time between slides
-const RESUME_MS = 2000; // after the 3D phone is released / un-hovered: wait this long, then change slide
+const AUTO_MS   = 6000;
+const RESUME_MS = 2000;
 
 export default function HeroSlider() {
-  const [current, setCurrent] = useState(0);
+  const [current,   setCurrent]   = useState(0);
   const [animating, setAnimating] = useState(false);
 
-  // Auto-slide is paused while the 3D phone is touched (finger down) or hovered (mouse).
-  // When it is let go, the slide changes after RESUME_MS of no interaction.
+  // Side banner index is always derived from the main slide index,
+  // so both change at exactly the same moment.
+  const bannerIdx = current % SIDE_BANNERS.length;
+
   const nextAt = useRef(Date.now() + AUTO_MS);
-  const holds = useRef({ pointers: new Set<number>(), hover: false, last: 0 });
+  const holds  = useRef({ pointers: new Set<number>(), hover: false, last: 0 });
 
   const goTo = (index: number) => {
     if (animating) return;
@@ -70,9 +76,8 @@ export default function HeroSlider() {
   useEffect(() => {
     const timer = setInterval(() => {
       const h = holds.current;
-      // safety: a finger that never reported "up" must not freeze the slider forever
       if (h.pointers.size && Date.now() - h.last > 10000) h.pointers.clear();
-      if (h.pointers.size > 0 || h.hover) return; // being touched / hovered → stay on this slide
+      if (h.pointers.size > 0 || h.hover) return;
       if (Date.now() >= nextAt.current) {
         setCurrent((prev) => (prev + 1) % slides.length);
         nextAt.current = Date.now() + AUTO_MS;
@@ -86,40 +91,19 @@ export default function HeroSlider() {
     if (h.pointers.size === 0 && !h.hover) nextAt.current = Date.now() + RESUME_MS;
   };
   const hold3d = {
-    onPointerDown: (e: React.PointerEvent) => {
-      holds.current.pointers.add(e.pointerId);
-      holds.current.last = Date.now();
-    },
-    onPointerMove: () => {
-      holds.current.last = Date.now();
-    },
-    onPointerUp: (e: React.PointerEvent) => {
-      holds.current.pointers.delete(e.pointerId);
-      released();
-    },
-    onPointerCancel: (e: React.PointerEvent) => {
-      holds.current.pointers.delete(e.pointerId);
-      released();
-    },
-    onPointerEnter: (e: React.PointerEvent) => {
-      if (e.pointerType === "mouse") holds.current.hover = true;
-    },
-    onPointerLeave: (e: React.PointerEvent) => {
-      if (e.pointerType === "mouse") {
-        holds.current.hover = false;
-        released();
-      }
-    },
+    onPointerDown:  (e: React.PointerEvent) => { holds.current.pointers.add(e.pointerId); holds.current.last = Date.now(); },
+    onPointerMove:  ()                       => { holds.current.last = Date.now(); },
+    onPointerUp:    (e: React.PointerEvent) => { holds.current.pointers.delete(e.pointerId); released(); },
+    onPointerCancel:(e: React.PointerEvent) => { holds.current.pointers.delete(e.pointerId); released(); },
+    onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType === "mouse") holds.current.hover = true; },
+    onPointerLeave: (e: React.PointerEvent) => { if (e.pointerType === "mouse") { holds.current.hover = false; released(); } },
   };
 
   const slide = slides[current];
 
-  // Touch swipe to change slides (ignored on the 3D phone, which has its own drag)
   const touchStart = useRef<number | null>(null);
   const onTouchStart = (e: React.TouchEvent) => {
-    touchStart.current = (e.target as HTMLElement).closest("[data-no-swipe]")
-      ? null
-      : e.touches[0].clientX;
+    touchStart.current = (e.target as HTMLElement).closest("[data-no-swipe]") ? null : e.touches[0].clientX;
   };
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStart.current === null) return;
@@ -129,7 +113,6 @@ export default function HeroSlider() {
     goTo(dx < 0 ? (current + 1) % slides.length : (current - 1 + slides.length) % slides.length);
   };
 
-  // The two call-to-action buttons (used on the banner for desktop, under it on mobile)
   const cta = (extra: string) => (
     <div className={`gap-3 ${extra}`}>
       <Link
@@ -147,14 +130,14 @@ export default function HeroSlider() {
     </div>
   );
 
+  const activeBanner = SIDE_BANNERS[bannerIdx % SIDE_BANNERS.length];
+
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-4 pb-1">
-      {/* Hero = 2 columns on desktop: banner 70% (left) + right column 30% split in 2 rows:
-          3D phone (top) and a second banner (bottom). Total height = the left banner's height.
-          Mobile: left banner (full width, top) + 2-column grid below (3D phone | side banner). */}
+      {/* Exact same grid as before: banner 70% left + right column 30% with 2 rows */}
       <div className="grid gap-2 lg:grid-cols-[7fr_3fr] lg:gap-3">
 
-        {/* ═════════ LEFT (70%): banner card ═════════ */}
+        {/* ═════════ LEFT (70%): main banner ═════════ */}
         <div
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
@@ -162,7 +145,6 @@ export default function HeroSlider() {
         >
           <h1 className="sr-only">{slide.cardName} – Pure Apple Mobile &amp; Gadget Shop</h1>
 
-          {/* The banner keeps its own shape (no cropping); on small laptops it may trim a little from the sides */}
           <div className="relative w-full aspect-[1808/870] lg:min-h-[420px]">
             {slides.map((s, i) => (
               <Image
@@ -180,10 +162,8 @@ export default function HeroSlider() {
               />
             ))}
 
-            {/* Buttons on top of the banner (desktop) */}
             {cta("hidden lg:flex absolute z-10 left-[6.5%] bottom-[27%]")}
 
-            {/* Prev / Next */}
             <button
               aria-label="Previous slide"
               onClick={() => goTo((current - 1 + slides.length) % slides.length)}
@@ -199,7 +179,6 @@ export default function HeroSlider() {
               <ChevronRight size={16} />
             </button>
 
-            {/* Dots */}
             <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-2 z-20">
               {slides.map((_, i) => (
                 <button
@@ -212,23 +191,21 @@ export default function HeroSlider() {
             </div>
           </div>
 
-          {/* Buttons under the banner (tablet only; hidden on phones) */}
           {cta("hidden sm:flex lg:hidden p-3 pt-2")}
         </div>
         {/* ═════════ end LEFT ═════════ */}
 
-        {/* ═════════ RIGHT (30% on desktop): 2 rows → 3D phone (top) + banner (bottom) ═════════ */}
-        {/* Mobile: 2-column grid side by side; Desktop: stacked 2 rows inside the right column */}
+        {/* ═════════ RIGHT (30%): 2 rows — 3D phone (top) + side banner (bottom) ═════════ */}
+        {/* LAYOUT UNCHANGED from original — only the bottom banner now cycles */}
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-3 lg:grid-rows-2 min-w-0 lg:h-full">
 
-          {/* Row 1 – 3D phone. bg matches the orange-green hero palette: dark base + warm glow */}
+          {/* Row 1 – 3D phone (unchanged) */}
           <div
             className="relative overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
             style={{
               background: "linear-gradient(145deg, #0d1f06 0%, #0a1503 40%, #1f0e02 100%)",
             }}
           >
-            {/* Strong orange glow — bottom right */}
             <div
               className="absolute pointer-events-none"
               style={{
@@ -236,7 +213,6 @@ export default function HeroSlider() {
                 background: "radial-gradient(ellipse at 85% 90%, rgba(249,115,22,0.55) 0%, rgba(234,88,12,0.25) 35%, transparent 65%)",
               }}
             />
-            {/* Green glow — top left */}
             <div
               className="absolute pointer-events-none"
               style={{
@@ -249,23 +225,30 @@ export default function HeroSlider() {
             </div>
           </div>
 
-          {/* Row 2 – side banner: object-contain so the full image shows, bg matches card tone */}
+          {/* Row 2 – side banner: changes in sync with main slider */}
           <Link
-            href={SIDE_BANNER.href}
+            href={activeBanner.href}
             className="group relative block overflow-hidden rounded-2xl shadow-sm min-w-0 aspect-[3/2] lg:aspect-auto"
             style={{ background: "#f8f4ef" }}
           >
-            <Image
-              src={SIDE_BANNER.src}
-              alt={SIDE_BANNER.alt}
-              fill
-              quality={90}
-              sizes="(min-width: 1280px) 360px, (min-width: 1024px) 30vw, 50vw"
-              className="object-contain transition-transform duration-500 group-hover:scale-[1.03]"
-            />
+            {SIDE_BANNERS.map((b, i) => (
+              <Image
+                key={b.src}
+                src={b.src}
+                alt={b.alt}
+                fill
+                quality={90}
+                sizes="(min-width: 1280px) 360px, (min-width: 1024px) 30vw, 50vw"
+                className={`object-cover transition-all duration-700 ease-in-out group-hover:scale-[1.03] ${
+                  i === bannerIdx % SIDE_BANNERS.length ? "opacity-100" : "opacity-0"
+                }`}
+              />
+            ))}
           </Link>
+
         </div>
         {/* ═════════ end RIGHT ═════════ */}
+
       </div>
     </section>
   );

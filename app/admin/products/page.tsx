@@ -6,6 +6,7 @@ import {
   Search, RefreshCw, Package, ChevronDown,
   Flame, Star, Eye, EyeOff, AlertCircle, CheckCircle,
   Loader2, X, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown,
+  Zap, Timer, Tag,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -27,9 +28,12 @@ interface Product {
   is_featured: boolean;
   is_hot_deal: boolean;
   is_published: boolean;
+  is_today_deal: boolean;
+  deal_price?: number;
+  deal_ends_at?: string | null;
 }
 
-type ToggleKey = "is_featured" | "is_hot_deal" | "is_published";
+type ToggleKey = "is_featured" | "is_hot_deal" | "is_published" | "is_today_deal";
 type SortKey   = "name" | "price" | "stock" | "category";
 
 const BADGE_PRESETS = [
@@ -209,6 +213,69 @@ export default function AdminProductsPage() {
   const [sortAsc,   setSortAsc]   = useState(true);
   const [toggling,  setToggling]  = useState<Record<string, boolean>>({});
 
+  // ── Today's Deal state ──
+  const [dealModal,    setDealModal]    = useState(false);
+  const [dealSearch,   setDealSearch]   = useState("");
+  const [dealProduct,  setDealProduct]  = useState<Product | null>(null);
+  const [dealPrice,    setDealPrice]    = useState("");
+  const [dealEndsAt,   setDealEndsAt]   = useState("");
+  const [dealSaving,   setDealSaving]   = useState(false);
+
+  const activeDeal = products.find(p => p.is_today_deal);
+  const dealFiltered = products.filter(p =>
+    !dealSearch || p.name.toLowerCase().includes(dealSearch.toLowerCase())
+  ).slice(0, 8);
+
+  async function saveDeal() {
+    if (!dealProduct) return;
+    setDealSaving(true);
+    try {
+      // First clear any existing today's deal
+      if (activeDeal && activeDeal.id !== dealProduct.id) {
+        await fetch(`/api/products/${activeDeal.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_today_deal: false, deal_price: null, deal_ends_at: null }),
+        });
+      }
+      // Set the new deal
+      const res = await fetch(`/api/products/${dealProduct.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          is_today_deal: true,
+          deal_price:    dealPrice ? Number(dealPrice) : dealProduct.price,
+          deal_ends_at:  dealEndsAt || null,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      await fetchProducts();
+      showToast("Today's Deal saved ✓", true);
+      setDealModal(false);
+      setDealProduct(null);
+      setDealPrice("");
+      setDealEndsAt("");
+    } catch {
+      showToast("Failed to save deal ✗", false);
+    } finally {
+      setDealSaving(false);
+    }
+  }
+
+  async function clearDeal(id: string) {
+    try {
+      await fetch(`/api/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_today_deal: false, deal_price: null, deal_ends_at: null }),
+      });
+      await fetchProducts();
+      showToast("Deal cleared ✓", true);
+    } catch {
+      showToast("Failed to clear deal ✗", false);
+    }
+  }
+
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
@@ -344,6 +411,192 @@ export default function AdminProductsPage() {
             </div>
           ))}
         </div>
+
+        {/* ── Today's Deal panel ── */}
+        <div className="mb-5 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2 shrink-0">
+            <Zap size={16} className="text-orange-500 fill-orange-100" />
+            <span className="font-extrabold text-gray-800 text-sm">Today&apos;s Deal</span>
+          </div>
+
+          {activeDeal ? (
+            <div className="flex flex-wrap items-center gap-3 flex-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={safeImg(activeDeal.image)} alt={activeDeal.name}
+                className="w-10 h-10 rounded-xl object-contain bg-white border border-orange-200 p-1" />
+              <div className="min-w-0">
+                <p className="font-bold text-gray-900 text-sm truncate">{activeDeal.name}</p>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span className="text-[11px] font-bold text-orange-600">
+                    Deal: ৳{(activeDeal.deal_price ?? activeDeal.price).toLocaleString("en-BD")}
+                  </span>
+                  {activeDeal.deal_ends_at && (
+                    <span className="flex items-center gap-1 text-[10px] text-gray-500 font-semibold bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+                      <Timer size={9} />
+                      {new Date(activeDeal.deal_ends_at) > new Date()
+                        ? `Ends ${new Date(activeDeal.deal_ends_at).toLocaleString("en-BD", { dateStyle: "short", timeStyle: "short" })}`
+                        : "Expired"}
+                    </span>
+                  )}
+                  {!activeDeal.deal_ends_at && (
+                    <span className="text-[10px] text-gray-400 font-medium">No expiry set</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 ml-auto shrink-0">
+                <button
+                  onClick={() => {
+                    setDealProduct(activeDeal);
+                    setDealPrice(String(activeDeal.deal_price ?? activeDeal.price));
+                    setDealEndsAt(activeDeal.deal_ends_at ? activeDeal.deal_ends_at.slice(0, 16) : "");
+                    setDealModal(true);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-white border border-orange-300 text-orange-600 text-xs font-bold hover:bg-orange-50 transition-colors shadow-sm"
+                >
+                  Change Deal
+                </button>
+                <button
+                  onClick={() => clearDeal(activeDeal.id)}
+                  className="px-3.5 py-1.5 rounded-xl bg-white border border-red-200 text-red-500 text-xs font-bold hover:bg-red-50 transition-colors shadow-sm"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 flex-1">
+              <span className="text-sm text-gray-500">No active deal right now.</span>
+              <button
+                onClick={() => setDealModal(true)}
+                className="ml-auto px-4 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-colors shadow-md shadow-orange-200 active:scale-95 flex items-center gap-1.5"
+              >
+                <Zap size={13} /> Set Today&apos;s Deal
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Today's Deal Modal */}
+        {dealModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 flex flex-col gap-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap size={18} className="text-orange-500" />
+                  <h3 className="font-extrabold text-gray-900 text-lg">Set Today&apos;s Deal</h3>
+                </div>
+                <button onClick={() => { setDealModal(false); setDealProduct(null); setDealPrice(""); setDealEndsAt(""); }}
+                  className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* Step 1 – pick product */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  1. Select Product
+                </label>
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 mb-2 focus-within:border-orange-400 transition-colors">
+                  <Search size={13} className="text-gray-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={dealSearch}
+                    onChange={e => setDealSearch(e.target.value)}
+                    placeholder="Search products…"
+                    className="flex-1 text-sm bg-transparent outline-none text-gray-800 placeholder-gray-400"
+                  />
+                </div>
+                <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-100 divide-y divide-gray-50">
+                  {dealFiltered.map(p => (
+                    <button key={p.id}
+                      onClick={() => { setDealProduct(p); setDealPrice(String(p.deal_price ?? p.price)); }}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 text-left hover:bg-orange-50 transition-colors ${dealProduct?.id === p.id ? "bg-orange-50 border-l-2 border-orange-400" : ""}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={safeImg(p.image)} alt={p.name}
+                        className="w-9 h-9 rounded-lg object-contain bg-gray-100 p-1 border border-gray-200 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm text-gray-900 truncate">{p.name}</p>
+                        <p className="text-[11px] text-gray-400">৳{p.price.toLocaleString("en-BD")}</p>
+                      </div>
+                      {dealProduct?.id === p.id && (
+                        <CheckCircle size={15} className="text-orange-500 shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                  {dealFiltered.length === 0 && (
+                    <p className="text-center text-sm text-gray-400 py-4">No products found</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Step 2 – deal price */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  2. Deal Price (৳)
+                </label>
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-orange-400 transition-colors">
+                  <Tag size={13} className="text-gray-400 shrink-0" />
+                  <input
+                    type="number"
+                    value={dealPrice}
+                    onChange={e => setDealPrice(e.target.value)}
+                    placeholder={dealProduct ? String(dealProduct.price) : "Enter deal price"}
+                    className="flex-1 text-sm bg-transparent outline-none text-gray-800 placeholder-gray-400 font-semibold"
+                  />
+                </div>
+                {dealProduct && dealPrice && Number(dealPrice) < dealProduct.price && (
+                  <p className="text-[11px] text-green-600 font-semibold mt-1 flex items-center gap-1">
+                    <CheckCircle size={10} />
+                    {Math.round(((dealProduct.price - Number(dealPrice)) / dealProduct.price) * 100)}% discount off regular price
+                  </p>
+                )}
+              </div>
+
+              {/* Step 3 – expiry (optional) */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  3. Offer Ends At <span className="text-gray-400 font-normal normal-case">(optional — leave blank for no expiry)</span>
+                </label>
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-orange-400 transition-colors">
+                  <Timer size={13} className="text-gray-400 shrink-0" />
+                  <input
+                    type="datetime-local"
+                    value={dealEndsAt}
+                    onChange={e => setDealEndsAt(e.target.value)}
+                    className="flex-1 text-sm bg-transparent outline-none text-gray-800"
+                  />
+                  {dealEndsAt && (
+                    <button onClick={() => setDealEndsAt("")} className="text-gray-300 hover:text-gray-500 transition-colors">
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  When the timer expires, the deal price is removed and the product returns to its regular price.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  onClick={() => { setDealModal(false); setDealProduct(null); setDealPrice(""); setDealEndsAt(""); }}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveDeal}
+                  disabled={!dealProduct || !dealPrice || dealSaving}
+                  className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors shadow-md shadow-orange-200 active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {dealSaving ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+                  {dealSaving ? "Saving…" : "Activate Deal"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2.5 mb-4">
