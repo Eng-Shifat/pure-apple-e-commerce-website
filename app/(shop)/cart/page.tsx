@@ -40,7 +40,18 @@ export default function CartPage() {
                   <Link href={`/products/${product.slug}`}>
                     <h3 className="font-bold text-gray-900 text-sm leading-snug hover:text-brand-500 transition-colors line-clamp-1">{product.name}</h3>
                   </Link>
-                  {product.variant && <p className="text-xs text-gray-400 mt-0.5 truncate">{product.variant}</p>}
+                  {product.variant && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {product.variant.split(" · ").map((part, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-50 text-orange-600 border border-orange-100"
+                        >
+                          {part}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
                     <span className="font-extrabold text-gray-900">৳{(product.price * quantity).toLocaleString("en-BD")}</span>

@@ -144,9 +144,11 @@ export default function Navbar() {
   const [activeBrand,  setActiveBrand]  = useState("apple");
 
   // Products cache
-  const [shopProducts,  setShopProducts]  = useState<Product[]>([]);
-  const [brandProducts, setBrandProducts] = useState<Record<string, Product[]>>({});
-  const [loadingProds,  setLoadingProds]  = useState(false);
+  const [shopProducts,    setShopProducts]    = useState<Product[]>([]);
+  const [hotDealProducts, setHotDealProducts] = useState<Product[]>([]);
+  const [brandProducts,   setBrandProducts]   = useState<Record<string, Product[]>>({});
+  const [loadingProds,    setLoadingProds]    = useState(false);
+  const [activeShopTab,   setActiveShopTab]   = useState<"featured" | "deals">("featured");
 
   const shopHoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const catHoverTimer  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -171,12 +173,22 @@ export default function Navbar() {
     if (shopProducts.length > 0) return;
     setLoadingProds(true);
     try {
-      const r = await fetch("/api/products?featured=true&available=true");
+      const r = await fetch("/api/products?featured=true&available=true&limit=4");
       const d = await r.json();
       setShopProducts((d.products ?? []).slice(0, 4));
     } catch { /* ignore */ }
     setLoadingProds(false);
   }, [shopProducts.length]);
+
+  // Fetch hot deal products (any product with a badge)
+  const fetchHotDeals = useCallback(async () => {
+    if (hotDealProducts.length > 0) return;
+    try {
+      const r = await fetch("/api/products?deals=true&available=true&limit=4");
+      const d = await r.json();
+      setHotDealProducts((d.products ?? []).slice(0, 4));
+    } catch { /* ignore */ }
+  }, [hotDealProducts.length]);
 
   // Fetch products for a brand
   const fetchBrandProducts = useCallback(async (brand: string) => {
@@ -198,6 +210,7 @@ export default function Navbar() {
     setShopHover(true);
     setCatHover(false);
     fetchShopProducts();
+    fetchHotDeals();
   }
   function handleShopLeave() {
     shopHoverTimer.current = setTimeout(() => setShopHover(false), 150);
@@ -298,7 +311,7 @@ export default function Navbar() {
 
                 <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[480px] transition-all duration-200 origin-top ${shopHover ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}>
                   <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-                    {/* Header */}
+                    {/* Header — condition links */}
                     <div className="flex items-center justify-between px-5 py-3 border-b border-gray-50 bg-gray-50/50">
                       <div className="flex gap-3">
                         <Link href="/products?condition=brand-new"
@@ -309,33 +322,62 @@ export default function Navbar() {
                           className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors">
                           ♻️ Pre-Owned
                         </Link>
-                        <Link href="/products?deals=true"
-                          className="text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors">
-                          🔥 Hot Deals
-                        </Link>
                       </div>
                       <Link href="/products" className="text-xs font-semibold text-brand-500 hover:text-brand-600">View All →</Link>
                     </div>
 
-                    {/* Featured products */}
+                    {/* Tabs — Featured / Hot Deals */}
+                    <div className="flex border-b border-gray-100">
+                      <button
+                        onClick={() => setActiveShopTab("featured")}
+                        className={`flex-1 py-2.5 text-xs font-bold transition-colors ${activeShopTab === "featured" ? "text-brand-500 border-b-2 border-brand-500 -mb-px" : "text-gray-400 hover:text-gray-600"}`}
+                      >
+                        ✨ Featured
+                      </button>
+                      <button
+                        onClick={() => setActiveShopTab("deals")}
+                        className={`flex-1 py-2.5 text-xs font-bold transition-colors ${activeShopTab === "deals" ? "text-orange-500 border-b-2 border-orange-500 -mb-px" : "text-gray-400 hover:text-gray-600"}`}
+                      >
+                        🔥 Hot Deals
+                      </button>
+                    </div>
+
+                    {/* Product grid */}
                     <div className="p-4">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">✨ Featured Products</p>
-                      {loadingProds ? (
-                        <div className="grid grid-cols-4 gap-2">
-                          {[...Array(4)].map((_, i) => (
-                            <div key={i} className="animate-pulse">
-                              <div className="aspect-square bg-gray-100 rounded-lg mb-2" />
-                              <div className="h-2 bg-gray-100 rounded mb-1" />
-                              <div className="h-2 bg-gray-100 rounded w-2/3" />
-                            </div>
-                          ))}
-                        </div>
-                      ) : shopProducts.length > 0 ? (
-                        <div className="grid grid-cols-4 gap-2">
-                          {shopProducts.map(p => <MiniCard key={p.id} p={p} />)}
-                        </div>
+                      {activeShopTab === "featured" ? (
+                        loadingProds ? (
+                          <div className="grid grid-cols-4 gap-2">
+                            {[...Array(4)].map((_, i) => (
+                              <div key={i} className="animate-pulse">
+                                <div className="aspect-square bg-gray-100 rounded-lg mb-2" />
+                                <div className="h-2 bg-gray-100 rounded mb-1" />
+                                <div className="h-2 bg-gray-100 rounded w-2/3" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : shopProducts.length > 0 ? (
+                          <div className="grid grid-cols-4 gap-2">
+                            {shopProducts.map(p => <MiniCard key={p.id} p={p} />)}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 text-center py-4">No featured products yet.</p>
+                        )
                       ) : (
-                        <p className="text-xs text-gray-400 text-center py-4">No featured products yet.</p>
+                        hotDealProducts.length > 0 ? (
+                          <div className="grid grid-cols-4 gap-2">
+                            {hotDealProducts.map(p => <MiniCard key={p.id} p={p} />)}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 text-center py-4">No deal products yet.</p>
+                        )
+                      )}
+                      {activeShopTab === "deals" && hotDealProducts.length > 0 && (
+                        <Link
+                          href="/products?deals=true"
+                          className="mt-3 flex items-center justify-center gap-1 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors"
+                        >
+                          সব Hot Deals দেখুন →
+                        </Link>
                       )}
                     </div>
                   </div>

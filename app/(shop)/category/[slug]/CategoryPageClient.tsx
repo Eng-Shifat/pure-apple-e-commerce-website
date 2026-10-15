@@ -138,42 +138,108 @@ interface Props {
   isEnabled: boolean;
 }
 
-// ── BrandDropdown ──────────────────────────────────────────────
-function BrandDropdown({
+// ── FiltersDropdown — Price + Brand combined ───────────────────
+function FiltersDropdown({
   brands,
   activeBrand,
-  onChange,
+  onBrandChange,
+  priceRange,
+  onPriceChange,
 }: {
   brands: string[];
   activeBrand: string;
-  onChange: (b: string) => void;
+  onBrandChange: (b: string) => void;
+  priceRange: number;
+  onPriceChange: (i: number) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const hasFilter = activeBrand !== "All" || priceRange !== 0;
   return (
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 shadow-sm hover:border-orange-300 transition-colors"
+        className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold shadow-sm transition-colors
+          ${hasFilter
+            ? "bg-orange-500 border-orange-500 text-white"
+            : "bg-white border-gray-200 text-gray-700 hover:border-orange-300"
+          }`}
       >
-        {activeBrand === "All" ? "সব Brand" : activeBrand}
+        <SlidersHorizontal size={13} className={hasFilter ? "text-white" : "text-orange-500"} />
+        Filters
+        {hasFilter && (
+          <span className="ml-0.5 bg-white/30 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+            {(activeBrand !== "All" ? 1 : 0) + (priceRange !== 0 ? 1 : 0)}
+          </span>
+        )}
         <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
+
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl z-40 min-w-[140px] overflow-hidden">
-          {brands.map((b) => (
-            <button
-              key={b}
-              onClick={() => { onChange(b); setOpen(false); }}
-              className={`w-full text-left px-4 py-2.5 text-xs font-medium border-b last:border-b-0 border-gray-50 transition-colors
-                ${activeBrand === b
-                  ? "bg-orange-50 text-orange-600 font-semibold"
-                  : "text-gray-700 hover:bg-gray-50"
-                }`}
-            >
-              {b === "All" ? "সব Brand" : b}
-            </button>
-          ))}
-        </div>
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+
+          <div className="absolute top-full left-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl z-40 w-56 overflow-hidden">
+
+            {/* Price Range */}
+            <div className="px-3 pt-3 pb-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">দাম অনুযায়ী</p>
+              <div className="flex flex-col gap-0.5">
+                {PRICE_RANGES.map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() => onPriceChange(i)}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors
+                      ${priceRange === i
+                        ? "bg-orange-50 text-orange-600 font-semibold"
+                        : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Brand — শুধু তখনই দেখাবে যদি ২টার বেশি brand থাকে */}
+            {brands.length > 2 && (
+              <>
+                <div className="h-px bg-gray-100 mx-3" />
+                <div className="px-3 pt-2 pb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Brand অনুযায়ী</p>
+                  <div className="flex flex-col gap-0.5">
+                    {brands.map((b) => (
+                      <button
+                        key={b}
+                        onClick={() => onBrandChange(b)}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors
+                          ${activeBrand === b
+                            ? "bg-orange-50 text-orange-600 font-semibold"
+                            : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                      >
+                        {b === "All" ? "সব Brand" : b}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Clear all */}
+            {hasFilter && (
+              <>
+                <div className="h-px bg-gray-100" />
+                <button
+                  onClick={() => { onBrandChange("All"); onPriceChange(0); setOpen(false); }}
+                  className="w-full px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors text-center"
+                >
+                  সব filter সরান
+                </button>
+              </>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
@@ -200,8 +266,7 @@ function SortDropdown({
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 shadow-sm hover:border-orange-300 transition-colors"
       >
-        <SlidersHorizontal size={13} className="text-orange-500" />
-        {current}
+        Sort: {current}
         <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
@@ -311,35 +376,14 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
       {/* Filter Bar */}
       <div className="bg-white sticky top-0 z-30 border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5">
-          {/* Row 1: Price range chips */}
-          <div
-            className="flex gap-1.5 overflow-x-auto pb-2"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {PRICE_RANGES.map((r, i) => (
-              <button
-                key={i}
-                onClick={() => setPriceRange(i)}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all border flex-shrink-0
-                  ${priceRange === i
-                    ? "border-orange-500 bg-orange-500 text-white shadow-sm"
-                    : "border-gray-200 bg-white text-gray-500 hover:border-orange-200 hover:text-orange-500"
-                  }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Row 2: Brand + Sort dropdowns — together on the right */}
-          <div className="flex items-center justify-end gap-2 pt-0.5">
-            {brands.length > 2 && (
-              <BrandDropdown
-                brands={brands}
-                activeBrand={activeBrand}
-                onChange={setActiveBrand}
-              />
-            )}
+          <div className="flex items-center justify-end gap-2">
+            <FiltersDropdown
+              brands={brands}
+              activeBrand={activeBrand}
+              onBrandChange={setActiveBrand}
+              priceRange={priceRange}
+              onPriceChange={setPriceRange}
+            />
             <SortDropdown sortBy={sortBy} onChange={setSortBy} />
           </div>
         </div>

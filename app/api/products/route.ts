@@ -42,9 +42,11 @@ export async function GET(req: NextRequest) {
   const category   = searchParams.get("category");
   const condition  = searchParams.get("condition");
   const deals      = searchParams.get("deals");
+  const badge      = searchParams.get("badge");      // exact badge value
   const q          = searchParams.get("q");
   const available  = searchParams.get("available");
   const slug       = searchParams.get("slug");
+  const limit      = searchParams.get("limit");
 
   let query = supabase
     .from("products")
@@ -54,10 +56,13 @@ export async function GET(req: NextRequest) {
   if (featured === "true")  query = query.eq("is_featured", true);
   if (category)             query = query.eq("category", category);
   if (condition)            query = query.eq("condition", condition);
-  if (deals === "true")     query = query.eq("badge", "Hot Deal");
+  // deals=true → any product that has a badge (admin-tagged deals)
+  if (deals === "true")     query = query.not("badge", "is", null).neq("badge", "");
+  if (badge)                query = query.eq("badge", badge);
   if (available === "true") query = query.eq("is_available", true);
   if (q)                    query = query.ilike("name", `%${q}%`);
   if (slug)                 query = query.eq("slug", slug);
+  if (limit)                query = query.limit(Number(limit));
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

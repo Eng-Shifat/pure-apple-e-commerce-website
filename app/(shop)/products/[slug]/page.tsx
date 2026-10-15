@@ -257,16 +257,32 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = useCallback(() => {
     if (!product) return;
+
+    // Build variant label: Storage · Color · Region (only non-empty parts)
+    const variantParts: string[] = [];
+    if (selStorage) variantParts.push(selStorage);
+    if (selColor)   variantParts.push(selColor);
+    if (selRegion)  variantParts.push(`Region: ${selRegion}`);
+    const variantLabel = variantParts.join(" · ");
+
     const chosen = catalogPhone?.colors.find((c) => c.name === selColor);
+    // Unique cart id per variant so same product with diff variants sit as separate lines
+    const variantId = variantParts.length
+      ? `${product.id}:${variantParts.join("-").replace(/\s+/g, "_")}`
+      : product.id;
+
     addItem(
-      chosen
-        ? { ...product, id: `${product.id}:${chosen.name}`, image: chosen.image, variant: `${catalogPhone!.storage} – ${chosen.name}` }
-        : product,
+      {
+        ...product,
+        id: variantId,
+        ...(chosen ? { image: chosen.image } : {}),
+        variant: variantLabel || product.variant,
+      },
       qty
     );
     setAdded(true);
     setShowCartBar(true);
-  }, [product, qty, addItem, catalogPhone, selColor]);
+  }, [product, qty, addItem, catalogPhone, selColor, selStorage, selRegion]);
 
   const handleShare = useCallback(() => {
     navigator.clipboard.writeText(window.location.href).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
