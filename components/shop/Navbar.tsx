@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Search, Heart, ShoppingCart, User, ChevronDown, ChevronRight,
-  Menu, X, Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut, Star,
+  Menu, X, Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
@@ -119,12 +119,6 @@ function MiniCard({ p }: { p: Product }) {
           <span className="text-[9px] text-gray-400 line-through">৳{p.original_price.toLocaleString("en-BD")}</span>
         )}
       </div>}
-      {p.rating && p.rating > 0 && (
-        <div className="flex items-center gap-0.5">
-          <Star size={9} className="fill-yellow-400 text-yellow-400" />
-          <span className="text-[9px] text-gray-500 font-medium">{p.rating}</span>
-        </div>
-      )}
     </Link>
   );
 }

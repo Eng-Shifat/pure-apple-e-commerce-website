@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Star, ShoppingCart, Zap, Heart, ChevronRight,
+  ShoppingCart, Zap, Heart, ChevronRight,
   Shield, RefreshCw, Truck, BadgeCheck, Minus, Plus,
   Share2, Check, ChevronLeft, Package, Tag, MessageCircle, CreditCard, X,
 } from "lucide-react";
@@ -35,16 +35,6 @@ function catalogToProduct(p: CatalogPhone): Product {
   } as Product;
 }
 
-// ── Star row ──
-function StarRow({ rating, size = 14 }: { rating: number; size?: number }) {
-  return (
-    <div className="flex">
-      {[1,2,3,4,5].map((n) => (
-        <Star key={n} size={size} className={n <= Math.round(rating) ? "fill-sun-500 text-sun-500" : "text-gray-200"}/>
-      ))}
-    </div>
-  );
-}
 
 // ── Related card ──
 function RelatedCard({ p }: { p: Product }) {
@@ -415,15 +405,6 @@ export default function ProductDetailPage() {
             {/* Name */}
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">{product.name}</h1>
             {product.variant && <p className="text-gray-400 text-sm mt-1">{product.variant}</p>}
-
-            {/* Rating */}
-            {product.rating > 0 && (
-              <div className="flex items-center gap-2 mt-3">
-                <StarRow rating={product.rating}/>
-                <span className="text-sm font-bold text-gray-800">{product.rating}</span>
-                <span className="text-xs text-gray-400">({product.review_count?.toLocaleString()} reviews)</span>
-              </div>
-            )}
 
             {/* Price */}
             <div className="mt-4 p-4 bg-brand-50 rounded-2xl border border-brand-100">

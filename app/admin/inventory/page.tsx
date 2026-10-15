@@ -176,14 +176,6 @@ export default function InventoryPage() {
             )}
           </div>
 
-          {/* Rating */}
-          {p.rating && p.rating > 0 ? (
-            <div className="flex items-center gap-1">
-              <Star size={9} className="fill-yellow-400 text-yellow-400" />
-              <span className="text-[10px] font-semibold text-gray-500">{p.rating}</span>
-            </div>
-          ) : null}
-
           {/* Stock */}
           <div>
             {editStock === p.id ? (
