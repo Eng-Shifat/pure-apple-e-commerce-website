@@ -5,6 +5,7 @@ import PromoBanner from "@/components/shop/PromoBanner";
 import ShopByBrand from "@/components/shop/ShopByBrand";
 import BestDeals from "@/components/shop/BestDeals";
 import TodaysDeal from "@/components/shop/TodaysDeal";
+import OffersSection from "@/components/shop/OffersSection";
 import PhoneSeriesSection from "@/components/shop/PhoneSeriesSection";
 import Link from "next/link";
 import Image from "next/image";
@@ -22,6 +23,8 @@ export default function HomePage() {
         <MobileCategoryStrip />
         <HeroSlider />
       </div>
+      {/* ── Special Offers (Best Deal / Today's Offer / Black Friday …) — admin-controlled, time-based ── */}
+      <OffersSection />
       <ShopByBrand />
       <PopularProducts />
       <PromoBanner />

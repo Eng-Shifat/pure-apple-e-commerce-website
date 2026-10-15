@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
+import { expireTodaysDeals } from "@/lib/todaysDeal";
 import path from "path";
 
 let imageIndex: Map<string, string> | null = null;
@@ -66,6 +67,7 @@ export async function GET(req: NextRequest) {
 
   // today_deal=true → is_today_deal active AND (deal_ends_at is null OR deal_ends_at > now)
   if (today_deal === "true") {
+    await expireTodaysDeals(supabase); // timer শেষ হলে DB-তেই deal OFF
     query = query
       .eq("is_today_deal", true)
       .or("deal_ends_at.is.null,deal_ends_at.gt." + new Date().toISOString());

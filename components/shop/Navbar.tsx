@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Search, Heart, ShoppingCart, User, ChevronDown, ChevronRight,
-  Menu, X, Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut,
+  Menu, X, Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut, Flame,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
@@ -92,6 +92,7 @@ const mobileLinks = [
   { label: "Shop",       href: "/products",                icon: ShoppingBag },
   { label: "Categories", href: "/products?view=categories",icon: LayoutGrid  },
   { label: "Deals",      href: "/products?deals=true",     icon: BadgePercent},
+  { label: "Offers",     href: "/offers",                  icon: Flame       },
   { label: "About",      href: "/about",                   icon: Info        },
 ];
 
@@ -509,6 +510,7 @@ export default function Navbar() {
               </div>
 
               <Link href="/products?deals=true" className="text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors">Deals</Link>
+              <Link href="/offers" className={`text-sm font-medium transition-colors ${pathname.startsWith("/offers") ? "text-brand-600 border-b-2 border-brand-500 pb-0.5" : "text-gray-800 hover:text-brand-600"}`}>Offers</Link>
               <Link href="/about" className="text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors">About</Link>
             </nav>
 
@@ -524,8 +526,9 @@ export default function Navbar() {
 
 
 
-              {/* Wishlist — visible on mobile too */}
-              <Link href="/wishlist" className="relative flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-white/60 md:bg-transparent text-gray-700 md:text-gray-800 hover:text-brand-600 hover:bg-brand-50 transition-colors">
+              {/* Wishlist + Cart — tight group (spacing কমানো) */}
+              <div className="flex items-center gap-0 md:gap-1">
+              <Link href="/wishlist" className="relative flex items-center justify-center w-9 h-9 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-white/60 md:bg-transparent text-gray-700 md:text-gray-800 hover:text-brand-600 hover:bg-brand-50 transition-colors">
                 <Heart size={18} />
                 {wishCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -535,7 +538,7 @@ export default function Navbar() {
               </Link>
 
               <Link href="/cart"
-                className="relative flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-white/60 md:bg-transparent text-gray-700 md:text-gray-800 hover:text-brand-600 hover:bg-brand-50 transition-colors">
+                className="relative flex items-center justify-center w-9 h-9 md:w-auto md:h-auto md:p-2 rounded-full md:rounded-lg bg-white/60 md:bg-transparent text-gray-700 md:text-gray-800 hover:text-brand-600 hover:bg-brand-50 transition-colors">
                 <ShoppingCart size={18} />
                 {cartCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -543,6 +546,7 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
+              </div>
 
               {/* User menu */}
               <div className="hidden md:block relative" ref={userRef}>

@@ -429,7 +429,7 @@ export default function ProductDetailPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6 flex-wrap">
+        <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-3 md:mb-6 flex-wrap">
           <Link href="/" className="hover:text-brand-500 transition-colors">Home</Link>
           <ChevronRight size={12}/>
           <Link href="/products" className="hover:text-brand-500 transition-colors">Products</Link>
@@ -452,11 +452,11 @@ export default function ProductDetailPage() {
         )}
 
         {/* ── Main Grid ── */}
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-14 items-start">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-8 lg:gap-14 items-start">
 
           {/* LEFT: Image */}
           <div className="flex flex-col gap-3">
-            <div className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden flex items-center justify-center" style={{ minHeight:"400px" }}>
+            <div className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-[400px]">
               {product.badge && (
                 <span className="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow" style={{ backgroundColor: product.badge_color ?? "#FB5724" }}>{product.badge}</span>
               )}
@@ -469,7 +469,12 @@ export default function ProductDetailPage() {
               <button onClick={handleShare} className="absolute top-24 right-4 w-9 h-9 rounded-full flex items-center justify-center shadow-md z-10 bg-white border border-gray-200 hover:scale-110 transition-all">
                 {copied ? <Check size={16} className="text-green-500"/> : <Share2 size={16} className="text-gray-400"/>}
               </button>
-              <div className="relative w-full px-4" style={{ height:"340px" }}>
+              {/* Condition badge — image-er bottom-left corner-e */}
+              {product.condition === "pre-owned"
+                ? <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50/95 border border-amber-200 px-2.5 py-1 rounded-full shadow-sm"><Tag size={11}/> Pre-Owned</span>
+                : <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-leaf-700 bg-leaf-50/95 border border-leaf-200 px-2.5 py-1 rounded-full shadow-sm"><BadgeCheck size={11}/> Brand New</span>
+              }
+              <div className="relative w-full px-4 h-[260px] md:h-[340px]">
                 <Image src={images[activeImg] ?? "/logo/pure-apple-logo.png"} alt={product.name} fill className="object-contain drop-shadow-xl" sizes="(max-width:768px) 100vw, 50vw" priority/>
               </div>
             </div>
@@ -483,29 +488,12 @@ export default function ProductDetailPage() {
                 ))}
               </div>
             )}
-
-            {/* Condition + Stock */}
-            <div className="flex items-center justify-center gap-2 flex-wrap">
-              {product.condition === "pre-owned"
-                ? <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full"><Tag size={12}/> Pre-Owned</span>
-                : <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-leaf-700 bg-leaf-50 border border-leaf-200 px-3 py-1.5 rounded-full"><BadgeCheck size={12}/> Brand New</span>
-              }
-              {inStock
-                ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-leaf-700 bg-leaf-50 border border-leaf-200 px-3 py-1.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-leaf-500 inline-block"/> In Stock
-                    {stockCount !== null && stockCount <= 10 && <span className="ml-1 text-amber-600">({stockCount} left)</span>}
-                  </span>
-                : <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"/> Out of Stock
-                  </span>
-              }
-            </div>
           </div>
 
           {/* RIGHT: Info */}
           <div className="flex flex-col">
             {/* Brand row */}
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-0.5">
               {product.category && (
                 <Link href={`/products?category=${product.category.toLowerCase().replace(/\s+/g,"-")}`} className="text-xs font-semibold text-brand-500 uppercase tracking-wider hover:underline">
                   {product.category}
@@ -521,7 +509,7 @@ export default function ProductDetailPage() {
             {product.variant && <p className="text-gray-400 text-sm mt-1">{product.variant}</p>}
 
             {/* Price */}
-            <div className="mt-4 p-4 bg-brand-50 rounded-2xl border border-brand-100">
+            <div className="mt-3 p-4 bg-brand-50 rounded-2xl border border-brand-100">
               <div className="flex items-center gap-2 text-xs text-gray-500 mb-1 font-semibold">Cash Price</div>
               <div className="flex items-end gap-3 flex-wrap">
                 <span className="text-3xl font-extrabold text-gray-900 tracking-tight">৳{displayPrice.toLocaleString("en-BD")}</span>
@@ -681,23 +669,29 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Trust badges */}
-            <div className="grid grid-cols-2 gap-2.5 mt-5 pt-5 border-t border-gray-100">
-              {[
-                { icon: Shield,     label:"1 Year Warranty", sub:"Official warranty" },
-                { icon: Truck,      label:"Free Delivery",   sub:"Dhaka & nationwide" },
-                { icon: RefreshCw,  label:"7-Day Return",    sub:"Hassle-free" },
-                { icon: BadgeCheck, label:"100% Genuine",    sub:"Verified authentic" },
-              ].map(({ icon: Icon, label, sub }) => (
-                <div key={label} className="flex items-start gap-2.5 bg-gray-50 rounded-xl p-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shrink-0">
-                    <Icon size={15} className="text-brand-500"/>
+            <div className="mt-5 rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-leaf-50 via-white to-brand-50 border-b border-gray-100">
+                <BadgeCheck size={14} className="text-leaf-600" />
+                <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-700">Pure Apple Promise</p>
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-y divide-gray-100 [&>*:nth-child(-n+2)]:border-t-0">
+                {[
+                  { icon: Shield,     label:"1 Year Warranty", sub:"Official warranty", tile:"bg-brand-50 text-brand-500 ring-brand-100" },
+                  { icon: Truck,      label:"Free Delivery",   sub:"Dhaka & nationwide", tile:"bg-sky-50 text-sky-600 ring-sky-100" },
+                  { icon: RefreshCw,  label:"7-Day Return",    sub:"Hassle-free",        tile:"bg-amber-50 text-amber-600 ring-amber-100" },
+                  { icon: BadgeCheck, label:"100% Genuine",    sub:"Verified authentic", tile:"bg-leaf-50 text-leaf-600 ring-leaf-100" },
+                ].map(({ icon: Icon, label, sub, tile }) => (
+                  <div key={label} className="flex items-center gap-3 px-3.5 py-3.5">
+                    <div className={`w-10 h-10 rounded-xl ring-1 flex items-center justify-center shrink-0 ${tile}`}>
+                      <Icon size={18} strokeWidth={2.1}/>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-bold text-gray-900 leading-tight">{label}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{sub}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-800">{label}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -67,15 +67,15 @@ function CountdownDisplay({ endsAt }: { endsAt: string }) {
     );
   }
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <Timer size={13} className="text-orange-500 shrink-0" />
-      <span className="text-[11px] font-semibold text-gray-500">Ends in</span>
+    <div className="flex items-center gap-1 shrink-0">
+      <Timer size={12} className="text-orange-500 shrink-0" />
+      <span className="text-[10px] font-semibold text-gray-500 whitespace-nowrap">Ends in</span>
       {[pad(time.h), pad(time.m), pad(time.s)].map((unit, i) => (
-        <span key={i} className="flex items-center gap-1">
-          <span className="inline-flex items-center justify-center w-9 h-8 rounded-lg bg-gray-900 text-white font-mono text-sm font-extrabold leading-none shadow-sm">
+        <span key={i} className="flex items-center gap-0.5">
+          <span className="inline-flex items-center justify-center w-7 h-7 sm:w-9 sm:h-8 rounded-md sm:rounded-lg bg-gray-900 text-white font-mono text-xs sm:text-sm font-extrabold leading-none shadow-sm">
             {unit}
           </span>
-          {i < 2 && <span className="text-gray-500 font-bold text-sm">:</span>}
+          {i < 2 && <span className="text-gray-500 font-bold text-xs">:</span>}
         </span>
       ))}
     </div>
@@ -150,7 +150,7 @@ function DealCard({ deal }: { deal: DealProduct }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
 
         {/* ── LEFT: Image + color strip ── */}
-        <div className="relative flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-[280px] md:min-h-[340px] p-8 overflow-hidden">
+        <div className="relative flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-[200px] md:min-h-[340px] p-4 md:p-8 overflow-hidden">
           {/* Subtle background glow */}
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: "radial-gradient(ellipse at 60% 50%, rgba(251,87,36,0.07) 0%, transparent 70%)" }}
@@ -184,38 +184,36 @@ function DealCard({ deal }: { deal: DealProduct }) {
               alt={deal.name}
               width={300}
               height={300}
-              className="object-contain max-h-[260px] drop-shadow-xl group-hover:scale-[1.04] transition-transform duration-500"
+              className="object-contain max-h-[190px] md:max-h-[260px] w-auto drop-shadow-xl group-hover:scale-[1.04] transition-transform duration-500"
             />
           </Link>
         </div>
 
         {/* ── RIGHT: Info ── */}
-        <div className="flex flex-col justify-center gap-4 p-7 md:p-10">
+        <div className="flex flex-col justify-center gap-2.5 md:gap-4 p-4 md:p-10">
 
-          {/* Flash label */}
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-orange-500 bg-orange-50 border border-orange-200 px-3 py-1 rounded-full">
-              <Zap size={11} className="fill-orange-400" /> Flash Deal
-            </span>
-            {deal.badge && (
-              <span
-                className="inline-block text-white text-[11px] font-bold px-3 py-1 rounded-full"
-                style={{ backgroundColor: deal.badge_color ?? "#FB5724" }}
-              >
-                {deal.badge}
+          {/* Flash label + Timer — ek row-te */}
+          <div className="flex items-center justify-between gap-2 flex-nowrap">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-orange-500 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-full whitespace-nowrap">
+                <Zap size={11} className="fill-orange-400" /> Flash Deal
               </span>
-            )}
+              {deal.badge && (
+                <span
+                  className="hidden sm:inline-block text-white text-[11px] font-bold px-3 py-1 rounded-full"
+                  style={{ backgroundColor: deal.badge_color ?? "#FB5724" }}
+                >
+                  {deal.badge}
+                </span>
+              )}
+            </div>
+            {deal.deal_ends_at && <CountdownDisplay endsAt={deal.deal_ends_at} />}
           </div>
-
-          {/* Timer */}
-          {deal.deal_ends_at && (
-            <CountdownDisplay endsAt={deal.deal_ends_at} />
-          )}
 
           {/* Name */}
           <Link
             href="/todays-deal"
-            className="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight hover:text-orange-600 transition-colors"
+            className="text-xl md:text-3xl font-extrabold text-gray-900 leading-tight hover:text-orange-600 transition-colors"
           >
             {deal.name}
           </Link>
@@ -233,11 +231,11 @@ function DealCard({ deal }: { deal: DealProduct }) {
 
           {/* Price */}
           <div className="flex items-baseline gap-3 flex-wrap">
-            <span className="text-3xl font-extrabold text-orange-500">
+            <span className="text-2xl md:text-3xl font-extrabold text-orange-500">
               ৳{activePrice.toLocaleString("en-BD")}
             </span>
             {comparePrice > activePrice && (
-              <span className="text-lg text-gray-400 line-through font-medium">
+              <span className="text-base md:text-lg text-gray-400 line-through font-medium">
                 ৳{comparePrice.toLocaleString("en-BD")}
               </span>
             )}
@@ -262,10 +260,10 @@ function DealCard({ deal }: { deal: DealProduct }) {
           )}
 
           {/* CTA buttons */}
-          <div className="flex flex-wrap gap-3 pt-1">
+          <div className="flex flex-wrap gap-2 md:gap-3 pt-0.5">
             <button
               onClick={handleAddToCart}
-              className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all shadow-lg active:scale-95 ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 rounded-full font-bold text-sm transition-all shadow-lg active:scale-95 ${
                 added
                   ? "bg-green-500 text-white shadow-green-200"
                   : "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-200"
@@ -276,7 +274,7 @@ function DealCard({ deal }: { deal: DealProduct }) {
             </button>
             <Link
               href="/todays-deal"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm bg-white border border-gray-200 text-gray-700 hover:border-orange-300 hover:text-orange-600 transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 rounded-full font-semibold text-sm bg-white border border-gray-200 text-gray-700 hover:border-orange-300 hover:text-orange-600 transition-all"
             >
               View Details
             </Link>
@@ -342,11 +340,11 @@ export default function TodaysDeal() {
   const deal = deals[current];
 
   return (
-    <section id="todays-deal" className="bg-white pt-8 md:pt-12 pb-0">
+    <section id="todays-deal" className="bg-white pt-5 md:pt-12 pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── Header ── */}
-        <div className="flex items-end justify-between mb-6">
+        <div className="flex items-end justify-between mb-3 md:mb-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Zap size={18} className="text-orange-500 fill-orange-100" />
@@ -416,7 +414,7 @@ export default function TodaysDeal() {
           )}
         </div>
 
-        <div className="mb-8" />
+        <div className="mb-4 md:mb-8" />
       </div>
     </section>
   );

@@ -27,6 +27,24 @@ const CATEGORIES = [
 const BRAND_FILTER =
   "brightness(0) saturate(100%) invert(42%) sepia(97%) saturate(631%) hue-rotate(342deg) brightness(98%) contrast(97%)";
 
+// ── Offer tab icon (/public/icon/offer.png) — gray when idle, brand-orange when active
+const GRAY_FILTER =
+  "brightness(0) saturate(100%) invert(68%) sepia(8%) saturate(260%) hue-rotate(177deg) brightness(92%) contrast(88%)";
+
+function OfferIcon({ size = 21, className = "" }: { size?: number; strokeWidth?: number; className?: string }) {
+  const active = className.includes("text-brand-500");
+  return (
+    <Image
+      src="/icon/offer.png"
+      alt="Offers"
+      width={size}
+      height={size}
+      className={`object-contain ${className}`}
+      style={{ width: size, height: size, filter: active ? BRAND_FILTER : GRAY_FILTER }}
+    />
+  );
+}
+
 // ── Product search data (name + slug for instant suggestions) ──────────────
 const SEARCH_CATALOG = PHONES.map((p) => ({
   name: p.name,
@@ -149,8 +167,9 @@ export default function MobileBottomNav() {
   const LEFT_ITEMS = [
     { label: "Home", href: "/", icon: Home, match: (p: string) => p === "/" },
   ];
+  // Cart bottom nav থেকে সরানো হয়েছে (navbar-এ cart icon আছে) — তার জায়গায় Offers
   const RIGHT_ITEMS = [
-    { label: "Cart",    href: "/cart", icon: ShoppingCart, match: (p: string) => p.startsWith("/cart") || p.startsWith("/checkout") },
+    { label: "Offers",  href: "/offers", icon: OfferIcon, match: (p: string) => p.startsWith("/offers") },
   ];
 
   return (
