@@ -89,38 +89,66 @@ export default function Footer() {
 
       {/* ── Main Grid ─────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-10 pb-0">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-white/10">
+        {/* Mobile layout:
+              Row 1 (col-span-2): Logo + description — full width
+              Row 2: col1=contact+social, col2=Store Hours (naturally aligned)
+              Row 3: Quick Links + Categories
+            Desktop: 4 columns side by side */}
 
-          {/* ── Brand Column ── */}
-          <div className="col-span-2 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-3 mb-5 group w-fit">
-              <Image
-                src="/logo/pure-apple-logo.svg"
-                alt="Pure Apple"
-                width={64}
-                height={65}
-                className="h-14 w-auto transition-transform duration-300 group-hover:scale-105"
-              />
-              <span className="block border-l border-white/15 pl-3 text-[9px] font-medium tracking-widest text-gray-400 uppercase leading-tight">
-                Mobile &amp;<br />Gadget Shop
-              </span>
-            </Link>
+        {/* Row 1 mobile: Logo + description full width */}
+        <div className="lg:hidden mb-4">
+          <Link href="/" className="flex items-center gap-3 mb-4 group w-fit">
+            <Image
+              src="/logo/pure-apple-logo.svg"
+              alt="Pure Apple"
+              width={64}
+              height={65}
+              className="h-14 w-auto transition-transform duration-300 group-hover:scale-105"
+            />
+            <span className="block border-l border-white/15 pl-3 text-[9px] font-medium tracking-widest text-gray-400 uppercase leading-tight">
+              Mobile &amp;<br />Gadget Shop
+            </span>
+          </Link>
+          <p className="text-gray-400 text-xs leading-relaxed">
+            Better Tech, Brighter Tomorrow. Your trusted source for premium
+            smartphones &amp; gadgets.
+          </p>
+        </div>
 
-            <p className="text-gray-400 text-xs leading-relaxed mb-5 max-w-[210px]">
-              Better Tech, Brighter Tomorrow. Your trusted source for premium
-              smartphones &amp; gadgets.
-            </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-8 pb-10 border-b border-white/10">
 
-            {/* Contact info */}
+          {/* ── Brand Column — hidden on mobile (split above), visible desktop ── */}
+          <div className="col-span-1 order-1 lg:order-1">
+            {/* Desktop only: logo + description */}
+            <div className="hidden lg:block">
+              <Link href="/" className="flex items-center gap-3 mb-5 group w-fit">
+                <Image
+                  src="/logo/pure-apple-logo.svg"
+                  alt="Pure Apple"
+                  width={64}
+                  height={65}
+                  className="h-14 w-auto transition-transform duration-300 group-hover:scale-105"
+                />
+                <span className="block border-l border-white/15 pl-3 text-[9px] font-medium tracking-widest text-gray-400 uppercase leading-tight">
+                  Mobile &amp;<br />Gadget Shop
+                </span>
+              </Link>
+              <p className="text-gray-400 text-xs leading-relaxed mb-5 max-w-[210px]">
+                Better Tech, Brighter Tomorrow. Your trusted source for premium
+                smartphones &amp; gadgets.
+              </p>
+            </div>
+
+            {/* Contact info — mobile & desktop */}
             <div className="space-y-2 mb-5">
               <a
-                href="tel:+8801XXXXXXXXX"
+                href="tel:+8801804660238"
                 className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/c"
               >
                 <span className="w-6 h-6 rounded-lg bg-white/8 flex items-center justify-center group-hover/c:bg-[#FB5724]/20 transition-colors">
                   <Phone size={11} className="text-[#FB5724]" />
                 </span>
-                +880 1XXX-XXXXXX
+                +880 1804-660238
               </a>
               <a
                 href="mailto:info@pureapple.com.bd"
@@ -160,8 +188,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* ── Quick Links ── */}
-          <div>
+          {/* ── Quick Links — mobile: col 1 row 2, desktop: col 2 ── */}
+          <div className="order-3 lg:order-2">
             <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
               <span className="w-1 h-4 rounded-full bg-[#FB5724] inline-block" />
               Quick Links
@@ -184,8 +212,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* ── Categories ── */}
-          <div>
+          {/* ── Categories — mobile: col 2 row 2, desktop: col 3 ── */}
+          <div className="order-4 lg:order-3">
             <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
               <span className="w-1 h-4 rounded-full bg-[#FB5724] inline-block" />
               Categories
@@ -208,41 +236,25 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* ── Opening Hours ── */}
-          <div>
-            <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
+          {/* ── Opening Hours — mobile: col 2 row 1 (next to Brand), desktop: col 4 ── */}
+          <div className="col-span-1 order-2 lg:order-4">
+            {/* Mobile: Store Hours heading aligned with phone number row */}
+            <h4 className="text-white font-bold text-sm mb-3 flex items-center gap-2 lg:pt-0">
               <span className="w-1 h-4 rounded-full bg-[#FB5724] inline-block" />
               Store Hours
             </h4>
-            <ul className="space-y-2">
+            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 space-y-2">
               {[
-                { day: "শনি – বৃহস্পতি", time: "10:00 – 21:00" },
-                { day: "শুক্রবার",        time: "14:00 – 21:00" },
-                { day: "সরকারি ছুটি",    time: "বন্ধ" },
+                { day: "শনি – মঙ্গল", time: "10:00 – 21:00" },
+                { day: "বুধবার",       time: "বন্ধ" },
+                { day: "বৃহস্পতি",     time: "10:00 – 21:00" },
+                { day: "শুক্রবার",     time: "14:00 – 21:00" },
               ].map((row) => (
-                <li key={row.day} className="flex items-center justify-between gap-4">
-                  <span className="text-gray-400 text-[11px]">{row.day}</span>
-                  <span
-                    className={`text-[11px] font-semibold ${
-                      row.time === "বন্ধ" ? "text-red-400" : "text-[#FB5724]"
-                    }`}
-                  >
+                <div key={row.day} className="flex items-center justify-between gap-2">
+                  <span className="text-gray-400 text-[10px] leading-tight">{row.day}</span>
+                  <span className={`text-[10px] font-bold tabular-nums whitespace-nowrap ${row.time === "বন্ধ" ? "text-red-400" : "text-[#FB5724]"}`}>
                     {row.time}
                   </span>
-                </li>
-              ))}
-            </ul>
-
-            {/* Trust badges */}
-            <div className="mt-6 space-y-2">
-              {[
-                { emoji: "🔒", text: "Secure Payment" },
-                { emoji: "🚚", text: "Fast Delivery" },
-                { emoji: "↩️", text: "Easy Returns" },
-              ].map((b) => (
-                <div key={b.text} className="flex items-center gap-2">
-                  <span className="text-sm">{b.emoji}</span>
-                  <span className="text-gray-400 text-[11px]">{b.text}</span>
                 </div>
               ))}
             </div>

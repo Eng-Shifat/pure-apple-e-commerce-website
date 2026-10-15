@@ -9,6 +9,7 @@ import {
   Menu, X, Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut, Star,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
 import { BrandLogo } from "./BrandIcons";
 
@@ -156,7 +157,12 @@ export default function Navbar() {
   const pathname   = usePathname();
   const router     = useRouter();
   const close      = () => setMobileOpen(false);
-  const cartCount  = useCartStore(s => s.count());
+  const cartCountRaw = useCartStore(s => s.count());
+  const wishCountRaw = useWishlistStore(s => s.count());
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const cartCount = mounted ? cartCountRaw : 0;
+  const wishCount = mounted ? wishCountRaw : 0;
   const user       = useAuthStore(s => s.user);
   const logout     = useAuthStore(s => s.logout);
 
@@ -480,8 +486,13 @@ export default function Navbar() {
                 <button type="submit" aria-label="Search" className="text-gray-400 hover:text-brand-500"><Search size={16} /></button>
               </form>
 
-              <Link href="/wishlist" className="hidden md:flex p-2 rounded-lg text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
+              <Link href="/wishlist" className="relative hidden md:flex p-2 rounded-lg text-gray-800 hover:text-brand-500 hover:bg-brand-50 transition-colors">
                 <Heart size={18} />
+                {wishCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {wishCount > 9 ? "9+" : wishCount}
+                  </span>
+                )}
               </Link>
 
               <Link href="/cart"

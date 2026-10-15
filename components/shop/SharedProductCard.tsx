@@ -14,6 +14,7 @@ import { Heart, ShoppingCart, Zap } from "lucide-react";
 import { useState } from "react";
 import type { ColorVariant } from "@/lib/phoneCatalog";
 import ColorSwatches from "./ColorSwatches";
+import { useWishlistStore } from "@/store/wishlistStore";
 
 export interface SharedProduct {
   id: string;
@@ -45,7 +46,8 @@ interface SharedProductCardProps {
 }
 
 export default function SharedProductCard({ product, onAddToCart }: SharedProductCardProps) {
-  const [wished, setWished] = useState(false);
+  const { toggle, isWished } = useWishlistStore();
+  const wished = isWished(product.id);
   const [added, setAdded] = useState(false);
   const [colorIdx, setColorIdx] = useState(0);
 
@@ -113,7 +115,7 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
               </span>
             )}
             <button
-              onClick={() => setWished((w) => !w)}
+              onClick={() => toggle(product as never)}
               aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
               className={`w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-all duration-200 hover:scale-110 active:scale-95
                 ${wished
