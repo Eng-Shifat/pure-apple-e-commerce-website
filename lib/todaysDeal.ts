@@ -4,7 +4,7 @@
 // - todaysDealOffer:   active Today's Deal গুলোকে একটা "Today's Deal" offer হিসেবে সাজায়
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Offer } from "@/lib/offers";
+import { validDealPrice, type Offer } from "@/lib/offers";
 
 export const TODAYS_DEAL_SLUG = "todays-deal";
 const OPEN_ENDED = "2099-12-31T00:00:00.000Z";
@@ -65,7 +65,7 @@ export async function todaysDealOffer(supabase: SupabaseClient): Promise<Offer |
     products: rows.map((p) => ({
       id: p.id, name: p.name, slug: p.slug, image: p.image, variant: p.variant,
       price: Number(p.price), original_price: p.original_price,
-      offer_price: p.deal_price ? Number(p.deal_price) : Number(p.price),
+      offer_price: validDealPrice(Number(p.price), p.deal_price),
       rating: p.rating, review_count: p.review_count,
       badge: p.badge, badge_color: p.badge_color,
       spec_screen: p.spec_screen, spec_ram: p.spec_ram, spec_camera: p.spec_camera,

@@ -12,7 +12,8 @@ export default function EditProductPage() {
   useEffect(() => {
     fetch(`/api/products/${id}`)
       .then((r) => r.json())
-      .then((d) => { setData(d.product); setLoading(false); });
+      .then((d) => { setData(d.product ?? null); setLoading(false); })
+      .catch(() => { setData(null); setLoading(false); });
   }, [id]);
 
   if (loading) return <div className="p-6 text-gray-400 text-sm">Loading…</div>;

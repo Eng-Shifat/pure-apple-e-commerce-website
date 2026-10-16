@@ -6,8 +6,8 @@ export const SHOP = {
   name: "Pure Apple",
 
   // Customer এই নম্বরে Send Money করবে
-  bkashNumber: "01804660238",
-  nagadNumber: "01804660238",
+  bkashNumber: "01863190537",
+  nagadNumber: "01736151742",
   // "Send Money" নাকি "Payment" — customer-কে যা বলতে চান
   walletType: "Personal",
 

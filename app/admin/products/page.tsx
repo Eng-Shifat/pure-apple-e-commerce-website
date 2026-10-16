@@ -229,6 +229,10 @@ export default function AdminProductsPage() {
 
   async function saveDeal() {
     if (!dealProduct) return;
+    if (!(Number(dealPrice) > 0) || Number(dealPrice) >= dealProduct.price) {
+      showToast(`Deal Price অবশ্যই Sale Price (৳${dealProduct.price.toLocaleString("en-BD")})-এর চেয়ে কম হতে হবে`, false);
+      return;
+    }
     setDealSaving(true);
     try {
       // First clear any existing today's deal
@@ -448,7 +452,7 @@ export default function AdminProductsPage() {
                 <button
                   onClick={() => {
                     setDealProduct(activeDeal);
-                    setDealPrice(String(activeDeal.deal_price ?? activeDeal.price));
+                    setDealPrice(activeDeal.deal_price && activeDeal.deal_price < activeDeal.price ? String(activeDeal.deal_price) : "");
                     setDealEndsAt(activeDeal.deal_ends_at ? activeDeal.deal_ends_at.slice(0, 16) : "");
                     setDealModal(true);
                   }}
@@ -510,7 +514,7 @@ export default function AdminProductsPage() {
                 <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-100 divide-y divide-gray-50">
                   {dealFiltered.map(p => (
                     <button key={p.id}
-                      onClick={() => { setDealProduct(p); setDealPrice(String(p.deal_price ?? p.price)); }}
+                      onClick={() => { setDealProduct(p); setDealPrice(p.deal_price && p.deal_price < p.price ? String(p.deal_price) : ""); }}
                       className={`flex items-center gap-3 w-full px-3 py-2.5 text-left hover:bg-orange-50 transition-colors ${dealProduct?.id === p.id ? "bg-orange-50 border-l-2 border-orange-400" : ""}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -546,6 +550,16 @@ export default function AdminProductsPage() {
                     className="flex-1 text-sm bg-transparent outline-none text-gray-800 placeholder-gray-400 font-semibold"
                   />
                 </div>
+                {dealProduct && (
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Sale Price: ৳{dealProduct.price.toLocaleString("en-BD")} — Deal Price এর চেয়ে কম দিন
+                  </p>
+                )}
+                {dealProduct && dealPrice && Number(dealPrice) >= dealProduct.price && (
+                  <p className="text-[11px] text-red-500 font-semibold mt-1">
+                    Deal Price Sale Price-এর চেয়ে কম হতে হবে
+                  </p>
+                )}
                 {dealProduct && dealPrice && Number(dealPrice) < dealProduct.price && (
                   <p className="text-[11px] text-green-600 font-semibold mt-1 flex items-center gap-1">
                     <CheckCircle size={10} />
@@ -588,7 +602,7 @@ export default function AdminProductsPage() {
                 </button>
                 <button
                   onClick={saveDeal}
-                  disabled={!dealProduct || !dealPrice || dealSaving}
+                  disabled={!dealProduct || !dealPrice || !(dealProduct && Number(dealPrice) < dealProduct.price) || dealSaving}
                   className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold transition-colors shadow-md shadow-orange-200 active:scale-95 flex items-center justify-center gap-2"
                 >
                   {dealSaving ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}

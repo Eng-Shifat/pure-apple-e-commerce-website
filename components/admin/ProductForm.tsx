@@ -132,8 +132,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     variant:         initialData.variant          ?? "",
     price:           initialData.price            ?? "",
     original_price:  initialData.original_price   ?? "",
-    rating:          initialData.rating            ?? "",
-    review_count:    initialData.review_count      ?? "",
     image:           initialData.image             ?? "",
     slug:            initialData.slug              ?? "",
     badge:           initialData.badge             ?? "",
@@ -209,6 +207,24 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       setError("Invalid image URL. Use Upload button, https:// link, or /images/... path.");
       return;
     }
+    const priceNum = Number(form.price);
+    const origNum  = form.original_price === "" ? 0 : Number(form.original_price);
+    if (!(priceNum > 0)) { setError("Sale Price সঠিকভাবে দিন (0-এর বেশি)।"); return; }
+    if (origNum && origNum <= priceNum) {
+      setError("Original Price অবশ্যই Sale Price-এর চেয়ে বেশি হতে হবে (না দিলে খালি রাখুন)।");
+      return;
+    }
+    // প্রথম storage = base price → সবসময় Sale Price-এর সাথে মিলবে।
+    // বাকি storage-এর price নিজে দিতে হবে; storage list-এ নেই এমন পুরনো price বাদ।
+    const finalStoragePrices: Record<string, number> = {};
+    storageVariants.forEach((s, i) => {
+      if (i === 0) { finalStoragePrices[s] = priceNum; return; }
+      const v = storagePrices[s];
+      if (v !== undefined && v !== "" && Number(v) > 0) finalStoragePrices[s] = Number(v);
+    });
+    const finalRegionPrices: Record<string, number> = {};
+    regionList.forEach((r) => { finalRegionPrices[r] = Number(regionPrices[r] ?? 0) || 0; });
+
     setSaving(true);
     setError("");
     const url  = mode === "edit" ? `/api/products/${initialData.id}` : "/api/products";
@@ -218,13 +234,16 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
+        price:            priceNum,
+        original_price:   origNum || null,
+        stock:            form.stock === "" ? null : Number(form.stock),
         colors:           colors.length > 0 ? JSON.stringify(colors) : null,
         storage_variants: storageVariants.length > 0 ? JSON.stringify(storageVariants) : null,
-        storage_prices:   Object.keys(storagePrices).length > 0
-          ? JSON.stringify(Object.fromEntries(Object.entries(storagePrices).map(([k, v]) => [k, Number(v)])))
+        storage_prices:   Object.keys(finalStoragePrices).length > 1
+          ? JSON.stringify(finalStoragePrices)
           : null,
-        region_prices:    Object.keys(regionPrices).length > 0
-          ? JSON.stringify(Object.fromEntries(Object.entries(regionPrices).map(([k, v]) => [k, Number(v)])))
+        region_prices:    Object.keys(finalRegionPrices).length > 0
+          ? JSON.stringify(finalRegionPrices)
           : null,
         regions:          regionList.length > 0 ? regionList.join(",") : null,
       }),
@@ -342,7 +361,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       {/* ── Storage + Pricing ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">💾 Storage Variants & Pricing</h2>
-        <p className="text-xs text-gray-400">প্রতিটা storage এর জন্য আলাদা price set করুন। Storage select করলে product page এ price automatically update হবে।</p>
+        <p className="text-xs text-gray-400">প্রথম storage-এর price = উপরের Sale Price (নিজে থেকে মিলে যাবে)। বাকি storage-এর আলাদা price দিন। Storage select করলে product page এ price automatically update হবে।</p>
 
         {/* Presets */}
         <div className="flex flex-wrap gap-2">
@@ -372,6 +391,12 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             {storageVariants.map((s) => (
               <div key={s} className="grid grid-cols-[1fr_1fr_auto] items-center px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                 <span className="text-sm font-bold text-gray-800">{s}</span>
+                {s === storageVariants[0] ? (
+                  <div className="w-full border border-gray-100 bg-gray-50 rounded-lg px-3 py-1.5 text-sm text-gray-500 mr-3">
+                    {form.price !== "" ? `৳${Number(form.price).toLocaleString("en-BD")}` : "—"}
+                    <span className="ml-2 text-[10px] text-gray-400">= Sale Price (Base)</span>
+                  </div>
+                ) : (
                 <input
                   type="number"
                   value={storagePrices[s] ?? ""}
@@ -379,6 +404,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
                   placeholder="e.g. 174999"
                   className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mr-3"
                 />
+                )}
                 <button type="button" onClick={() => removeStorage(s)} className="text-gray-300 hover:text-red-400 transition-colors ml-2">
                   <Trash2 size={14}/>
                 </button>
@@ -492,6 +518,9 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       {/* ── Pricing ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Pricing</h2>
+        <p className="text-xs text-gray-400">
+          <strong>Sale Price</strong> = কাস্টমার যে দামে কিনবে (যেমন ৫৪,০০০)। <strong>Original Price</strong> = কাটা দাম / MRP (যেমন ৬৪,০০০), অবশ্যই Sale Price-এর চেয়ে বেশি। Offer / Today&apos;s Deal-এর দাম এর চেয়েও কম হবে।
+        </p>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Sale Price (৳) *</label>
@@ -500,21 +529,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Original Price (৳)</label>
             <input type="number" value={form.original_price} onChange={(e) => set("original_price", e.target.value)} placeholder="124999" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Rating ── */}
-      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Rating</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Rating (0–5)</label>
-            <input type="number" min="0" max="5" step="0.1" value={form.rating} onChange={(e) => set("rating", e.target.value)} placeholder="4.8" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Review Count</label>
-            <input type="number" min="0" value={form.review_count} onChange={(e) => set("review_count", e.target.value)} placeholder="2500" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           </div>
         </div>
       </section>

@@ -116,8 +116,8 @@ function DealCard({ deal }: { deal: DealProduct }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
 
-  const activePrice  = deal.deal_price ?? deal.price;
-  const comparePrice = deal.original_price ?? deal.price;
+  const activePrice  = deal.deal_price && deal.deal_price < deal.price ? deal.deal_price : deal.price;
+  const comparePrice = deal.original_price && deal.original_price > activePrice ? deal.original_price : deal.price;
   const discount     = comparePrice > activePrice
     ? Math.round(((comparePrice - activePrice) / comparePrice) * 100)
     : null;

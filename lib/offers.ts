@@ -43,9 +43,19 @@ export function offerStatus(o: Pick<Offer, "starts_at" | "ends_at" | "is_active"
   return "live";
 }
 
+/**
+ * Deal / offer price শুধু তখনই valid যখন সেটা sale price-এর চেয়ে কম।
+ * না হলে (ভুল করে বেশি বা সমান দিলে) sale price-ই চলবে।
+ */
+export function validDealPrice(price: number, deal?: number | null): number {
+  const p = Number(price) || 0;
+  const d = Number(deal);
+  return d > 0 && d < p ? d : p;
+}
+
 /** offer price নির্ধারণ: per-product price > offer % > product price */
 export function resolveOfferPrice(price: number, offerPrice?: number | null, percent?: number | null): number {
-  if (offerPrice != null && Number(offerPrice) > 0) return Number(offerPrice);
+  if (offerPrice != null && Number(offerPrice) > 0) return validDealPrice(price, Number(offerPrice));
   if (percent && percent > 0) return Math.round(price * (1 - percent / 100));
   return price;
 }

@@ -17,7 +17,9 @@ import { useCartStore } from "@/store/cartStore";
 import { offerStatus, type Offer, type OfferProduct } from "@/lib/offers";
 
 export function toCard(p: OfferProduct): SharedProduct {
-  const compare = p.price > p.offer_price ? p.price : (p.original_price ?? undefined) || undefined;
+  // strike-through: আসল (original) price আগে, না থাকলে sale price
+  const orig = Number(p.original_price) || 0;
+  const compare = orig > p.offer_price ? orig : p.price > p.offer_price ? p.price : undefined;
   return {
     id: p.id, name: p.name, variant: p.variant, slug: p.slug, image: p.image,
     price: p.offer_price,

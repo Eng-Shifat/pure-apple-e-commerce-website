@@ -270,7 +270,7 @@ export default function ProductDetailPage() {
           );
         }
         // Check if this product is a today's deal
-        if (found?.is_today_deal && found.deal_price) {
+        if (found?.is_today_deal && found.deal_price && found.deal_price < found.price) {
           setDealInfo({ deal_price: found.deal_price, deal_ends_at: found.deal_ends_at ?? null });
         }
 
@@ -326,27 +326,44 @@ export default function ProductDetailPage() {
     ?? (product?.regions ? product.regions.split(",").map((r) => r.trim()) : []);
 
   // ── Dynamic price based on selected storage + region ──
-  const computedPrice = (() => {
-    if (catalogPhone?.storagePrices) {
-      const base = catalogPhone.storagePrices[selStorage] ?? catalogPhone.price;
-      const delta = catalogPhone.regionPrices?.[selRegion] ?? 0;
-      return base + delta;
-    }
+  // base price of a storage (without region adjustment)
+  const baseFor = (storage: string): number => {
+    if (catalogPhone?.storagePrices) return catalogPhone.storagePrices[storage] ?? catalogPhone.price;
     if (product?.storage_prices) {
       try {
         const sp: Record<string, number> = JSON.parse(product.storage_prices);
-        const base = sp[selStorage] ?? product.price;
-        const rp: Record<string, number> = product.region_prices ? JSON.parse(product.region_prices) : {};
-        const delta = rp[selRegion] ?? 0;
-        return base + delta;
+        return sp[storage] ?? product.price;
       } catch { /* fall through */ }
     }
     return product?.price ?? 0;
-  })();
+  };
+  // region price adjustment (+/-)
+  const deltaFor = (region: string): number => {
+    if (catalogPhone?.regionPrices) return catalogPhone.regionPrices[region] ?? 0;
+    if (product?.region_prices) {
+      try {
+        const rp: Record<string, number> = JSON.parse(product.region_prices);
+        return rp[region] ?? 0;
+      } catch { /* ignore */ }
+    }
+    return 0;
+  };
 
-  const displayPrice    = computedPrice;
-  const displayOriginal = product?.original_price
+  // regular (sale) price for the selected storage + region
+  const computedPrice = baseFor(selStorage) + deltaFor(selRegion);
+
+  // Today's Deal: sale price থেকে যত টাকা কম (flat), সব storage/region-এ প্রযোজ্য
+  const dealDiscount = dealInfo && product ? Math.max(0, product.price - dealInfo.deal_price) : 0;
+  const displayPrice = Math.max(0, computedPrice - dealDiscount);
+
+  // কাটা দাম: Original Price (storage/region অনুযায়ী scale) — কিন্তু শুধু যদি দেখানো দামের চেয়ে বেশি হয়;
+  // না হলে deal চললে sale price-ই কাটা দাম।
+  const scaledOriginal = product?.original_price
     ? Math.round(product.original_price * (computedPrice / (product.price || 1)))
+    : 0;
+  const displayOriginal: number | undefined =
+    scaledOriginal > displayPrice ? scaledOriginal
+    : dealDiscount > 0 ? computedPrice
     : undefined;
 
   const handleAddToCart = useCallback(() => {
@@ -369,6 +386,8 @@ export default function ProductDetailPage() {
       {
         ...product,
         id: variantId,
+        price: displayPrice,
+        original_price: displayOriginal,
         ...(chosen ? { image: chosen.image } : {}),
         variant: variantLabel || product.variant,
       },
@@ -376,7 +395,7 @@ export default function ProductDetailPage() {
     );
     setAdded(true);
     setShowCartBar(true);
-  }, [product, qty, addItem, catalogPhone, selColor, selStorage, selRegion]);
+  }, [product, qty, addItem, catalogPhone, selColor, selStorage, selRegion, displayPrice, displayOriginal]);
 
   const handleShare = useCallback(() => {
     navigator.clipboard.writeText(window.location.href).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
@@ -545,15 +564,15 @@ export default function ProductDetailPage() {
               </div>
             )}
 
+            {/* ── Storage + Region (এক row-তে) ── */}
+            <div className="mt-4 flex flex-wrap items-stretch gap-3">
             {/* ── Storage Selector ── */}
             {storageVariants.length > 0 && (
-              <div className="mt-4 p-3.5 bg-white border border-gray-100 rounded-2xl">
+              <div className="flex-1 basis-[240px] p-3.5 bg-white border border-gray-100 rounded-2xl">
                 <p className="text-sm font-bold text-gray-700 mb-2.5">Storage:</p>
                 <div className="flex flex-wrap gap-2">
                   {storageVariants.map((s) => {
-                    const sp = catalogPhone?.storagePrices?.[s];
-                    const regionDelta = catalogPhone?.regionPrices?.[selRegion] ?? 0;
-                    const spWithRegion = sp !== undefined ? sp + regionDelta : undefined;
+                    const spWithRegion = Math.max(0, baseFor(s) + deltaFor(selRegion) - dealDiscount);
                     const isSelected = selStorage === s;
                     return (
                       <button key={s} type="button" onClick={() => setSelStorage(s)}
@@ -578,23 +597,14 @@ export default function ProductDetailPage() {
 
             {/* ── Region Selector ── */}
             {regionList.length > 0 && (
-              <div className="mt-3 p-3.5 bg-white border border-gray-100 rounded-2xl">
+              <div className="flex-1 basis-[240px] p-3.5 bg-white border border-gray-100 rounded-2xl">
                 <p className="text-sm font-bold text-gray-700 mb-2.5">
                   Region:
                   <span className="ml-2 text-[11px] font-normal text-gray-400">প্রতিটি region-এর price আলাদা</span>
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {regionList.map((r) => {
-                    const base = catalogPhone?.storagePrices?.[selStorage] ?? displayPrice;
-                    const delta = catalogPhone?.regionPrices?.[r] ?? 0;
-                    const rp = (() => {
-                      if (product?.region_prices) {
-                        try { const rpr: Record<string, number> = JSON.parse(product.region_prices); return rpr[r] ?? 0; }
-                        catch { return 0; }
-                      }
-                      return delta;
-                    })();
-                    const rPrice = base + rp;
+                    const rPrice = Math.max(0, baseFor(selStorage) + deltaFor(r) - dealDiscount);
                     const isSelected = selRegion === r;
                     return (
                       <button key={r} type="button" onClick={() => setSelRegion(r)}
@@ -614,6 +624,8 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             )}
+
+            </div>
 
             {/* Key points */}
             <ul className="mt-4 space-y-1.5">
