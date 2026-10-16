@@ -1,3 +1,4 @@
+// SAVE PATH: types/index.ts
 export interface Product {
   id: string;
   name: string;
@@ -64,6 +65,18 @@ export interface Order {
   shipping_city: string;
   payment_method: "cod" | "bkash" | "nagad";
   created_at: string;
+  // checkout / advance payment
+  subtotal?: number;
+  delivery_area?: "dhaka" | "outside";
+  delivery_charge?: number;
+  advance_amount?: number;
+  advance_method?: "bkash" | "nagad";
+  payment_trx_id?: string;
+  payment_sender?: string;
+  payment_status?: "pending_review" | "verified" | "rejected";
+  payment_proof_url?: string | null; // admin only (signed URL)
+  reject_reason?: string | null;
+  note?: string | null;
 }
 
 export interface OrderItem {

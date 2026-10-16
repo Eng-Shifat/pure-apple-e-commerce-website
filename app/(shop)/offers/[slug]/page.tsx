@@ -1,3 +1,4 @@
+// SAVE PATH: app/(shop)/offers/[slug]/page.tsx
 "use client";
 
 // /offers/[slug] — একটা offer-এর সব product (Black Friday, Black Sunday, Best Deal …)
@@ -74,7 +75,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ slug: st
               <span className="text-xs font-bold bg-black/25 px-3 py-1.5 rounded-full">এই offer শেষ হয়ে গেছে</span>
             ) : !offer.no_timer && (
               <OfferCountdown key={status} target={live ? offer.ends_at : offer.starts_at}
-                label={live ? "Ends in" : "Starts in"} dark onDone={load} />
+                label={live ? "Offer ends in" : "Starts in"} dark big onDone={load} />
             )}
             <span className="text-xs font-semibold text-white/80">{offer.products?.length ?? 0} products</span>
           </div>

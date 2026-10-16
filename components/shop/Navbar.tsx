@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/Navbar.tsx
 "use client";
 
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Search, Heart, ShoppingCart, User, ChevronDown, ChevronRight,
-  Menu, X, Home, ShoppingBag, LayoutGrid, BadgePercent, Info, LogOut, Flame,
+  Menu, X, Home, ShoppingBag, LayoutGrid, Info, LogOut, Flame,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
@@ -91,7 +92,6 @@ const mobileLinks = [
   { label: "Home",       href: "/",                        icon: Home        },
   { label: "Shop",       href: "/products",                icon: ShoppingBag },
   { label: "Categories", href: "/products?view=categories",icon: LayoutGrid  },
-  { label: "Deals",      href: "/products?deals=true",     icon: BadgePercent},
   { label: "Offers",     href: "/offers",                  icon: Flame       },
   { label: "About",      href: "/about",                   icon: Info        },
 ];
@@ -509,7 +509,6 @@ export default function Navbar() {
                 </div>
               </div>
 
-              <Link href="/products?deals=true" className="text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors">Deals</Link>
               <Link href="/offers" className={`text-sm font-medium transition-colors ${pathname.startsWith("/offers") ? "text-brand-600 border-b-2 border-brand-500 pb-0.5" : "text-gray-800 hover:text-brand-600"}`}>Offers</Link>
               <Link href="/about" className="text-gray-800 hover:text-brand-600 text-sm font-medium transition-colors">About</Link>
             </nav>

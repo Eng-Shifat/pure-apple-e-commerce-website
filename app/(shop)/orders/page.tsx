@@ -1,3 +1,4 @@
+// SAVE PATH: app/(shop)/orders/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -70,9 +71,15 @@ export default function OrdersPage() {
                     <p className="text-xs text-gray-400 font-mono">#{order.id.slice(0, 8).toUpperCase()}</p>
                     <p className="text-sm text-gray-400 mt-0.5">{new Date(order.created_at).toLocaleDateString("en-BD", { dateStyle: "medium" })}</p>
                   </div>
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full capitalize ${STATUS_STYLES[order.status] ?? "bg-gray-100 text-gray-600"}`}>
-                    {order.status}
-                  </span>
+                  {order.payment_status === "pending_review" ? (
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">Payment under review</span>
+                  ) : order.payment_status === "rejected" ? (
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-600">Payment rejected</span>
+                  ) : (
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full capitalize ${STATUS_STYLES[order.status] ?? "bg-gray-100 text-gray-600"}`}>
+                      {order.status}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">

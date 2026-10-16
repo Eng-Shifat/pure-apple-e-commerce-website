@@ -1,7 +1,9 @@
+// SAVE PATH: app/admin/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { adminFetch } from "@/lib/adminFetch";
 import {
   Package, ShoppingBag, TrendingUp, Zap,
   ArrowUpRight, Clock, CheckCircle, Truck,
@@ -20,6 +22,7 @@ interface Order {
   total: number;
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   payment_method: string;
+  payment_status?: "pending_review" | "verified" | "rejected";
   created_at: string;
   order_items?: { quantity: number; price: number; product?: { name: string; image: string } }[];
 }
@@ -142,7 +145,7 @@ function StatusSelect({ orderId, current, onUpdate }: {
     const next = e.target.value;
     setSaving(true);
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await adminFetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: next }),
@@ -174,19 +177,23 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [stats,    setStats]    = useState<DashStats | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const [pRes, oRes] = await Promise.all([
         fetch("/api/products"),
-        fetch("/api/orders"),
+        adminFetch("/api/orders"),
       ]);
       const pData = await pRes.json();
       const oData = await oRes.json();
 
       const prods: Product[] = pData.products ?? [];
-      const ords:  Order[]   = oData.orders   ?? [];
+      const allOrds: Order[] = oData.orders   ?? [];
+      // Payment accept হওয়া order-ই হিসাবে ধরা হবে (review বাকি / reject বাদ)
+      const ords = allOrds.filter(o => o.payment_status !== "pending_review" && o.payment_status !== "rejected");
+      setReviewCount(allOrds.filter(o => o.payment_status === "pending_review").length);
 
       setProducts(prods);
       setOrders(ords);
@@ -299,6 +306,15 @@ export default function AdminDashboard() {
             </Link>
           ))}
         </div>
+
+        {/* ── Payment review alert ── */}
+        {reviewCount > 0 && (
+          <Link href="/admin/orders" className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 hover:bg-amber-100/70 transition-colors">
+            <AlertCircle size={18} className="text-amber-600 shrink-0" />
+            <p className="text-sm font-bold text-amber-800">{reviewCount} নতুন order-এর payment যাচাই বাকি</p>
+            <span className="ml-auto text-xs font-bold text-amber-700 shrink-0">Review →</span>
+          </Link>
+        )}
 
         {/* ── Main Stats Grid ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

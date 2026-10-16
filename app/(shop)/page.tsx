@@ -1,3 +1,4 @@
+// SAVE PATH: app/(shop)/page.tsx
 import HeroSlider from "@/components/shop/HeroSlider";
 import MobileCategoryStrip from "@/components/shop/MobileCategoryStrip";
 import PopularProducts from "@/components/shop/PopularProducts";
@@ -5,7 +6,6 @@ import PromoBanner from "@/components/shop/PromoBanner";
 import ShopByBrand from "@/components/shop/ShopByBrand";
 import BestDeals from "@/components/shop/BestDeals";
 import TodaysDeal from "@/components/shop/TodaysDeal";
-import OffersSection from "@/components/shop/OffersSection";
 import PhoneSeriesSection from "@/components/shop/PhoneSeriesSection";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,8 +23,6 @@ export default function HomePage() {
         <MobileCategoryStrip />
         <HeroSlider />
       </div>
-      {/* ── Special Offers (Best Deal / Today's Offer / Black Friday …) — admin-controlled, time-based ── */}
-      <OffersSection />
       <ShopByBrand />
       <PopularProducts />
       <PromoBanner />
@@ -38,14 +36,16 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <Link
             href="/products?deals=true"
-            className="block relative rounded-2xl overflow-hidden"
-            style={{ aspectRatio: "16/4" }}
+            className="block rounded-2xl overflow-hidden"
           >
+            {/* Image-er asol ratio (2170×362) — crop hobe na, puro banner dekhabe */}
             <Image
               src="/images/Banner/deals-banner.webp"
               alt="Best Deals Banner"
-              fill
-              className="object-cover object-[center_center]"
+              width={2170}
+              height={362}
+              sizes="(max-width: 1280px) 100vw, 1280px"
+              className="w-full h-auto"
               priority
             />
           </Link>

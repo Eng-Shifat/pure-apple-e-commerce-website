@@ -1,6 +1,8 @@
+// SAVE PATH: app/(shop)/layout.tsx
 import Navbar from "@/components/shop/Navbar";
 import Footer from "@/components/shop/Footer";
 import MobileBottomNav from "@/components/shop/MobileBottomNav";
+import WhatsAppFloat from "@/components/shop/WhatsAppFloat";
 
 export default function ShopLayout({
   children,
@@ -16,6 +18,7 @@ export default function ShopLayout({
         <Footer />
       </div>
       <MobileBottomNav />
+      <WhatsAppFloat />
     </>
   );
 }
