@@ -5,6 +5,7 @@
 // POST /api/offers                → admin: নতুন offer + product_ids
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { createClient } from "@supabase/supabase-js";
 import { offerStatus, resolveOfferPrice, type Offer } from "@/lib/offers";
 import { todaysDealOffer, TODAYS_DEAL_SLUG } from "@/lib/todaysDeal";
@@ -108,6 +109,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  { const denied = await requireAdmin(req); if (denied) return denied; }
   const supabase = getSupabase();
   const body = await req.json();
   const { title, slug, subtitle, emoji, color, starts_at, ends_at, discount_percent, is_active, sort_order, products } = body as {

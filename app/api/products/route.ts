@@ -1,5 +1,6 @@
 // SAVE PATH: app/api/products/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { expireTodaysDeals } from "@/lib/todaysDeal";
@@ -89,6 +90,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/products
 export async function POST(req: NextRequest) {
+  { const denied = await requireAdmin(req); if (denied) return denied; }
   const supabase = getSupabase();
   const body = await req.json();
 

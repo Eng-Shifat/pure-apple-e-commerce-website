@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore, verifyAdminOnServer, recentlyVerifiedAdmin } from "@/store/authStore";
+import { supabase } from "@/lib/supabase";
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart3,
   LogOut, ChevronRight, ExternalLink, FolderOpen, Flame,
@@ -25,13 +26,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const hasHydrated = useAuthStore(s => s._hasHydrated);
   const logout      = useAuthStore(s => s.logout);
 
+  // server-verified admin: null = যাচাই চলছে, true/false = ফলাফল, "error" = network সমস্যা
+  const [verified, setVerified] = useState<boolean | "error" | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
     if (!hasHydrated) return;
-    if (!user) { router.push("/login"); return; }
-    if (user.role !== "admin") { router.push("/"); }
-  }, [user, hasHydrated, router]);
+    if (!user) { router.replace("/login"); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) { if (!cancelled) { setVerified(false); router.replace("/login"); } return; }
 
-  if (!hasHydrated || !user || user.role !== "admin") {
+        // এইমাত্র login-এ server যাচাই হয়ে থাকলে আবার অপেক্ষা করার দরকার নেই
+        if (user.role === "admin" && recentlyVerifiedAdmin()) { if (!cancelled) setVerified(true); return; }
+
+        const ok = await verifyAdminOnServer(token, 10000);
+        if (cancelled) return;
+        setVerified(ok);
+        if (!ok) router.replace("/");
+      } catch {
+        if (!cancelled) setVerified("error"); // slow/offline — redirect না করে Retry দেখাও
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, hasHydrated, router, attempt]);
+
+  if (verified === "error") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3 px-4 text-center">
+        <p className="text-sm text-gray-600">Couldn&apos;t verify your admin session (slow connection).</p>
+        <button onClick={() => { setVerified(null); setAttempt((n) => n + 1); }}
+          className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!hasHydrated || !user || verified !== true) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="w-6 h-6 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />

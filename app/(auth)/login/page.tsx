@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuthStore, DEMO_ADMIN } from "@/store/authStore";
+import { useAuthStore } from "@/store/authStore";
 import { Eye, EyeOff, Loader2, LogIn, Mail, Lock } from "lucide-react";
 import Navbar from "@/components/shop/Navbar";
 import MobileBottomNav from "@/components/shop/MobileBottomNav";
@@ -17,11 +17,6 @@ export default function LoginPage() {
   const [showPw,   setShowPw]   = useState(false);
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
-
-  function fillAdmin() {
-    setEmail(DEMO_ADMIN.email);
-    setPassword(DEMO_ADMIN.password);
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,22 +47,6 @@ export default function LoginPage() {
             <p className="text-gray-400 text-sm mt-3 text-center">
               Welcome back — sign in to your account
             </p>
-          </div>
-
-          {/* ── Demo hint (collapsible feel) ── */}
-          <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3.5 mb-5">
-            <p className="text-xs font-bold text-orange-700 mb-2">🔑 Demo Credentials</p>
-            <div className="space-y-0.5 text-xs text-orange-600 font-mono">
-              <p>Email: <span className="font-bold">{DEMO_ADMIN.email}</span></p>
-              <p>Password: <span className="font-bold">{DEMO_ADMIN.password}</span></p>
-            </div>
-            <button
-              type="button"
-              onClick={fillAdmin}
-              className="mt-2.5 w-full text-xs font-semibold text-orange-700 bg-orange-100 hover:bg-orange-200 py-1.5 rounded-xl transition-colors"
-            >
-              ↑ Fill Admin Credentials
-            </button>
           </div>
 
           {/* ── Card ── */}

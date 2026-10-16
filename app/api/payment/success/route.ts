@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export async function POST(req: NextRequest) {
+  { const denied = await requireAdmin(req); if (denied) return denied; }
   const body = await req.json();
   const { order_id } = body;
 

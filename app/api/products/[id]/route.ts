@@ -1,5 +1,6 @@
 // SAVE PATH: app/api/products/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { clearCache } from "@/lib/serverCache";
 import { createClient } from "@supabase/supabase-js";
 
@@ -28,6 +29,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  { const denied = await requireAdmin(req); if (denied) return denied; }
   const { id } = await params;
   const supabase = getSupabase();
   const body = await req.json();
@@ -60,9 +62,10 @@ export async function PUT(
 
 // DELETE /api/products/[id]
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  { const denied = await requireAdmin(req); if (denied) return denied; }
   const { id } = await params;
   const supabase = getSupabase();
   const { error } = await supabase.from("products").delete().eq("id", id);

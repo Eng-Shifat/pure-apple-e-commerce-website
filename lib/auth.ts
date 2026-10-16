@@ -33,6 +33,6 @@ export async function getCurrentUser(): Promise<User | null> {
     id: data.user.id,
     email: data.user.email!,
     name: data.user.user_metadata?.name,
-    role: data.user.user_metadata?.role ?? "customer",
+    role: "customer", // admin কিনা server (/api/admin/verify) ঠিক করে
   };
 }

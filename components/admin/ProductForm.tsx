@@ -1,10 +1,10 @@
 "use client";
 
+import { adminFetch } from "@/lib/adminFetch";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Upload, Loader2, CheckCircle, X, Plus, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 interface ProductFormProps {
   initialData?: {
@@ -189,11 +189,12 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     setUploading(true);
     setError("");
     try {
-      const ext = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("product-images").upload(fileName, file, { cacheControl: "3600", upsert: false });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(fileName);
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await adminFetch("/api/admin/upload", { method: "POST", body: fd });
+      const upData = await up.json();
+      if (!up.ok) throw new Error(upData.error ?? "Upload failed");
+      const publicUrl = upData.url as string;
       set("image", publicUrl);
     } catch (err: unknown) {
       setError(`Image upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -212,7 +213,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     setError("");
     const url  = mode === "edit" ? `/api/products/${initialData.id}` : "/api/products";
     const meth = mode === "edit" ? "PUT" : "POST";
-    const res = await fetch(url, {
+    const res = await adminFetch(url, {
       method: meth,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

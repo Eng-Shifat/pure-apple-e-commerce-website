@@ -1,5 +1,6 @@
 "use client";
 
+import { adminFetch } from "@/lib/adminFetch";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
@@ -232,14 +233,14 @@ export default function AdminProductsPage() {
     try {
       // First clear any existing today's deal
       if (activeDeal && activeDeal.id !== dealProduct.id) {
-        await fetch(`/api/products/${activeDeal.id}`, {
+        await adminFetch(`/api/products/${activeDeal.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ is_today_deal: false, deal_price: null, deal_ends_at: null }),
         });
       }
       // Set the new deal
-      const res = await fetch(`/api/products/${dealProduct.id}`, {
+      const res = await adminFetch(`/api/products/${dealProduct.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -264,7 +265,7 @@ export default function AdminProductsPage() {
 
   async function clearDeal(id: string) {
     try {
-      await fetch(`/api/products/${id}`, {
+      await adminFetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_today_deal: false, deal_price: null, deal_ends_at: null }),
@@ -279,7 +280,7 @@ export default function AdminProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/products");
+      const res = await adminFetch("/api/products");
       const d   = await res.json();
       setProducts(d.products ?? []);
     } catch {
@@ -298,7 +299,7 @@ export default function AdminProductsPage() {
 
   async function patch(id: string, payload: Record<string, unknown>) {
     try {
-      const res = await fetch(`/api/products/${id}`, {
+      const res = await adminFetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

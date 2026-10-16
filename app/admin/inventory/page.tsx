@@ -1,5 +1,6 @@
 "use client";
 
+import { adminFetch } from "@/lib/adminFetch";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -70,7 +71,7 @@ export default function InventoryPage() {
 
   async function toggleAvailable(p: Product) {
     setToggling(p.id);
-    await fetch(`/api/products/${p.id}`, {
+    await adminFetch(`/api/products/${p.id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_available: !p.is_available }),
     });
@@ -82,7 +83,7 @@ export default function InventoryPage() {
   async function toggleHotDeal(p: Product) {
     setToggling(p.id);
     const isHot = p.badge === "Hot Deal";
-    await fetch(`/api/products/${p.id}`, {
+    await adminFetch(`/api/products/${p.id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ badge: isHot ? "" : "Hot Deal", badge_color: isHot ? "" : "#FB5724" }),
     });
@@ -90,7 +91,7 @@ export default function InventoryPage() {
   }
 
   async function saveStock(id: string) {
-    await fetch(`/api/products/${id}`, {
+    await adminFetch(`/api/products/${id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stock: Number(stockInput) }),
     });

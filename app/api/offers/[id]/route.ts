@@ -2,6 +2,7 @@
 // DELETE /api/offers/[id] → offer delete
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { createClient } from "@supabase/supabase-js";
 
 function getSupabase() {
@@ -12,6 +13,7 @@ function getSupabase() {
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  { const denied = await requireAdmin(req); if (denied) return denied; }
   const { id } = await params;
   const supabase = getSupabase();
   const body = await req.json();
@@ -45,7 +47,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  { const denied = await requireAdmin(req); if (denied) return denied; }
   const { id } = await params;
   const supabase = getSupabase();
   const { error } = await supabase.from("offers").delete().eq("id", id);

@@ -6,6 +6,7 @@
 // Toggle on/off করলে shop-এ সাথে সাথে effect হয়
 // ─────────────────────────────────────────────────────────────
 
+import { adminFetch } from "@/lib/adminFetch";
 import { useState, useEffect, useCallback } from "react";
 import {
   ToggleLeft, ToggleRight, RefreshCw,
@@ -33,7 +34,7 @@ export default function AdminCategoriesPage() {
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/categories");
+      const res = await adminFetch("/api/categories");
       const data = await res.json() as { categories: CategorySetting[] };
       if (data.categories) setCategories(data.categories);
     } catch {
@@ -64,7 +65,7 @@ export default function AdminCategoriesPage() {
     setSaving(cat.slug);
 
     try {
-      const res = await fetch("/api/categories", {
+      const res = await adminFetch("/api/categories", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug: cat.slug, is_enabled: newVal }),

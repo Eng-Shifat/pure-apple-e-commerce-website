@@ -4,6 +4,7 @@
 // Best Deal, Today's Offer, Black Friday, Black Sunday … সব এখান থেকে বানান।
 // Start/End time দিলে shop-এ নিজে থেকেই live → শেষ হলে hide হয়ে যায়।
 
+import { adminFetch } from "@/lib/adminFetch";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X, Search, Loader2, Flame, Clock, Package } from "lucide-react";
 import { offerStatus, type Offer } from "@/lib/offers";
@@ -51,8 +52,8 @@ export default function AdminOffersPage() {
     setLoading(true);
     try {
       const [o, p] = await Promise.all([
-        fetch("/api/offers?all=true", { cache: "no-store" }).then((r) => r.json()),
-        fetch("/api/products").then((r) => r.json()),
+        adminFetch("/api/offers?all=true", { cache: "no-store" }).then((r) => r.json()),
+        adminFetch("/api/products").then((r) => r.json()),
       ]);
       setOffers(o.offers ?? []);
       setProducts(p.products ?? []);
@@ -80,7 +81,7 @@ export default function AdminOffersPage() {
   }
 
   async function openEdit(o: Offer) {
-    const r = await fetch(`/api/offers?slug=${encodeURIComponent(o.slug)}`, { cache: "no-store" }).then((x) => x.json());
+    const r = await adminFetch(`/api/offers?slug=${encodeURIComponent(o.slug)}`, { cache: "no-store" }).then((x) => x.json());
     const full: Offer = r.offer ?? o;
     setForm({
       id: o.id, title: o.title, slug: o.slug, subtitle: o.subtitle ?? "", emoji: o.emoji ?? "🔥", color: o.color,
@@ -110,7 +111,7 @@ export default function AdminOffersPage() {
 
     setSaving(true);
     try {
-      const res = await fetch(form.id ? `/api/offers/${form.id}` : "/api/offers", {
+      const res = await adminFetch(form.id ? `/api/offers/${form.id}` : "/api/offers", {
         method: form.id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
       const d = await res.json().catch(() => ({}));
@@ -122,12 +123,12 @@ export default function AdminOffersPage() {
   }
 
   async function toggleActive(o: Offer) {
-    await fetch(`/api/offers/${o.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_active: !o.is_active }) });
+    await adminFetch(`/api/offers/${o.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_active: !o.is_active }) });
     load();
   }
   async function remove(o: Offer) {
     if (!confirm(`"${o.title}" delete করবেন?`)) return;
-    const res = await fetch(`/api/offers/${o.id}`, { method: "DELETE" });
+    const res = await adminFetch(`/api/offers/${o.id}`, { method: "DELETE" });
     say(res.ok ? "Deleted ✓" : "Delete হয়নি", res.ok); load();
   }
 
