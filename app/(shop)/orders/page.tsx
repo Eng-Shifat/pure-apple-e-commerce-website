@@ -5,8 +5,12 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Package, ChevronRight, Loader2 } from "lucide-react";
+import { Package, Download, Loader2 } from "lucide-react";
+import { downloadInvoice } from "@/lib/invoice";
 import type { Order } from "@/types";
+
+type OrderItemRow = { quantity: number; price: number; product_name?: string | null; variant?: string | null; product?: { name: string } | null };
+type FullOrder = Order & { order_items?: OrderItemRow[] };
 
 const STATUS_STYLES: Record<string, string> = {
   pending:    "bg-yellow-100 text-yellow-700",
@@ -19,7 +23,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function OrdersPage() {
   const user = useAuth(s => s.user);
   const authLoading = !useAuth(s => s._hasHydrated);
-  const [orders,  setOrders]  = useState<Order[]>([]);
+  const [orders,  setOrders]  = useState<FullOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -84,10 +88,21 @@ export default function OrdersPage() {
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
                   <div>
-                    <p className="text-xs text-gray-400">{order.items?.length ?? 0} item(s) · {order.payment_method?.toUpperCase()}</p>
+                    <p className="text-xs text-gray-400">{order.order_items?.reduce((n, i) => n + i.quantity, 0) ?? 0} item(s) · {order.payment_method?.toUpperCase()}</p>
                     <p className="font-extrabold text-gray-900 mt-0.5">৳{order.total?.toLocaleString("en-BD")}</p>
                   </div>
-                  <ChevronRight size={18} className="text-gray-300" />
+                  <button type="button"
+                    onClick={() => downloadInvoice({
+                      orderId: order.id, createdAt: order.created_at,
+                      customer: { name: order.shipping_name, phone: order.shipping_phone, address: order.shipping_address, city: order.shipping_city },
+                      items: (order.order_items ?? []).map((i) => ({ name: i.product_name || i.product?.name || "Product", variant: i.variant, quantity: i.quantity, price: i.price })),
+                      subtotal: order.subtotal ?? order.total - (order.delivery_charge ?? 0), deliveryCharge: order.delivery_charge ?? 0, deliveryArea: order.delivery_area ?? null,
+                      total: order.total, advanceAmount: order.advance_amount ?? 0, paymentMethod: order.payment_method,
+                      advanceMethod: order.advance_method ?? null, trxId: order.payment_trx_id ?? null, note: order.note ?? null, paymentStatus: order.payment_status ?? null,
+                    })}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-gray-200 text-gray-700 hover:border-brand-300 hover:text-brand-500 transition-colors">
+                    <Download size={13} /> Invoice
+                  </button>
                 </div>
               </div>
             ))}
