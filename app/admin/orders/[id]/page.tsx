@@ -6,7 +6,8 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, Loader2, Phone, MapPin, MessageCircle } from "lucide-react";
+import { ChevronLeft, Loader2, Phone, MapPin, MessageCircle, Download } from "lucide-react";
+import { downloadInvoice } from "@/lib/invoice";
 import { adminFetch } from "@/lib/adminFetch";
 import OrderPaymentPanel, { PaymentBadge, taka } from "@/components/admin/OrderPaymentPanel";
 import type { Order } from "@/types";
@@ -45,8 +46,19 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         <h1 className="text-2xl font-extrabold text-gray-900 font-mono">#{order.id.slice(0, 8).toUpperCase()}</h1>
         <PaymentBadge status={order.payment_status} />
         <span className="text-xs text-gray-400">{new Date(order.created_at).toLocaleString("en-GB")}</span>
+        <button type="button" onClick={() => downloadInvoice({
+            orderId: order.id, createdAt: order.created_at,
+            customer: { name: order.shipping_name, phone: order.shipping_phone, address: order.shipping_address, city: order.shipping_city },
+            items: (order.order_items ?? []).map((i) => ({ name: i.product_name || i.product?.name || "Product", variant: i.variant, quantity: i.quantity, price: i.price })),
+            subtotal: order.subtotal ?? order.total - (order.delivery_charge ?? 0), deliveryCharge: order.delivery_charge ?? 0, deliveryArea: order.delivery_area ?? null,
+            total: order.total, advanceAmount: order.advance_amount ?? 0, paymentMethod: order.payment_method,
+            advanceMethod: order.advance_method ?? null, trxId: order.payment_trx_id ?? null, note: order.note ?? null, paymentStatus: order.payment_status ?? null,
+          })}
+          className="ml-auto inline-flex items-center gap-1.5 text-sm font-bold border border-gray-200 rounded-xl px-3 py-2 bg-white hover:border-orange-300 hover:text-orange-500 transition-colors">
+          <Download size={14} /> Invoice
+        </button>
         <select value={order.status} onChange={(e) => changeStatus(e.target.value)} disabled={order.payment_status === "pending_review"}
-          className="ml-auto text-sm font-bold border border-gray-200 rounded-xl px-3 py-2 bg-white capitalize disabled:opacity-50">
+          className="text-sm font-bold border border-gray-200 rounded-xl px-3 py-2 bg-white capitalize disabled:opacity-50">
           {["pending", "processing", "shipped", "delivered", "cancelled"].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>

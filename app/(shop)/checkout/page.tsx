@@ -26,6 +26,7 @@ import {
   type DeliveryArea, type PayMethod, type Wallet,
 } from "@/lib/shopConfig";
 import PayLogo from "@/components/shop/PayLogo";
+import { downloadInvoice, stashInvoice, type InvoiceData } from "@/lib/invoice";
 
 const taka = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
 const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-300 placeholder:text-gray-400";
@@ -166,6 +167,19 @@ export default function CheckoutPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { alert(data.error ?? "Order failed"); setLoading(false); return; }
+
+      // Invoice বানাও (cart clear হওয়ার আগে) → auto-download + success page-এ আবার নামানোর জন্য save
+      const invoice: InvoiceData = {
+        orderId: data.order.id,
+        createdAt: new Date().toISOString(),
+        customer: { name: form.name.trim(), phone: form.phone.trim(), address: form.address.trim(), city: form.city.trim() },
+        items: lines.map((l) => ({ name: l.product.name, variant: l.product.variant, quantity: l.quantity, price: l.product.price })),
+        subtotal, deliveryCharge: delivery, deliveryArea: area || null, total: grand,
+        advanceAmount: advance, paymentMethod: method, advanceMethod: activeWallet,
+        trxId: trx.trim(), note: form.note.trim() || null, paymentStatus: "pending_review",
+      };
+      stashInvoice(invoice);
+      try { await downloadInvoice(invoice); } catch { /* invoice fail করলেও order হয়ে গেছে */ }
 
       clearCart();
       router.push(`/checkout/success?order_id=${data.order.id}&advance=${advance}&total=${grand}`);

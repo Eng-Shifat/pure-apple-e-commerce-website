@@ -1,11 +1,12 @@
 // SAVE PATH: app/(shop)/checkout/success/page.tsx
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, Package, ArrowRight, ShieldCheck } from "lucide-react";
+import { CheckCircle, Package, ArrowRight, ShieldCheck, Download } from "lucide-react";
 import { SHOP } from "@/lib/shopConfig";
+import { downloadInvoice, readInvoice, type InvoiceData } from "@/lib/invoice";
 
 const taka = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
 
@@ -16,6 +17,9 @@ function SuccessContent() {
   const total   = Number(params.get("total") || 0);
   const due     = Math.max(0, total - advance);
   const code    = orderId ? `#${orderId.slice(0, 8).toUpperCase()}` : "";
+
+  const [invoice, setInvoice] = useState<InvoiceData | null>(null);
+  useEffect(() => { if (orderId) setInvoice(readInvoice(orderId)); }, [orderId]);
 
   const waText = encodeURIComponent(`Hi Pure Apple! আমি order ${code} করেছি। Payment verify হয়েছে কিনা জানতে চাই।`);
 
@@ -52,6 +56,13 @@ function SuccessContent() {
             </div>
           ))}
         </div>
+
+        {invoice && (
+          <button type="button" onClick={() => downloadInvoice(invoice)}
+            className="w-full mb-3 flex items-center justify-center gap-2 h-11 bg-gray-900 hover:bg-gray-800 text-white font-semibold text-sm rounded-xl transition-all active:scale-95">
+            <Download size={16} /> Download Invoice (PDF)
+          </button>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3">
           <a href={`https://wa.me/${SHOP.whatsappNumber}?text=${waText}`} target="_blank" rel="noopener noreferrer"
