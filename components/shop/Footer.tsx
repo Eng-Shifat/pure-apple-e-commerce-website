@@ -111,7 +111,7 @@ export default function Footer() {
               </a>
 
               {/* Email */}
-              <a href="mailto:info@pureapple.com.bd"
+              <a href="mailto:pureapplebd@gmail.com"
                 className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/m">
                 <span className="w-6 h-6 rounded-md bg-[#FB5724]/15 flex items-center justify-center shrink-0 group-hover/m:bg-[#FB5724]/25 transition-colors">
                   <Image
@@ -120,7 +120,7 @@ export default function Footer() {
                     style={{ filter: "invert(45%) sepia(90%) saturate(600%) hue-rotate(345deg) brightness(105%)" }}
                   />
                 </span>
-                <span className="break-all leading-tight">info@pureapple.com.bd</span>
+                <span className="break-all leading-tight">pureapplebd@gmail.com</span>
               </a>
 
               {/* Address */}
@@ -204,13 +204,13 @@ export default function Footer() {
                 </span>
                 +880 1804-660238
               </a>
-              <a href="mailto:info@pureapple.com.bd"
+              <a href="mailto:pureapplebd@gmail.com"
                 className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/m">
                 <span className="w-6 h-6 rounded-lg bg-[#FB5724]/15 flex items-center justify-center shrink-0 group-hover/m:bg-[#FB5724]/25 transition-colors">
                   <Image src="/icon/email.png" alt="Email" width={13} height={13} className="object-contain"
                     style={{ filter: "invert(45%) sepia(90%) saturate(600%) hue-rotate(345deg) brightness(105%)" }} />
                 </span>
-                info@pureapple.com.bd
+                pureapplebd@gmail.com
               </a>
               <div className="flex items-start gap-2 text-gray-400 text-[11px]">
                 <span className="w-6 h-6 rounded-lg bg-[#FB5724]/15 flex items-center justify-center shrink-0 mt-0.5">
@@ -320,7 +320,14 @@ export default function Footer() {
           <div className="w-full h-px bg-white/5" />
           <p className="text-gray-600 text-[10px]">
             © 2026 Pure Apple. All rights reserved. | Developed by{" "}
-            <span className="text-[#FB5724] font-bold tracking-wide">FDIT</span>
+            <a
+              href="https://www.facebook.com/share/1H6KcCFaeR/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#FB5724] font-bold tracking-wide hover:underline"
+            >
+              FDIT
+            </a>
           </p>
         </div>
 
