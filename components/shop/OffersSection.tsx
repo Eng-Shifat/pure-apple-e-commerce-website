@@ -14,16 +14,14 @@ import { Flame, ChevronRight } from "lucide-react";
 import SharedProductCard, { type SharedProduct } from "./SharedProductCard";
 import OfferCountdown from "./OfferCountdown";
 import { useCartStore } from "@/store/cartStore";
-import { offerStatus, type Offer, type OfferProduct } from "@/lib/offers";
+import { offerStatus, displayPricing, type Offer, type OfferProduct } from "@/lib/offers";
 
 export function toCard(p: OfferProduct): SharedProduct {
-  // strike-through: আসল (original) price আগে, না থাকলে sale price
-  const orig = Number(p.original_price) || 0;
-  const compare = orig > p.offer_price ? orig : p.price > p.offer_price ? p.price : undefined;
+  const { final, compare } = displayPricing(p.price, p.original_price, p.offer_price);
   return {
     id: p.id, name: p.name, variant: p.variant, slug: p.slug, image: p.image,
-    price: p.offer_price,
-    originalPrice: compare && compare > p.offer_price ? compare : undefined,
+    price: final,
+    originalPrice: compare,
     rating: p.rating, reviewCount: p.review_count,
     badge: p.badge ?? undefined, badgeColor: p.badge_color ?? undefined,
     specs: { screen: p.spec_screen, ram: p.spec_ram, camera: p.spec_camera },

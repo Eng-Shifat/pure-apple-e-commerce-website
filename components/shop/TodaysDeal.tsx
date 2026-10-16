@@ -8,6 +8,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { cachedJson } from "@/lib/cachedFetch";
+import { displayPricing } from "@/lib/offers";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Zap, Timer, Tag, ChevronLeft, ChevronRight } from "lucide-react";
@@ -116,8 +117,8 @@ function DealCard({ deal }: { deal: DealProduct }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
 
-  const activePrice  = deal.deal_price && deal.deal_price < deal.price ? deal.deal_price : deal.price;
-  const comparePrice = deal.original_price && deal.original_price > activePrice ? deal.original_price : deal.price;
+  const { final: activePrice, compare } = displayPricing(deal.price, deal.original_price, deal.deal_price);
+  const comparePrice = compare ?? activePrice;
   const discount     = comparePrice > activePrice
     ? Math.round(((comparePrice - activePrice) / comparePrice) * 100)
     : null;

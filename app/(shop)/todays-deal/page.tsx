@@ -13,6 +13,7 @@ import {
   ChevronLeft, ArrowRight, Sparkles,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
+import { displayPricing } from "@/lib/offers";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface DealProduct {
@@ -128,8 +129,8 @@ function FeaturedDealCard({ deal }: { deal: DealProduct }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
 
-  const activePrice  = deal.deal_price && deal.deal_price < deal.price ? deal.deal_price : deal.price;
-  const comparePrice = deal.original_price && deal.original_price > activePrice ? deal.original_price : deal.price;
+  const { final: activePrice, compare } = displayPricing(deal.price, deal.original_price, deal.deal_price);
+  const comparePrice = compare ?? activePrice;
   const discount     = comparePrice > activePrice
     ? Math.round(((comparePrice - activePrice) / comparePrice) * 100)
     : null;
@@ -306,8 +307,8 @@ function SmallDealTile({ deal }: { deal: DealProduct }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
 
-  const activePrice  = deal.deal_price && deal.deal_price < deal.price ? deal.deal_price : deal.price;
-  const comparePrice = deal.original_price && deal.original_price > activePrice ? deal.original_price : deal.price;
+  const { final: activePrice, compare } = displayPricing(deal.price, deal.original_price, deal.deal_price);
+  const comparePrice = compare ?? activePrice;
   const discount     = comparePrice > activePrice
     ? Math.round(((comparePrice - activePrice) / comparePrice) * 100)
     : null;

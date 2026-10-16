@@ -329,6 +329,8 @@ export default function ProductDetailPage() {
   // base price of a storage (without region adjustment)
   const baseFor = (storage: string): number => {
     if (catalogPhone?.storagePrices) return catalogPhone.storagePrices[storage] ?? catalogPhone.price;
+    // প্রথম storage = সবসময় admin-এর Sale Price (পুরনো save করা দাম ধরবে না)
+    if (product && storage === storageVariants[0]) return product.price;
     if (product?.storage_prices) {
       try {
         const sp: Record<string, number> = JSON.parse(product.storage_prices);
@@ -356,15 +358,12 @@ export default function ProductDetailPage() {
   const dealDiscount = dealInfo && product ? Math.max(0, product.price - dealInfo.deal_price) : 0;
   const displayPrice = Math.max(0, computedPrice - dealDiscount);
 
-  // কাটা দাম: Original Price (storage/region অনুযায়ী scale) — কিন্তু শুধু যদি দেখানো দামের চেয়ে বেশি হয়;
-  // না হলে deal চললে sale price-ই কাটা দাম।
-  const scaledOriginal = product?.original_price
-    ? Math.round(product.original_price * (computedPrice / (product.price || 1)))
-    : 0;
-  const displayOriginal: number | undefined =
-    scaledOriginal > displayPrice ? scaledOriginal
-    : dealDiscount > 0 ? computedPrice
-    : undefined;
+  // কাটা দাম = main price: Original Price থাকলে সেটা (Sale Price-এর চেয়ে বেশি হলে), না হলে Sale Price।
+  // Original আর Sale-এর ফারাক সব storage/region-এ একই থাকে।
+  const origGap = product?.original_price && product.original_price > product.price
+    ? product.original_price - product.price : 0;
+  const reference = computedPrice + origGap;
+  const displayOriginal: number | undefined = reference > displayPrice ? reference : undefined;
 
   const handleAddToCart = useCallback(() => {
     if (!product) return;
@@ -465,7 +464,7 @@ export default function ProductDetailPage() {
           <DealBanner
             id="deal"
             dealPrice={dealInfo.deal_price}
-            regularPrice={product?.price ?? 0}
+            regularPrice={Math.max(product?.original_price ?? 0, product?.price ?? 0)}
             dealEndsAt={dealInfo.deal_ends_at}
           />
         )}

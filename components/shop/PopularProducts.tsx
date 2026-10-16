@@ -7,6 +7,7 @@ import ProductCard, { Product } from "./ProductCard";
 import { useCartStore } from "@/store/cartStore";
 import { cachedJson } from "@/lib/cachedFetch";
 import { phonesBySlugs, toCardProduct, PHONES } from "@/lib/phoneCatalog";
+import { publicPrices } from "@/lib/offers";
 
 const POPULAR_SLUGS = [
   "iphone-16-pro",
@@ -25,8 +26,7 @@ function fromApi(r: any): Product {
     id: String(r.id),
     name: r.name ?? "",
     variant: r.variant ?? "",
-    price: Number(r.price ?? 0),
-    originalPrice: r.original_price ?? r.originalPrice ?? undefined,
+    ...publicPrices(r),
     rating: Number(r.rating ?? 0),
     reviewCount: Number(r.review_count ?? r.reviewCount ?? 0),
     image: r.image ?? "",

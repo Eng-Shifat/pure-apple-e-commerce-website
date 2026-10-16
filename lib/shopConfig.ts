@@ -25,7 +25,7 @@ export const DELIVERY = {
 export type DeliveryArea = keyof typeof DELIVERY;
 
 /** Order confirm করতে minimum advance (security) */
-export const MIN_ADVANCE = 2500;
+export const MIN_ADVANCE = 2040;
 
 export type PayMethod = "cod" | "bkash" | "nagad";
 export type Wallet = "bkash" | "nagad";
