@@ -26,7 +26,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const hasHydrated = useAuthStore(s => s._hasHydrated);
   const logout      = useAuthStore(s => s.logout);
 
-  // server-verified admin: null = যাচাই চলছে, true/false = ফলাফল, "error" = network সমস্যা
   const [verified, setVerified] = useState<boolean | "error" | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -40,7 +39,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const token = data.session?.access_token;
         if (!token) { if (!cancelled) { setVerified(false); router.replace("/login"); } return; }
 
-        // এইমাত্র login-এ server যাচাই হয়ে থাকলে আবার অপেক্ষা করার দরকার নেই
         if (user.role === "admin" && recentlyVerifiedAdmin()) { if (!cancelled) setVerified(true); return; }
 
         const ok = await verifyAdminOnServer(token, 10000);
@@ -48,7 +46,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         setVerified(ok);
         if (!ok) router.replace("/");
       } catch {
-        if (!cancelled) setVerified("error"); // slow/offline — redirect না করে Retry দেখাও
+        if (!cancelled) setVerified("error");
       }
     })();
     return () => { cancelled = true; };
