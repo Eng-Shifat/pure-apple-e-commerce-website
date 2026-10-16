@@ -1,9 +1,11 @@
+// SAVE PATH: components/shop/PopularProducts.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ProductCard, { Product } from "./ProductCard";
 import { useCartStore } from "@/store/cartStore";
+import { cachedJson } from "@/lib/cachedFetch";
 import { phonesBySlugs, toCardProduct, PHONES } from "@/lib/phoneCatalog";
 
 const POPULAR_SLUGS = [
@@ -47,8 +49,7 @@ export default function PopularProducts() {
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
-    fetch("/api/products?featured=true")
-      .then(r => r.json())
+    cachedJson<{ products?: unknown[] }>("/api/products?featured=true")
       .then(d => { if (Array.isArray(d.products) && d.products.length > 0) setProducts(d.products.map(fromApi)); })
       .catch(() => {})
       .finally(() => setLoading(false));

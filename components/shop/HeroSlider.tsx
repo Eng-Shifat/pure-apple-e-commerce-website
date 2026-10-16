@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/HeroSlider.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -148,7 +149,7 @@ export default function HeroSlider() {
                 alt={`${s.cardName} – Pure Apple`}
                 fill
                 priority={i === 0}
-                quality={90}
+                quality={75}
                 sizes="(min-width: 1280px) 860px, (min-width: 1024px) 70vw, 100vw"
                 aria-hidden={i !== current}
                 className={`object-cover object-[20%_center] transition-opacity duration-700 ease-in-out ${
@@ -235,7 +236,7 @@ export default function HeroSlider() {
                 src={b.src}
                 alt={b.alt}
                 fill
-                quality={90}
+                quality={75}
                 sizes="(min-width: 1280px) 360px, (min-width: 1024px) 30vw, 50vw"
                 className={`object-cover object-center transition-all duration-700 ease-in-out group-hover:scale-[1.03] ${
                   i === bannerIdx % SIDE_BANNERS.length ? "opacity-100" : "opacity-0"

@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/SharedProductCard.tsx
 "use client";
 
 /**
@@ -213,13 +214,6 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
               {product.originalPrice && product.originalPrice > product.price && (
                 <span className="text-[11px] line-through text-gray-400 leading-none">
                   ৳{product.originalPrice.toLocaleString("en-BD")}
-                </span>
-              )}
-
-              {/* Saved % */}
-              {discount && (
-                <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-[3px] rounded-full leading-none">
-                  -{discount}%
                 </span>
               )}
             </div>

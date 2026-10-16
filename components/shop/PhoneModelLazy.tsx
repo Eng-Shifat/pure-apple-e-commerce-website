@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/PhoneModelLazy.tsx
 "use client";
 
 import { lazy, Suspense, useEffect, useState } from "react";
@@ -12,6 +13,23 @@ import { lazy, Suspense, useEffect, useState } from "react";
 const PhoneModel = lazy(() => import("./PhoneModel"));
 
 const ENV_URL = "/models/studio.hdr";
+
+/**
+ * Weak phone / slow network / data-saver → 3D আপনা-আপনি load হবে না
+ * (≈ 2 MB download + three.js parse বাঁচে)। ইউজার চাইলে button চেপে চালাতে পারবে।
+ */
+function isLowEndDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const n = navigator as Navigator & {
+    deviceMemory?: number;
+    connection?: { saveData?: boolean; effectiveType?: string };
+  };
+  const slowNet = !!n.connection?.saveData || /^(slow-2g|2g|3g)$/.test(n.connection?.effectiveType ?? "");
+  const lowMem = typeof n.deviceMemory === "number" && n.deviceMemory <= 4;
+  const lowCpu = typeof n.hardwareConcurrency === "number" && n.hardwareConcurrency <= 4;
+  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  return slowNet || lowMem || lowCpu || !!reduced;
+}
 const SPLASH_EVENT = "pure-apple:splash-done";
 
 function Placeholder({ fill }: { fill?: boolean }) {
@@ -24,8 +42,15 @@ function Placeholder({ fill }: { fill?: boolean }) {
 
 export default function PhoneModelLazy({ fill = false, model }: { fill?: boolean; model: string }) {
   const [ready, setReady] = useState(false);
+  // undefined = এখনো check হয়নি, true = weak device (tap করলে 3D চলবে)
+  const [lowEnd, setLowEnd] = useState<boolean | undefined>(undefined);
+  const [forced, setForced] = useState(false);
+
+  useEffect(() => { setLowEnd(isLowEndDevice()); }, []);
 
   useEffect(() => {
+    if (lowEnd === undefined) return;
+    if (lowEnd && !forced) return; // download-ও শুরু করব না
     let cancelled = false;
     let idleId: number | undefined;
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
@@ -60,7 +85,24 @@ export default function PhoneModelLazy({ fill = false, model }: { fill?: boolean
       if (idleId !== undefined) (window as any).cancelIdleCallback?.(idleId);
       if (fallbackTimer) clearTimeout(fallbackTimer);
     };
-  }, []);
+  }, [lowEnd, forced]);
+
+  if (lowEnd && !forced) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center">
+        <button
+          type="button"
+          onClick={() => setForced(true)}
+          className="flex flex-col items-center gap-2 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur px-5 py-4 text-white transition active:scale-95"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 shadow-lg shadow-brand-500/40">
+            <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white" aria-hidden><path d="M8 5v14l11-7z" /></svg>
+          </span>
+          <span className="text-xs font-bold tracking-wide">View in 3D</span>
+        </button>
+      </div>
+    );
+  }
 
   if (!ready) return <Placeholder fill={fill} />;
 

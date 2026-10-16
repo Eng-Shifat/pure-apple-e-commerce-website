@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/PhoneModel.tsx
 "use client";
 
 import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -433,9 +434,9 @@ export default function PhoneModel({ fill = false, model = "/models/apple-iphone
         <Canvas
           camera={{ position: [0, 0, 4.2], fov: 38 }}
           style={{ background: "transparent", opacity: shown ? 1 : 0, transition: "opacity 0.6s ease" }}
-          dpr={[1, 1.5]}
+          dpr={[1, 1.25]}
           frameloop={inView ? "always" : "never"}
-          gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+          gl={{ alpha: true, antialias: true, powerPreference: "default" }}
           onCreated={({ gl }) => {
             gl.setClearColor(0x000000, 0);
             setShown(true);

@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { cachedJson } from "@/lib/cachedFetch";
 import ShineLogo from "./ShineLogo";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -168,8 +169,7 @@ export default function Navbar() {
     if (shopProducts.length > 0) return;
     setLoadingProds(true);
     try {
-      const r = await fetch("/api/products?featured=true&available=true&limit=4");
-      const d = await r.json();
+      const d = await cachedJson<{ products?: Product[] }>("/api/products?featured=true&available=true&limit=4");
       setShopProducts((d.products ?? []).slice(0, 4));
     } catch { /* ignore */ }
     setLoadingProds(false);
@@ -179,8 +179,7 @@ export default function Navbar() {
   const fetchHotDeals = useCallback(async () => {
     if (hotDealProducts.length > 0) return;
     try {
-      const r = await fetch("/api/products?deals=true&available=true&limit=4");
-      const d = await r.json();
+      const d = await cachedJson<{ products?: Product[] }>("/api/products?deals=true&available=true&limit=4");
       setHotDealProducts((d.products ?? []).slice(0, 4));
     } catch { /* ignore */ }
   }, [hotDealProducts.length]);
@@ -193,8 +192,7 @@ export default function Navbar() {
       return;
     }
     try {
-      const r = await fetch(`/api/products?category=${brand}&available=true`);
-      const d = await r.json();
+      const d = await cachedJson<{ products?: Product[] }>(`/api/products?category=${brand}&available=true`);
       setBrandProducts(prev => ({ ...prev, [brand]: (d.products ?? []).slice(0, 4) }));
     } catch { /* ignore */ }
   }, [brandProducts]);

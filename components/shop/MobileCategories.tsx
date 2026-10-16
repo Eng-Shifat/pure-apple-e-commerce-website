@@ -1,6 +1,8 @@
+// SAVE PATH: components/shop/MobileCategories.tsx
 "use client";
 
 import { useState, useEffect } from "react";
+import { cachedJson } from "@/lib/cachedFetch";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -29,9 +31,8 @@ export default function MobileCategories() {
   const [comingSoon, setComingSoon] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/categories")
-      .then((r) => r.json())
-      .then((d: { categories: CategorySetting[] }) => {
+    cachedJson<{ categories: CategorySetting[] }>("/api/categories", 60_000)
+      .then((d) => {
         if (d.categories?.length) setSettings(d.categories);
       })
       .catch(() => {});

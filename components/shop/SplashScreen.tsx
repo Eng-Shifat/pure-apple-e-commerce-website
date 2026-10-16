@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/SplashScreen.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -26,8 +27,8 @@ const APPLE: Piece[] = [["M0 0 C14 -0.4 27.2 0.5 40.9 3.1 C41.8 3.2 42.6 3.4 43.
 const VIEWBOX = "80 91 2319 2368";
 
 // timing (seconds) – pieces appear one after another from left to right
-const T0 = 0.25;       // start
-const SPAN = 1.9;      // total left → right duration
+const T0 = 0.1;        // start
+const SPAN = 1.1;      // total left → right duration
 const OVER = 0.1;
 const reach = (fx: number) => +(T0 + ((fx + OVER) / (1 + 2 * OVER)) * SPAN).toFixed(3);
 
@@ -79,18 +80,28 @@ export default function SplashScreen() {
   );
 
   useEffect(() => {
-    // If splash was already shown in this browser session, skip immediately
+    // Same page-session-এ আগেই দেখানো হয়ে থাকলে skip
     if ((window as any).__paSplashDone) {
+      setPhase("done");
+      return;
+    }
+    // এই browser session-এ একবার দেখানো হয়ে গেলে আর দেখাবে না (reload-এও না)
+    let seen = false;
+    try { seen = sessionStorage.getItem("pa_splash_seen") === "1"; } catch { /* ignore */ }
+    if (seen) {
+      (window as any).__paSplashDone = true;
+      window.dispatchEvent(new Event("pure-apple:splash-done"));
       setPhase("done");
       return;
     }
     const t1 = setTimeout(() => {
       setPhase("exit");
+      try { sessionStorage.setItem("pa_splash_seen", "1"); } catch { /* ignore */ }
       // tell the rest of the page (3D phone etc.) that it can start loading now
       (window as any).__paSplashDone = true;
       window.dispatchEvent(new Event("pure-apple:splash-done"));
-    }, 3200);
-    const t2 = setTimeout(() => setPhase("done"), 4150);
+    }, 2000);
+    const t2 = setTimeout(() => setPhase("done"), 2700);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
@@ -148,7 +159,7 @@ export default function SplashScreen() {
         .pa-splash.pa-exit {
           transform: translateX(100%);
           box-shadow: -24px 0 48px rgba(15, 23, 42, 0.06);
-          transition: transform 0.9s cubic-bezier(0.7, 0, 0.25, 1);
+          transition: transform 0.6s cubic-bezier(0.7, 0, 0.25, 1);
         }
         .pa-center { display: flex; flex-direction: column; align-items: center; }
 
@@ -184,20 +195,19 @@ export default function SplashScreen() {
         .pa-grow-up { animation: pa-grow-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .pa-leaf {
           animation:
-            pa-leaf-grow 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both,
-            pa-sway 3.4s ease-in-out 2.6s infinite;
+            pa-leaf-grow 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
 
 
         /* tagline: wiped in left → right */
         .pa-tagline-wipe { margin-top: 30px; overflow: hidden; will-change: transform;
-                           animation: pa-wipe-box 0.9s cubic-bezier(0.4, 0, 0.2, 1) 1.75s both; }
+                           animation: pa-wipe-box 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1s both; }
         .pa-tagline {
           font-size: 12px; font-weight: 500; text-transform: uppercase;
           letter-spacing: 0.3em; padding-left: 0.3em;
           color: #9ca3af; text-align: center; white-space: nowrap;
           will-change: transform;
-          animation: pa-wipe-content 0.9s cubic-bezier(0.4, 0, 0.2, 1) 1.75s both;
+          animation: pa-wipe-content 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1s both;
         }
 
         .pa-progress {
@@ -208,7 +218,7 @@ export default function SplashScreen() {
           height: 100%; width: 100%; border-radius: 9999px; transform-origin: left;
           background: linear-gradient(90deg, #4FAE53, #FB5724, #FCC10B);
           will-change: transform;
-          animation: pa-progress 3.1s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+          animation: pa-progress 1.9s cubic-bezier(0.4, 0, 0.2, 1) 0.05s both;
         }
 
         @keyframes pa-wipe-box     { from { transform: translateX(-100%); } to { transform: translateX(0); } }

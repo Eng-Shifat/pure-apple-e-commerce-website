@@ -1,3 +1,4 @@
+// SAVE PATH: next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   devIndicators: false,
@@ -10,6 +11,9 @@ const nextConfig = {
       },
     ],
     qualities: [75, 90],
+    // optimized image ১ মাস cache থাকবে — বারবার নতুন করে বানাতে হবে না
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+    formats: ["image/webp"],
   },
 };
 

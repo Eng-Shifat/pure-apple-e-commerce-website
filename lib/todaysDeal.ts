@@ -1,3 +1,4 @@
+// SAVE PATH: lib/todaysDeal.ts
 // Today's Deal helpers (server only)
 // - expireTodaysDeals: timer শেষ হওয়া deal DB-তে নিজে থেকেই OFF করে দেয়
 // - todaysDealOffer:   active Today's Deal গুলোকে একটা "Today's Deal" offer হিসেবে সাজায়
@@ -8,7 +9,12 @@ import type { Offer } from "@/lib/offers";
 export const TODAYS_DEAL_SLUG = "todays-deal";
 const OPEN_ENDED = "2099-12-31T00:00:00.000Z";
 
+let lastExpireRun = 0;
+
 export async function expireTodaysDeals(supabase: SupabaseClient) {
+  // প্রতি request-এ DB write না করে ৩০ সেকেন্ডে একবার
+  if (Date.now() - lastExpireRun < 30_000) return;
+  lastExpireRun = Date.now();
   try {
     await supabase
       .from("products")

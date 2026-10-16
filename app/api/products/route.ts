@@ -1,7 +1,9 @@
+// SAVE PATH: app/api/products/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { expireTodaysDeals } from "@/lib/todaysDeal";
+import { cacheGet, cacheSet, clearCache } from "@/lib/serverCache";
 import path from "path";
 
 let imageIndex: Map<string, string> | null = null;
@@ -36,6 +38,11 @@ function getSupabase() {
 
 // GET /api/products
 export async function GET(req: NextRequest) {
+  // 20 sec memory cache — same query বারবার Supabase-এ যাবে না
+  const cacheKey = "products:" + req.nextUrl.search;
+  const cached = cacheGet<{ products: unknown[] }>(cacheKey);
+  if (cached) return NextResponse.json(cached);
+
   const supabase = getSupabase();
   const { searchParams } = new URL(req.url);
 
@@ -75,7 +82,9 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ products: (data ?? []).map((p) => ({ ...p, image: fixLocalImage(p.image) })) });
+  const payload = { products: (data ?? []).map((p) => ({ ...p, image: fixLocalImage(p.image) })) };
+  cacheSet(cacheKey, payload, 20_000);
+  return NextResponse.json(payload);
 }
 
 // POST /api/products
@@ -129,5 +138,6 @@ export async function POST(req: NextRequest) {
   }]).select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  clearCache("products:");
   return NextResponse.json({ product: data }, { status: 201 });
 }

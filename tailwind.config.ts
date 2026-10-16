@@ -1,3 +1,4 @@
+// SAVE PATH: tailwind.config.ts
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -56,7 +57,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
       },
       borderRadius: {
         "2xl": "1rem",

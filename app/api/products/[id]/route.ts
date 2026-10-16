@@ -1,4 +1,6 @@
+// SAVE PATH: app/api/products/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { clearCache } from "@/lib/serverCache";
 import { createClient } from "@supabase/supabase-js";
 
 function getSupabase() {
@@ -52,6 +54,7 @@ export async function PUT(
   const { data, error } = await supabase
     .from("products").update(payload).eq("id", id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  clearCache("products:");
   return NextResponse.json({ product: data });
 }
 
@@ -64,5 +67,6 @@ export async function DELETE(
   const supabase = getSupabase();
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  clearCache("products:");
   return NextResponse.json({ message: "Deleted" });
 }

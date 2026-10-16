@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { getRequestUser } from "@/lib/adminAuth";
+import { clearCache } from "@/lib/serverCache";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       payment_reviewed_at: new Date().toISOString(), stock_deducted: true,
     }).eq("id", id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    clearCache("products:"); // stock বদলেছে
     return NextResponse.json({ order: data });
   }
 

@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/PromoBanner.tsx
 import Link from "next/link";
 import Image from "next/image";
 
@@ -24,7 +25,6 @@ export default function PromoBanner() {
               alt="Today's Deal – Best Deals at Pure Apple Mobile & Gadget Shop"
               fill
               className="object-contain transition-transform duration-500 group-hover:scale-[1.02]"
-              priority
               sizes="100vw"
             />
           </div>
@@ -36,7 +36,6 @@ export default function PromoBanner() {
               alt="Today's Deal – Best Deals at Pure Apple Mobile & Gadget Shop"
               fill
               className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
-              priority
               sizes="(min-width: 1280px) 1200px, 95vw"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/5 via-transparent to-black/10 rounded-2xl" />

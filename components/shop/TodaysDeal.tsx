@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/TodaysDeal.tsx
 "use client";
 
 /**
@@ -6,6 +7,7 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { cachedJson } from "@/lib/cachedFetch";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Zap, Timer, Tag, ChevronLeft, ChevronRight } from "lucide-react";
@@ -300,8 +302,7 @@ export default function TodaysDeal() {
   const autoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    fetch("/api/products?today_deal=true&limit=20")
-      .then((r) => r.json())
+    cachedJson<{ products?: DealProduct[] }>("/api/products?today_deal=true&limit=20", 20_000)
       .then((d) => setDeals(d.products ?? []))
       .catch(() => setDeals([]));
   }, []);
