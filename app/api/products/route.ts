@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     is_featured, category, condition, stock,
     product_code, colors, storage_variants,
     storage_prices, region_prices, regions,
-    emi_available, whatsapp_number,
+    emi_available, whatsapp_number, battery_health,
     // Today's deal fields
     is_today_deal, deal_price, deal_ends_at,
   } = body;
@@ -132,6 +132,9 @@ export async function POST(req: NextRequest) {
     regions:          regions          ?? null,
     emi_available: emi_available ?? false,
     whatsapp_number: whatsapp_number ?? null,
+    ...(battery_health !== undefined && battery_health !== null && battery_health !== ""
+      ? { battery_health: Math.min(100, Math.max(0, Number(battery_health))) }
+      : {}),
     // Today's deal
     is_today_deal: is_today_deal ?? false,
     deal_price:    deal_price ? Number(deal_price) : null,

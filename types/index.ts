@@ -35,6 +35,8 @@ export interface Product {
   /** comma-separated region codes available: "HK,JP,US" */
   regions?: string;
   emi_available?: boolean;
+  /** Battery health percentage (0-100) — admin দেয়, product page-এ দেখায় */
+  battery_health?: number | null;
   whatsapp_number?: string;
   created_at?: string;
   updated_at?: string;

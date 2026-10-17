@@ -12,6 +12,7 @@ import {
 import { useCartStore } from "@/store/cartStore";
 import type { Product } from "@/types";
 import { phoneBySlug, PHONES, type CatalogPhone } from "@/lib/phoneCatalog";
+import { supabase } from "@/lib/supabase";
 
 function fixImage(src: string | undefined) {
   if (!src) return "/logo/pure-apple-logo.png";
@@ -242,7 +243,12 @@ export default function ProductDetailPage() {
   const [selStorage,  setSelStorage]  = useState<string>("");
   const [selRegion,   setSelRegion]   = useState<string>("");
   const [catalogPhone, setCatalogPhone] = useState<CatalogPhone | null>(null);
-  const [dealInfo, setDealInfo] = useState<{ deal_price: number; deal_ends_at: string | null } | null>(null);
+  // Today's Deal — product থেকেই হিসাব হয়, তাই admin বদলালে live আপডেট হয়
+  const dealInfo: { deal_price: number; deal_ends_at: string | null } | null =
+    product && product.is_today_deal && product.deal_price && product.deal_price < product.price &&
+    (!product.deal_ends_at || new Date(product.deal_ends_at).getTime() > Date.now())
+      ? { deal_price: product.deal_price, deal_ends_at: product.deal_ends_at ?? null }
+      : null;
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -268,10 +274,6 @@ export default function ProductDetailPage() {
           setRelated(
             PHONES.filter((x) => x.brand === fromCatalog.brand && x.slug !== slug).slice(0, 8).map(catalogToProduct)
           );
-        }
-        // Check if this product is a today's deal
-        if (found?.is_today_deal && found.deal_price && found.deal_price < found.price) {
-          setDealInfo({ deal_price: found.deal_price, deal_ends_at: found.deal_ends_at ?? null });
         }
 
         if (found) {
@@ -304,6 +306,40 @@ export default function ProductDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // ── Live update: admin যা বদলাবে (দাম, battery %, stock, deal ইত্যাদি) সাথে সাথে এই পেজে আসবে ──
+  const liveId = product?.id;
+  const liveDb = !!product && !catalogPhone;
+  useEffect(() => {
+    if (!liveId || !liveDb) return;
+    const channel = supabase
+      .channel(`product-live-${liveId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "products", filter: `id=eq.${liveId}` },
+        (payload) => setProduct((prev) => (prev ? { ...prev, ...(payload.new as Partial<Product>) } : prev))
+      )
+      .subscribe();
+    // Realtime বন্ধ থাকলেও আপডেট আসবে: tab-এ ফিরলে ও প্রতি ৩০ সেকেন্ডে নতুন করে আনে
+    const refetch = () => {
+      if (document.visibilityState === "hidden") return;
+      fetch(`/api/products?slug=${slug}`, { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => {
+          const f: Product | undefined = Array.isArray(d.products)
+            ? d.products.find((p: Product) => p.slug === slug) : undefined;
+          if (f) setProduct((prev) => (prev ? { ...prev, ...f } : prev));
+        })
+        .catch(() => {});
+    };
+    const timer = setInterval(refetch, 30000);
+    document.addEventListener("visibilitychange", refetch);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refetch);
+    };
+  }, [liveId, liveDb, slug]);
 
   // Catalog product হলে: প্রতিটা color-এর ছবি + বাড়তি side ছবি thumbnail হিসেবে
   const images: string[] = catalogPhone
@@ -435,6 +471,18 @@ export default function ProductDetailPage() {
 
   const discount  = displayOriginal ? Math.round(((displayOriginal - displayPrice) / displayOriginal) * 100) : null;
   const savings   = displayOriginal ? displayOriginal - displayPrice : null;
+
+  // ── Warranty / Replacement (condition + brand অনুযায়ী) ──
+  const isPreOwned = product.condition === "pre-owned";
+  const isApple    = (product.category ?? "").toLowerCase() === "apple" || catalogPhone?.brand === "apple";
+  const warrantyPoints: string[] = isPreOwned
+    ? ["15 Days Replacement Guarantee", "2 Years Service Warranty"]
+    : isApple
+      ? ["1 Year Apple Official Warranty Support", "15 Days Replacement Guarantee"]
+      : ["15 Days Replacement Guarantee", "2 Years Service Warranty"];
+  const warrantyTile = !isPreOwned && isApple
+    ? { label: "1 Year Warranty", sub: "Apple official warranty" }
+    : { label: "2 Years Warranty", sub: "Service warranty" };
   const inStock   = product.is_available !== false;
   const stockCount = product.stock ?? null;
 
@@ -628,7 +676,9 @@ export default function ProductDetailPage() {
 
             {/* Key points */}
             <ul className="mt-4 space-y-1.5">
-              <li className="flex items-center gap-2 text-sm text-gray-700"><Check size={14} className="text-green-500 shrink-0"/> 1 Year Apple Official Warranty Support</li>
+              {warrantyPoints.map((w) => (
+                <li key={w} className="flex items-center gap-2 text-sm text-gray-700"><Check size={14} className="text-green-500 shrink-0"/> {w}</li>
+              ))}
               <li className="flex items-center gap-2 text-sm text-gray-700"><Check size={14} className="text-green-500 shrink-0"/> Activation is Mandatory to Get the Offer Price</li>
               {product.emi_available && (
                 <li className="flex items-center gap-2 text-sm text-gray-700"><CreditCard size={14} className="text-brand-500 shrink-0"/> EMI Available — <Link href="#emi" className="text-brand-500 underline font-semibold">View Plans</Link></li>
@@ -687,9 +737,9 @@ export default function ProductDetailPage() {
               </div>
               <div className="grid grid-cols-2 divide-x divide-y divide-gray-100 [&>*:nth-child(-n+2)]:border-t-0">
                 {[
-                  { icon: Shield,     label:"1 Year Warranty", sub:"Official warranty", tile:"bg-brand-50 text-brand-500 ring-brand-100" },
+                  { icon: Shield,     label:warrantyTile.label, sub:warrantyTile.sub, tile:"bg-brand-50 text-brand-500 ring-brand-100" },
                   { icon: Truck,      label:"Free Delivery",   sub:"Dhaka & nationwide", tile:"bg-sky-50 text-sky-600 ring-sky-100" },
-                  { icon: RefreshCw,  label:"7-Day Return",    sub:"Hassle-free",        tile:"bg-amber-50 text-amber-600 ring-amber-100" },
+                  { icon: RefreshCw,  label:"15 Days Replacement", sub:"Hassle-free",    tile:"bg-amber-50 text-amber-600 ring-amber-100" },
                   { icon: BadgeCheck, label:"100% Genuine",    sub:"Verified authentic", tile:"bg-leaf-50 text-leaf-600 ring-leaf-100" },
                 ].map(({ icon: Icon, label, sub, tile }) => (
                   <div key={label} className="flex items-center gap-3 px-3.5 py-3.5">
@@ -729,6 +779,9 @@ export default function ProductDetailPage() {
                     { label:"Model / Variant",    value: product.variant || product.name },
                     { label:"Product Code",       value: product.product_code || "—" },
                     { label:"Condition",          value: product.condition==="pre-owned" ? "Pre-Owned" : "Brand New" },
+                    ...(product.battery_health != null && Number(product.battery_health) > 0
+                      ? [{ label:"Battery Health", value: `🔋 ${product.battery_health}%` }]
+                      : []),
                     { label:"Display",            value: product.spec_screen || "—" },
                     { label:"RAM / Storage",      value: product.spec_ram || "—" },
                     { label:"Camera",             value: product.spec_camera || "—" },

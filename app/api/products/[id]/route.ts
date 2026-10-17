@@ -42,7 +42,7 @@ export async function PUT(
     "category", "condition", "is_available", "stock",
     "product_code", "colors", "storage_variants",
     "storage_prices", "region_prices", "regions",
-    "emi_available", "whatsapp_number",
+    "emi_available", "whatsapp_number", "battery_health",
     // Today's deal
     "is_today_deal", "deal_price", "deal_ends_at",
   ];
@@ -54,7 +54,7 @@ export async function PUT(
   // খালি string / ভুল type DB-তে গেলে update fail করে → number/null এ ঠিক করা
   const numOrNull = (v: unknown) =>
     v === "" || v === null || v === undefined || Number.isNaN(Number(v)) ? null : Number(v);
-  for (const k of ["original_price", "stock", "deal_price"]) {
+  for (const k of ["original_price", "stock", "deal_price", "battery_health"]) {
     if (k in payload) payload[k] = numOrNull(payload[k]);
   }
   for (const k of ["price", "rating", "review_count"]) {
@@ -62,6 +62,9 @@ export async function PUT(
       const n = numOrNull(payload[k]);
       if (n === null) delete payload[k]; else payload[k] = n;
     }
+  }
+  if (payload.battery_health != null && (Number(payload.battery_health) < 0 || Number(payload.battery_health) > 100)) {
+    return NextResponse.json({ error: "Battery health must be between 0 and 100" }, { status: 400 });
   }
   if (payload.original_price && payload.price && Number(payload.original_price) <= Number(payload.price)) {
     return NextResponse.json({ error: "Original price must be greater than sale price" }, { status: 400 });

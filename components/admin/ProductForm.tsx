@@ -13,6 +13,7 @@ interface ProductFormProps {
     variant?: string;
     price?: number;
     original_price?: number;
+    battery_health?: number | null;
     rating?: number;
     review_count?: number;
     image?: string;
@@ -145,6 +146,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     stock:           initialData.stock             ?? "",
     product_code:    initialData.product_code      ?? "",
     emi_available:   initialData.emi_available     ?? false,
+    battery_health:  initialData.battery_health    ?? "",
     whatsapp_number: initialData.whatsapp_number   ?? "",
   });
 
@@ -214,6 +216,11 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       setError("Original Price অবশ্যই Sale Price-এর চেয়ে বেশি হতে হবে (না দিলে খালি রাখুন)।");
       return;
     }
+    const batteryStr = String(form.battery_health ?? "").trim();
+    if (batteryStr !== "" && !(Number(batteryStr) >= 0 && Number(batteryStr) <= 100)) {
+      setError("Battery Health 0 থেকে 100-এর মধ্যে হতে হবে।");
+      return;
+    }
     // প্রথম storage = base price → সবসময় Sale Price-এর সাথে মিলবে।
     // বাকি storage-এর price নিজে দিতে হবে; storage list-এ নেই এমন পুরনো price বাদ।
     const finalStoragePrices: Record<string, number> = {};
@@ -236,6 +243,10 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         ...form,
         price:            priceNum,
         original_price:   origNum || null,
+        // battery_health: মান দিলে বা আগে থেকে থাকলে (মুছতে চাইলে null) পাঠায়; নইলে একদম পাঠায় না
+        ...(batteryStr !== "" || initialData.battery_health != null
+          ? { battery_health: batteryStr === "" ? null : Number(batteryStr) }
+          : { battery_health: undefined }),
         stock:            form.stock === "" ? null : Number(form.stock),
         colors:           colors.length > 0 ? JSON.stringify(colors) : null,
         storage_variants: storageVariants.length > 0 ? JSON.stringify(storageVariants) : null,
@@ -531,6 +542,27 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             <input type="number" value={form.original_price} onChange={(e) => set("original_price", e.target.value)} placeholder="124999" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           </div>
         </div>
+      </section>
+
+      {/* ── Battery Health ── */}
+      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Battery Health (Optional)</h2>
+        <div className="max-w-xs">
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Battery Health (%)</label>
+          <div className="relative">
+            <input
+              type="number" min="0" max="100" step="1"
+              value={form.battery_health}
+              onChange={(e) => set("battery_health", e.target.value)}
+              placeholder="e.g. 89"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400">
+          দিলে product page-এর Product Details-এ &quot;Battery Health&quot; দেখাবে এবং পরে বাড়ালে/কমালে সাথে সাথে আপডেট হবে। খালি রাখলে দেখাবে না।
+        </p>
       </section>
 
       {/* ── Badge ── */}
