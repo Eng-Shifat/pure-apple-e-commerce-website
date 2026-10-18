@@ -61,7 +61,6 @@ export default function BestDeals() {
       spec_screen: p.specs?.screen, spec_ram: p.specs?.ram, spec_camera: p.specs?.camera,
     } as never);
   }
-
   return (
     <section className="bg-gray-50 pt-8 md:pt-12 pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
