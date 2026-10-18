@@ -243,12 +243,57 @@ export default function ProductDetailPage() {
   const [selStorage,  setSelStorage]  = useState<string>("");
   const [selRegion,   setSelRegion]   = useState<string>("");
   const [catalogPhone, setCatalogPhone] = useState<CatalogPhone | null>(null);
-  // Today's Deal — product থেকেই হিসাব হয়, তাই admin বদলালে live আপডেট হয়
-  const dealInfo: { deal_price: number; deal_ends_at: string | null } | null =
-    product && product.is_today_deal && product.deal_price && product.deal_price < product.price &&
-    (!product.deal_ends_at || new Date(product.deal_ends_at).getTime() > Date.now())
-      ? { deal_price: product.deal_price, deal_ends_at: product.deal_ends_at ?? null }
-      : null;
+  // ── Condition-aware base price ──────────────────────────────────────────────
+  // Brand New price = product.brand_new_price ?? product.price
+  // Pre-Owned price = product.pre_owned_price (এটা brand_new_price থেকে সম্পূর্ণ আলাদা)
+  const conditionBasePrice: number = (() => {
+    if (!product) return 0;
+    if (product.condition === "pre-owned") {
+      return product.pre_owned_price ?? product.price;
+    }
+    return product.brand_new_price ?? product.price;
+  })();
+
+  // ── Active offer/deal resolution (time-based, auto-expire) ───────────────
+  // Priority: new offer system > legacy today's deal
+  const activeOfferInfo: { offer_price: number; offer_ends_at: string | null; offer_label: string } | null = (() => {
+    if (!product) return null;
+    const now = Date.now();
+
+    // New offer system
+    const offerEnded = product.offer_ends_at ? new Date(product.offer_ends_at).getTime() < now : false;
+    if (!offerEnded) {
+      const offerPrice = product.condition === "pre-owned"
+        ? product.offer_price_pre_owned
+        : product.offer_price_brand_new;
+      if (offerPrice && offerPrice > 0 && offerPrice < conditionBasePrice) {
+        return {
+          offer_price: offerPrice,
+          offer_ends_at: product.offer_ends_at ?? null,
+          offer_label: product.offer_type ?? "Offer",
+        };
+      }
+    }
+
+    // Legacy today's deal
+    if (product.is_today_deal && product.deal_price && product.deal_price < product.price) {
+      const dealEnded = product.deal_ends_at ? new Date(product.deal_ends_at).getTime() < now : false;
+      if (!dealEnded) {
+        return {
+          offer_price: product.deal_price,
+          offer_ends_at: product.deal_ends_at ?? null,
+          offer_label: "Today's Deal",
+        };
+      }
+    }
+    return null;
+  })();
+
+  // backward compat alias so DealBanner still works
+  const dealInfo = activeOfferInfo ? {
+    deal_price: activeOfferInfo.offer_price,
+    deal_ends_at: activeOfferInfo.offer_ends_at,
+  } : null;
 
   const addItem = useCartStore((s) => s.addItem);
 
@@ -365,15 +410,15 @@ export default function ProductDetailPage() {
   // base price of a storage (without region adjustment)
   const baseFor = (storage: string): number => {
     if (catalogPhone?.storagePrices) return catalogPhone.storagePrices[storage] ?? catalogPhone.price;
-    // প্রথম storage = সবসময় admin-এর Sale Price (পুরনো save করা দাম ধরবে না)
-    if (product && storage === storageVariants[0]) return product.price;
+    // প্রথম storage = condition অনুযায়ী সঠিক price (brand-new বা pre-owned)
+    if (product && storage === storageVariants[0]) return conditionBasePrice;
     if (product?.storage_prices) {
       try {
         const sp: Record<string, number> = JSON.parse(product.storage_prices);
-        return sp[storage] ?? product.price;
+        return sp[storage] ?? conditionBasePrice;
       } catch { /* fall through */ }
     }
-    return product?.price ?? 0;
+    return conditionBasePrice;
   };
   // region price adjustment (+/-)
   const deltaFor = (region: string): number => {
@@ -390,14 +435,16 @@ export default function ProductDetailPage() {
   // regular (sale) price for the selected storage + region
   const computedPrice = baseFor(selStorage) + deltaFor(selRegion);
 
-  // Today's Deal: sale price থেকে যত টাকা কম (flat), সব storage/region-এ প্রযোজ্য
-  const dealDiscount = dealInfo && product ? Math.max(0, product.price - dealInfo.deal_price) : 0;
-  const displayPrice = Math.max(0, computedPrice - dealDiscount);
+  // Offer discount: offer price flat discount থেকে condition base price বাদ দেওয়া হয়
+  // সব storage/region variant-এ সমান ভাবে apply হয়
+  const offerDiscount = activeOfferInfo && product
+    ? Math.max(0, conditionBasePrice - activeOfferInfo.offer_price)
+    : 0;
+  const displayPrice = Math.max(0, computedPrice - offerDiscount);
 
-  // কাটা দাম = main price: Original Price থাকলে সেটা (Sale Price-এর চেয়ে বেশি হলে), না হলে Sale Price।
-  // Original আর Sale-এর ফারাক সব storage/region-এ একই থাকে।
-  const origGap = product?.original_price && product.original_price > product.price
-    ? product.original_price - product.price : 0;
+  // কাটা দাম: Original Price থাকলে সেটা (Sale Price-এর চেয়ে বেশি হলে), না হলে condition base price
+  const origGap = product?.original_price && product.original_price > conditionBasePrice
+    ? product.original_price - conditionBasePrice : 0;
   const reference = computedPrice + origGap;
   const displayOriginal: number | undefined = reference > displayPrice ? reference : undefined;
 
@@ -507,13 +554,13 @@ export default function ProductDetailPage() {
           <span className="text-gray-700 font-medium line-clamp-1">{product.name}</span>
         </nav>
 
-        {/* ── Today's Deal Banner ── */}
-        {dealInfo && (
+        {/* ── Offer / Today's Deal Banner — auto shows when offer active, auto hides when expired ── */}
+        {activeOfferInfo && (
           <DealBanner
             id="deal"
-            dealPrice={dealInfo.deal_price}
-            regularPrice={Math.max(product?.original_price ?? 0, product?.price ?? 0)}
-            dealEndsAt={dealInfo.deal_ends_at}
+            dealPrice={activeOfferInfo.offer_price}
+            regularPrice={Math.max(product?.original_price ?? 0, conditionBasePrice)}
+            dealEndsAt={activeOfferInfo.offer_ends_at}
           />
         )}
 
@@ -524,9 +571,14 @@ export default function ProductDetailPage() {
           <div className="flex flex-col gap-3">
             {/* ── Main image with zoom-on-hover ── */}
             <div className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-[400px] group/imgbox">
-              {product.badge && (
+              {/* Auto offer badge — offer active থাকলে দেখায়, expire হলে সরে যায় */}
+              {activeOfferInfo ? (
+                <span className="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow animate-pulse" style={{ backgroundColor: "#FB5724" }}>
+                  🔥 {activeOfferInfo.offer_label}
+                </span>
+              ) : product.badge ? (
                 <span className="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow" style={{ backgroundColor: product.badge_color ?? "#FB5724" }}>{product.badge}</span>
-              )}
+              ) : null}
               {discount && (
                 <span className="absolute top-4 right-4 bg-red-500 text-white text-xs font-extrabold px-2.5 py-1 rounded-full z-10">-{discount}%</span>
               )}

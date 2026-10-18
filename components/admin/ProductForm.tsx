@@ -1,10 +1,11 @@
 "use client";
+// SAVE PATH: components/admin/ProductForm.tsx
 
 import { adminFetch } from "@/lib/adminFetch";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, Loader2, CheckCircle, X, Plus, Trash2 } from "lucide-react";
+import { Upload, Loader2, CheckCircle, X, Plus, Trash2, Tag, Timer, AlertCircle } from "lucide-react";
 
 interface ProductFormProps {
   initialData?: {
@@ -35,6 +36,18 @@ interface ProductFormProps {
     regions?: string;
     emi_available?: boolean;
     whatsapp_number?: string;
+    // New price fields
+    brand_new_price?: number | null;
+    pre_owned_price?: number | null;
+    // Offer fields
+    offer_price_brand_new?: number | null;
+    offer_price_pre_owned?: number | null;
+    offer_ends_at?: string | null;
+    offer_type?: string | null;
+    // Legacy
+    is_today_deal?: boolean;
+    deal_price?: number | null;
+    deal_ends_at?: string | null;
   };
   mode?: "create" | "edit";
 }
@@ -59,6 +72,8 @@ const CATEGORIES = [
   { label: "iQOO",     value: "iqoo"     },
 ];
 
+const OFFER_TYPES = ["Offer", "Today's Deal", "Flash Sale", "Weekend Deal", "Clearance"];
+
 const COLOR_PRESETS = ["Black","White","Silver","Gold","Burgundy","Glacier","Desert Titanium","Natural Titanium","Blue Titanium","Purple","Pink","Green","Yellow","Red","Midnight","Starlight"];
 const STORAGE_PRESETS = ["64GB","128GB","256GB","512GB","1TB","2TB"];
 
@@ -74,11 +89,25 @@ function safeImageSrc(value: string): string | null {
   if (isAbsoluteUrl(value)) return value;
   return null;
 }
-
-// Parse JSON array string safely
 function parseArr(val: string | undefined): string[] {
   if (!val) return [];
   try { const p = JSON.parse(val); return Array.isArray(p) ? p : []; } catch { return []; }
+}
+
+// datetime-local input value থেকে ISO string
+function toISO(val: string): string | null {
+  if (!val) return null;
+  try { return new Date(val).toISOString(); } catch { return null; }
+}
+// ISO string থেকে datetime-local input value
+function toDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    // format: "YYYY-MM-DDTHH:MM"
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch { return ""; }
 }
 
 export default function ProductForm({ initialData = {}, mode = "create" }: ProductFormProps) {
@@ -91,20 +120,17 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   const [imageSizeError, setImageSizeError] = useState("");
   const [localPreview, setLocalPreview] = useState<string>("");
 
-  // Color & Storage as arrays (UI state)
-  const [colors,           setColors]           = useState<string[]>(parseArr(initialData.colors));
-  const [storageVariants,  setStorageVariants]  = useState<string[]>(parseArr(initialData.storage_variants));
-  const [colorInput,       setColorInput]       = useState("");
-  const [storageInput,     setStorageInput]     = useState("");
+  const [colors,          setColors]          = useState<string[]>(parseArr(initialData.colors));
+  const [storageVariants, setStorageVariants] = useState<string[]>(parseArr(initialData.storage_variants));
+  const [colorInput,      setColorInput]      = useState("");
+  const [storageInput,    setStorageInput]    = useState("");
 
-  // Storage Prices: { "256GB": 174999, "512GB": 194999 }
   const [storagePrices, setStoragePrices] = useState<Record<string, string>>(() => {
     if (!initialData.storage_prices) return {};
     try { const p = JSON.parse(initialData.storage_prices); return Object.fromEntries(Object.entries(p).map(([k, v]) => [k, String(v)])); }
     catch { return {}; }
   });
 
-  // Region list + prices: { "HK": 0, "JP": -2000 }
   const [regionList,   setRegionList]   = useState<string[]>(
     initialData.regions ? initialData.regions.split(",").map((r) => r.trim()).filter(Boolean) : []
   );
@@ -114,7 +140,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     catch { return {}; }
   });
   const [regionInput, setRegionInput] = useState("");
-
   const REGION_PRESETS = ["HK", "JP", "US", "UK", "SG", "AU", "AE"];
 
   function addRegion(r: string) {
@@ -128,11 +153,17 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     setRegionPrices((prev) => { const n = { ...prev }; delete n[r]; return n; });
   }
 
+  // Determine initial condition
+  const initCondition = initialData.condition ?? "brand-new";
+
   const [form, setForm] = useState({
     name:            initialData.name            ?? "",
     variant:         initialData.variant          ?? "",
-    price:           initialData.price            ?? "",
-    original_price:  initialData.original_price   ?? "",
+    // Brand New price
+    brand_new_price: String(initialData.brand_new_price ?? initialData.price ?? ""),
+    // Pre-Owned price
+    pre_owned_price: String(initialData.pre_owned_price ?? ""),
+    original_price:  String(initialData.original_price  ?? ""),
     image:           initialData.image             ?? "",
     slug:            initialData.slug              ?? "",
     badge:           initialData.badge             ?? "",
@@ -142,12 +173,17 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     spec_camera:     initialData.spec_camera       ?? "",
     is_featured:     initialData.is_featured       ?? false,
     category:        initialData.category          ?? "",
-    condition:       initialData.condition         ?? "brand-new",
-    stock:           initialData.stock             ?? "",
+    condition:       initCondition,
+    stock:           String(initialData.stock      ?? ""),
     product_code:    initialData.product_code      ?? "",
     emi_available:   initialData.emi_available     ?? false,
-    battery_health:  initialData.battery_health    ?? "",
+    battery_health:  String(initialData.battery_health ?? ""),
     whatsapp_number: initialData.whatsapp_number   ?? "",
+    // Offer fields
+    offer_price_brand_new: String(initialData.offer_price_brand_new ?? ""),
+    offer_price_pre_owned: String(initialData.offer_price_pre_owned ?? ""),
+    offer_ends_at:   toDatetimeLocal(initialData.offer_ends_at),
+    offer_type:      initialData.offer_type ?? "Offer",
   });
 
   function set(key: string, value: unknown) {
@@ -176,6 +212,18 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   }
   function removeStorage(s: string) { setStorageVariants((prev) => prev.filter((x) => x !== s)); }
 
+  // ── Derived: active offer check ──
+  const hasActiveOffer = (() => {
+    const bnOffer = Number(form.offer_price_brand_new);
+    const poOffer = Number(form.offer_price_pre_owned);
+    return (bnOffer > 0) || (poOffer > 0);
+  })();
+
+  const offerExpired = (() => {
+    if (!form.offer_ends_at) return false;
+    return new Date(form.offer_ends_at).getTime() < Date.now();
+  })();
+
   async function handleImageUpload(file: File) {
     setImageSizeError("");
     setImageSize(file.size);
@@ -194,8 +242,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       const up = await adminFetch("/api/admin/upload", { method: "POST", body: fd });
       const upData = await up.json();
       if (!up.ok) throw new Error(upData.error ?? "Upload failed");
-      const publicUrl = upData.url as string;
-      set("image", publicUrl);
+      set("image", upData.url as string);
     } catch (err: unknown) {
       setError(`Image upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
@@ -209,41 +256,77 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       setError("Invalid image URL. Use Upload button, https:// link, or /images/... path.");
       return;
     }
-    const priceNum = Number(form.price);
-    const origNum  = form.original_price === "" ? 0 : Number(form.original_price);
-    if (!(priceNum > 0)) { setError("Sale Price সঠিকভাবে দিন (0-এর বেশি)।"); return; }
-    if (origNum && origNum <= priceNum) {
-      setError("Original Price অবশ্যই Sale Price-এর চেয়ে বেশি হতে হবে (না দিলে খালি রাখুন)।");
+
+    // Brand New price validation
+    const bnPrice = Number(form.brand_new_price);
+    if (!(bnPrice > 0)) {
+      setError("Brand New Price সঠিকভাবে দিন (0-এর বেশি)।");
       return;
     }
+
+    // Pre-Owned price validation — only required if condition is pre-owned
+    const poPrice = form.pre_owned_price !== "" ? Number(form.pre_owned_price) : null;
+    if (form.condition === "pre-owned" && !poPrice) {
+      setError("Pre-Owned condition এর জন্য Pre-Owned Price দিন।");
+      return;
+    }
+
+    const origNum = form.original_price !== "" ? Number(form.original_price) : null;
+
+    // Offer price validation
+    const bnOffer = form.offer_price_brand_new !== "" ? Number(form.offer_price_brand_new) : null;
+    const poOffer = form.offer_price_pre_owned !== "" ? Number(form.offer_price_pre_owned) : null;
+
+    if (bnOffer !== null && bnOffer >= bnPrice) {
+      setError("Brand New Offer Price অবশ্যই Brand New Price এর চেয়ে কম হতে হবে।");
+      return;
+    }
+    if (poOffer !== null && poPrice && poOffer >= poPrice) {
+      setError("Pre-Owned Offer Price অবশ্যই Pre-Owned Price এর চেয়ে কম হতে হবে।");
+      return;
+    }
+
     const batteryStr = String(form.battery_health ?? "").trim();
     if (batteryStr !== "" && !(Number(batteryStr) >= 0 && Number(batteryStr) <= 100)) {
       setError("Battery Health 0 থেকে 100-এর মধ্যে হতে হবে।");
       return;
     }
-    // প্রথম storage = base price → সবসময় Sale Price-এর সাথে মিলবে।
-    // বাকি storage-এর price নিজে দিতে হবে; storage list-এ নেই এমন পুরনো price বাদ।
+
+    // Storage prices
     const finalStoragePrices: Record<string, number> = {};
     storageVariants.forEach((s, i) => {
-      if (i === 0) { finalStoragePrices[s] = priceNum; return; }
+      if (i === 0) { finalStoragePrices[s] = bnPrice; return; }
       const v = storagePrices[s];
       if (v !== undefined && v !== "" && Number(v) > 0) finalStoragePrices[s] = Number(v);
     });
     const finalRegionPrices: Record<string, number> = {};
     regionList.forEach((r) => { finalRegionPrices[r] = Number(regionPrices[r] ?? 0) || 0; });
 
+    // Offer ends_at
+    const offerEndsAt = form.offer_ends_at ? toISO(form.offer_ends_at) : null;
+
     setSaving(true);
     setError("");
+
     const url  = mode === "edit" ? `/api/products/${initialData.id}` : "/api/products";
     const meth = mode === "edit" ? "PUT" : "POST";
+
     const res = await adminFetch(url, {
       method: meth,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
-        price:            priceNum,
-        original_price:   origNum || null,
-        // battery_health: মান দিলে বা আগে থেকে থাকলে (মুছতে চাইলে null) পাঠায়; নইলে একদম পাঠায় না
+        // Prices
+        brand_new_price: bnPrice,
+        pre_owned_price: poPrice,
+        price: bnPrice,                      // backward compat
+        original_price: origNum,
+        // Offer
+        offer_price_brand_new: bnOffer,
+        offer_price_pre_owned: poOffer,
+        offer_ends_at: offerEndsAt,
+        offer_type: (bnOffer || poOffer) ? (form.offer_type || "Offer") : null,
+        // Battery
         ...(batteryStr !== "" || initialData.battery_health != null
           ? { battery_health: batteryStr === "" ? null : Number(batteryStr) }
           : { battery_health: undefined }),
@@ -251,14 +334,13 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         colors:           colors.length > 0 ? JSON.stringify(colors) : null,
         storage_variants: storageVariants.length > 0 ? JSON.stringify(storageVariants) : null,
         storage_prices:   Object.keys(finalStoragePrices).length > 1
-          ? JSON.stringify(finalStoragePrices)
-          : null,
+          ? JSON.stringify(finalStoragePrices) : null,
         region_prices:    Object.keys(finalRegionPrices).length > 0
-          ? JSON.stringify(finalRegionPrices)
-          : null,
+          ? JSON.stringify(finalRegionPrices) : null,
         regions:          regionList.length > 0 ? regionList.join(",") : null,
       }),
     });
+
     const data = await res.json();
     setSaving(false);
     if (!res.ok) { setError(data.error ?? "Something went wrong"); return; }
@@ -267,6 +349,8 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   }
 
   const previewSrc = safeImageSrc(form.image);
+  const isBrandNew = form.condition === "brand-new";
+  const isPreOwned = form.condition === "pre-owned";
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto p-6 space-y-8">
@@ -337,10 +421,192 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </div>
       </section>
 
+      {/* ── PRICING — Brand New & Pre-Owned SEPARATED ── */}
+      <section className="bg-white rounded-2xl border-2 border-brand-200 p-5 space-y-5">
+        <div className="flex items-center gap-2">
+          <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Pricing</h2>
+          <span className="text-[10px] bg-brand-100 text-brand-700 font-bold px-2 py-0.5 rounded-full uppercase">Brand New ও Pre-Owned আলাদা</span>
+        </div>
+        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 flex items-start gap-2">
+          <AlertCircle size={14} className="shrink-0 mt-0.5"/>
+          Brand New ও Pre-Owned এর price কখনো mix হবে না। Condition অনুযায়ী সঠিক price automatically দেখাবে।
+        </p>
+
+        {/* Brand New Price block */}
+        <div className={`rounded-xl border-2 p-4 space-y-3 transition-all ${isBrandNew ? "border-green-400 bg-green-50" : "border-gray-100 bg-gray-50 opacity-70"}`}>
+          <div className="flex items-center gap-2">
+            <span className="text-base">🆕</span>
+            <span className="text-sm font-bold text-green-700">Brand New Price</span>
+            {isBrandNew && <span className="text-[10px] bg-green-500 text-white font-bold px-2 py-0.5 rounded-full">Active Condition</span>}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Brand New Sale Price (৳) *</label>
+              <input
+                required
+                type="number"
+                value={form.brand_new_price}
+                onChange={(e) => set("brand_new_price", e.target.value)}
+                placeholder="e.g. 114499"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 bg-white"
+              />
+              <p className="text-[10px] text-gray-400 mt-1">কাস্টমার brand new কিনলে এই দামে পাবে</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Original / MRP Price (৳)</label>
+              <input
+                type="number"
+                value={form.original_price}
+                onChange={(e) => set("original_price", e.target.value)}
+                placeholder="e.g. 124999 (কাটা দাম)"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 bg-white"
+              />
+              <p className="text-[10px] text-gray-400 mt-1">Sale Price এর চেয়ে বেশি হতে হবে</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Pre-Owned Price block */}
+        <div className={`rounded-xl border-2 p-4 space-y-3 transition-all ${isPreOwned ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-gray-50 opacity-70"}`}>
+          <div className="flex items-center gap-2">
+            <span className="text-base">♻️</span>
+            <span className="text-sm font-bold text-blue-700">Pre-Owned Price</span>
+            {isPreOwned && <span className="text-[10px] bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full">Active Condition</span>}
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              Pre-Owned Sale Price (৳) {isPreOwned && "*"}
+            </label>
+            <input
+              type="number"
+              required={isPreOwned}
+              value={form.pre_owned_price}
+              onChange={(e) => set("pre_owned_price", e.target.value)}
+              placeholder="e.g. 89999"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">
+              {isPreOwned ? "কাস্টমার pre-owned কিনলে এই দামে পাবে" : "এই product brand-new হলেও future এ pre-owned হিসেবে list করতে চাইলে দিতে পারো"}
+            </p>
+          </div>
+        </div>
+
+        {/* Price preview */}
+        {(form.brand_new_price || form.pre_owned_price) && (
+          <div className="bg-gray-50 rounded-xl px-4 py-3 flex flex-wrap gap-4 text-sm">
+            <span className="text-gray-500">Price Preview:</span>
+            {form.brand_new_price && (
+              <span className="font-bold text-green-700">🆕 Brand New: ৳{Number(form.brand_new_price).toLocaleString("en-BD")}</span>
+            )}
+            {form.pre_owned_price && (
+              <span className="font-bold text-blue-700">♻️ Pre-Owned: ৳{Number(form.pre_owned_price).toLocaleString("en-BD")}</span>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ── OFFER / TODAY'S DEAL section ── */}
+      <section className="bg-white rounded-2xl border-2 border-orange-200 p-5 space-y-5">
+        <div className="flex items-center gap-2">
+          <Tag size={16} className="text-orange-500"/>
+          <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Offer / Today&apos;s Deal</h2>
+          {hasActiveOffer && !offerExpired && (
+            <span className="text-[10px] bg-orange-500 text-white font-bold px-2 py-0.5 rounded-full animate-pulse">ACTIVE</span>
+          )}
+          {offerExpired && (
+            <span className="text-[10px] bg-red-100 text-red-600 font-bold px-2 py-0.5 rounded-full">EXPIRED</span>
+          )}
+        </div>
+
+        <p className="text-xs text-gray-500 bg-orange-50 border border-orange-100 rounded-xl px-3 py-2 flex items-start gap-2">
+          <Timer size={13} className="text-orange-400 shrink-0 mt-0.5"/>
+          Offer price দিলে product page এ auto badge লাগবে এবং offer section এ দেখাবে। Time শেষ হলে automatically সরে যাবে, regular price এ ফিরে আসবে।
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Brand New Offer Price */}
+          <div className="rounded-xl border border-green-200 bg-green-50 p-3 space-y-2">
+            <label className="block text-xs font-bold text-green-700">🆕 Brand New Offer Price (৳)</label>
+            <input
+              type="number"
+              value={form.offer_price_brand_new}
+              onChange={(e) => set("offer_price_brand_new", e.target.value)}
+              placeholder={form.brand_new_price ? `< ৳${Number(form.brand_new_price).toLocaleString("en-BD")} (Main Price)` : "Brand New offer price"}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 bg-white"
+            />
+            {form.offer_price_brand_new && form.brand_new_price && Number(form.offer_price_brand_new) > 0 && (
+              <p className="text-[11px] text-green-700 font-semibold">
+                ৳{(Number(form.brand_new_price) - Number(form.offer_price_brand_new)).toLocaleString("en-BD")} discount
+                ({Math.round(((Number(form.brand_new_price) - Number(form.offer_price_brand_new)) / Number(form.brand_new_price)) * 100)}% off)
+              </p>
+            )}
+          </div>
+
+          {/* Pre-Owned Offer Price */}
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 space-y-2">
+            <label className="block text-xs font-bold text-blue-700">♻️ Pre-Owned Offer Price (৳)</label>
+            <input
+              type="number"
+              value={form.offer_price_pre_owned}
+              onChange={(e) => set("offer_price_pre_owned", e.target.value)}
+              placeholder={form.pre_owned_price ? `< ৳${Number(form.pre_owned_price).toLocaleString("en-BD")} (Pre-Owned Price)` : "Pre-Owned offer price"}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+            />
+            {form.offer_price_pre_owned && form.pre_owned_price && Number(form.offer_price_pre_owned) > 0 && (
+              <p className="text-[11px] text-blue-700 font-semibold">
+                ৳{(Number(form.pre_owned_price) - Number(form.offer_price_pre_owned)).toLocaleString("en-BD")} discount
+                ({Math.round(((Number(form.pre_owned_price) - Number(form.offer_price_pre_owned)) / Number(form.pre_owned_price)) * 100)}% off)
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Offer Type */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Offer Type / Badge Label</label>
+            <select
+              value={form.offer_type}
+              onChange={(e) => set("offer_type", e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+            >
+              {OFFER_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <p className="text-[10px] text-gray-400 mt-1">Product card এ এই badge auto লাগবে offer active থাকলে</p>
+          </div>
+
+          {/* Offer End Time */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Offer End Date & Time</label>
+            <input
+              type="datetime-local"
+              value={form.offer_ends_at}
+              onChange={(e) => set("offer_ends_at", e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">এই সময়ের পর automatically offer সরে যাবে</p>
+          </div>
+        </div>
+
+        {/* Clear offer button */}
+        {hasActiveOffer && (
+          <button
+            type="button"
+            onClick={() => {
+              set("offer_price_brand_new", "");
+              set("offer_price_pre_owned", "");
+              set("offer_ends_at", "");
+            }}
+            className="text-xs font-semibold text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all"
+          >
+            <X size={13}/> Offer সরিয়ে দাও (Regular Price এ ফিরে যাও)
+          </button>
+        )}
+      </section>
+
       {/* ── Colors ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">🎨 Available Colors</h2>
-        {/* Presets */}
         <div className="flex flex-wrap gap-2">
           {COLOR_PRESETS.map((c) => (
             <button key={c} type="button"
@@ -350,12 +616,10 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             >{c}</button>
           ))}
         </div>
-        {/* Custom input */}
         <div className="flex gap-2">
           <input value={colorInput} onChange={(e) => setColorInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addColor(colorInput); }}} placeholder="Custom color name…" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           <button type="button" onClick={() => addColor(colorInput)} className="px-4 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:bg-brand-600 flex items-center gap-1"><Plus size={14}/> Add</button>
         </div>
-        {/* Selected tags */}
         {colors.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {colors.map((c) => (
@@ -366,15 +630,13 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             ))}
           </div>
         )}
-        {colors.length === 0 && <p className="text-xs text-gray-400">No colors added — color selector won't show on product page.</p>}
+        {colors.length === 0 && <p className="text-xs text-gray-400">No colors added — color selector won&apos;t show on product page.</p>}
       </section>
 
       {/* ── Storage + Pricing ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">💾 Storage Variants & Pricing</h2>
-        <p className="text-xs text-gray-400">প্রথম storage-এর price = উপরের Sale Price (নিজে থেকে মিলে যাবে)। বাকি storage-এর আলাদা price দিন। Storage select করলে product page এ price automatically update হবে।</p>
-
-        {/* Presets */}
+        <p className="text-xs text-gray-400">প্রথম storage-এর price = উপরের Brand New Sale Price। বাকি storage-এর আলাদা price দিন।</p>
         <div className="flex flex-wrap gap-2">
           {STORAGE_PRESETS.map((s) => (
             <button key={s} type="button"
@@ -384,96 +646,64 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             >{s}</button>
           ))}
         </div>
-
-        {/* Custom input */}
         <div className="flex gap-2">
           <input value={storageInput} onChange={(e) => setStorageInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addStorage(storageInput); }}} placeholder="Custom storage e.g. 3TB…" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           <button type="button" onClick={() => addStorage(storageInput)} className="px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 flex items-center gap-1"><Plus size={14}/> Add</button>
         </div>
-
-        {/* Storage + Price table */}
         {storageVariants.length > 0 && (
           <div className="border border-gray-100 rounded-xl overflow-hidden">
             <div className="grid grid-cols-[1fr_1fr_auto] bg-gray-50 border-b border-gray-100 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-              <span>Storage</span>
-              <span>Cash Price (৳)</span>
-              <span></span>
+              <span>Storage</span><span>Cash Price (৳)</span><span></span>
             </div>
             {storageVariants.map((s) => (
-              <div key={s} className="grid grid-cols-[1fr_1fr_auto] items-center px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+              <div key={s} className="grid grid-cols-[1fr_1fr_auto] items-center px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
                 <span className="text-sm font-bold text-gray-800">{s}</span>
                 {s === storageVariants[0] ? (
                   <div className="w-full border border-gray-100 bg-gray-50 rounded-lg px-3 py-1.5 text-sm text-gray-500 mr-3">
-                    {form.price !== "" ? `৳${Number(form.price).toLocaleString("en-BD")}` : "—"}
-                    <span className="ml-2 text-[10px] text-gray-400">= Sale Price (Base)</span>
+                    {form.brand_new_price !== "" ? `৳${Number(form.brand_new_price).toLocaleString("en-BD")}` : "—"}
+                    <span className="ml-2 text-[10px] text-gray-400">= Brand New Price</span>
                   </div>
                 ) : (
-                <input
-                  type="number"
-                  value={storagePrices[s] ?? ""}
-                  onChange={(e) => setStoragePrices((prev) => ({ ...prev, [s]: e.target.value }))}
-                  placeholder="e.g. 174999"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mr-3"
-                />
+                  <input type="number" value={storagePrices[s] ?? ""} onChange={(e) => setStoragePrices((prev) => ({ ...prev, [s]: e.target.value }))} placeholder="e.g. 174999" className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mr-3"/>
                 )}
-                <button type="button" onClick={() => removeStorage(s)} className="text-gray-300 hover:text-red-400 transition-colors ml-2">
-                  <Trash2 size={14}/>
-                </button>
+                <button type="button" onClick={() => removeStorage(s)} className="text-gray-300 hover:text-red-400 ml-2"><Trash2 size={14}/></button>
               </div>
             ))}
           </div>
         )}
-        {storageVariants.length === 0 && <p className="text-xs text-gray-400">No storage variants — storage selector won't show on product page.</p>}
+        {storageVariants.length === 0 && <p className="text-xs text-gray-400">No storage variants added.</p>}
       </section>
 
       {/* ── Region + Pricing ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">🌍 Region & Price Adjustment</h2>
-        <p className="text-xs text-gray-400">Region select করলে base storage price এর সাথে এই amount যোগ/বিয়োগ হবে। HK সবচেয়ে সস্তা হলে HK = 0, JP একটু কম হলে JP = -2000।</p>
-
-        {/* Region presets */}
+        <p className="text-xs text-gray-400">Region select করলে base storage price এর সাথে এই amount যোগ/বিয়োগ হবে।</p>
         <div className="flex flex-wrap gap-2">
           {REGION_PRESETS.map((r) => (
-            <button key={r} type="button"
-              onClick={() => addRegion(r)}
-              disabled={regionList.includes(r)}
+            <button key={r} type="button" onClick={() => addRegion(r)} disabled={regionList.includes(r)}
               className={`text-xs px-3 py-1.5 rounded-full border font-bold transition-all ${regionList.includes(r) ? "bg-gray-800 text-white border-gray-800" : "border-gray-200 text-gray-600 hover:border-gray-400"}`}
             >{r}</button>
           ))}
         </div>
-
-        {/* Custom region input */}
         <div className="flex gap-2">
           <input value={regionInput} onChange={(e) => setRegionInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRegion(regionInput); }}} placeholder="Custom region e.g. EU…" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           <button type="button" onClick={() => addRegion(regionInput)} className="px-4 py-2.5 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 flex items-center gap-1"><Plus size={14}/> Add</button>
         </div>
-
-        {/* Region + Price delta table */}
         {regionList.length > 0 && (
           <div className="border border-gray-100 rounded-xl overflow-hidden">
             <div className="grid grid-cols-[80px_1fr_auto] bg-gray-50 border-b border-gray-100 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-              <span>Region</span>
-              <span>Price Adjustment (৳) — 0 = base price, -2000 = ২০০০ কম, +5000 = ৫০০০ বেশি</span>
-              <span></span>
+              <span>Region</span><span>Price Adjustment (৳) — 0 = base, -2000 = কম, +5000 = বেশি</span><span></span>
             </div>
             {regionList.map((r) => (
-              <div key={r} className="grid grid-cols-[80px_1fr_auto] items-center px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+              <div key={r} className="grid grid-cols-[80px_1fr_auto] items-center px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
                 <span className="text-sm font-extrabold text-gray-800">{r}</span>
-                <input
-                  type="number"
-                  value={regionPrices[r] ?? "0"}
-                  onChange={(e) => setRegionPrices((prev) => ({ ...prev, [r]: e.target.value }))}
-                  placeholder="0"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mr-3"
-                />
-                <button type="button" onClick={() => removeRegion(r)} className="text-gray-300 hover:text-red-400 transition-colors ml-2">
-                  <Trash2 size={14}/>
-                </button>
+                <input type="number" value={regionPrices[r] ?? "0"} onChange={(e) => setRegionPrices((prev) => ({ ...prev, [r]: e.target.value }))} placeholder="0" className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mr-3"/>
+                <button type="button" onClick={() => removeRegion(r)} className="text-gray-300 hover:text-red-400 ml-2"><Trash2 size={14}/></button>
               </div>
             ))}
           </div>
         )}
-        {regionList.length === 0 && <p className="text-xs text-gray-400">No regions added — region selector won't show on product page.</p>}
+        {regionList.length === 0 && <p className="text-xs text-gray-400">No regions added.</p>}
       </section>
 
       {/* ── Product Image ── */}
@@ -487,17 +717,11 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
                 <input type="file" accept="image/*" disabled={uploading} className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file); }}/>
               </label>
               <span className="text-xs text-gray-400">or paste URL below</span>
-              <span className="text-[11px] font-semibold text-orange-500 bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg"> Max 10 KB</span>
+              <span className="text-[11px] font-semibold text-orange-500 bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg">Max 10 KB</span>
             </div>
-            {imageSizeError && (
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-xl">
-                <X size={13} className="shrink-0"/>{imageSizeError}
-              </div>
-            )}
+            {imageSizeError && <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-xl"><X size={13}/>{imageSizeError}</div>}
             {imageSize !== null && imageSize <= 10 * 1024 && !imageSizeError && (
-              <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-2 rounded-xl">
-                <CheckCircle size={13} className="shrink-0"/> Image size: {(imageSize / 1024).toFixed(1)} KB ✓
-              </div>
+              <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-2 rounded-xl"><CheckCircle size={13}/> Image size: {(imageSize / 1024).toFixed(1)} KB ✓</div>
             )}
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Image URL *</label>
@@ -517,29 +741,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
                 <span className="text-3xl text-gray-200">🖼</span>
               )}
             </div>
-            {imageSize !== null && (
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${imageSize > 10 * 1024 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                {(imageSize / 1024).toFixed(1)} KB {imageSize > 100 * 1024 ? "✗" : "✓"}
-              </span>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Pricing ── */}
-      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Pricing</h2>
-        <p className="text-xs text-gray-400">
-          <strong>Sale Price</strong> = কাস্টমার যে দামে কিনবে (যেমন ৫৪,০০০)। <strong>Original Price</strong> = কাটা দাম / MRP (যেমন ৬৪,০০০), অবশ্যই Sale Price-এর চেয়ে বেশি। Offer / Today&apos;s Deal-এর দাম এর চেয়েও কম হবে।
-        </p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Sale Price (৳) *</label>
-            <input required type="number" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="114499" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Original Price (৳)</label>
-            <input type="number" value={form.original_price} onChange={(e) => set("original_price", e.target.value)} placeholder="124999" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
           </div>
         </div>
       </section>
@@ -550,27 +751,20 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         <div className="max-w-xs">
           <label className="block text-xs font-semibold text-gray-600 mb-1">Battery Health (%)</label>
           <div className="relative">
-            <input
-              type="number" min="0" max="100" step="1"
-              value={form.battery_health}
-              onChange={(e) => set("battery_health", e.target.value)}
-              placeholder="e.g. 89"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
-            />
+            <input type="number" min="0" max="100" step="1" value={form.battery_health} onChange={(e) => set("battery_health", e.target.value)} placeholder="e.g. 89" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
           </div>
         </div>
-        <p className="text-xs text-gray-400">
-          দিলে product page-এর Product Details-এ &quot;Battery Health&quot; দেখাবে এবং পরে বাড়ালে/কমালে সাথে সাথে আপডেট হবে। খালি রাখলে দেখাবে না।
-        </p>
+        <p className="text-xs text-gray-400">দিলে product page-এ Battery Health দেখাবে।</p>
       </section>
 
       {/* ── Badge ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Badge (Optional)</h2>
+        <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Badge (Optional — Offer badge auto লাগে)</h2>
+        <p className="text-xs text-gray-400">Offer active থাকলে offer badge auto লাগে। এখানে manual static badge দিতে চাইলে দাও।</p>
         <div className="flex flex-wrap gap-2">
           {BADGE_PRESETS.map((b) => (
-            <button key={b.label} type="button" onClick={() => { set("badge", b.label); set("badge_color", b.color); }} className="flex items-center gap-1.5 text-xs font-bold text-white px-3 py-1.5 rounded-full transition-all hover:opacity-90 active:scale-95" style={{ backgroundColor: b.color }}>{b.label}</button>
+            <button key={b.label} type="button" onClick={() => { set("badge", b.label); set("badge_color", b.color); }} className="flex items-center gap-1.5 text-xs font-bold text-white px-3 py-1.5 rounded-full hover:opacity-90" style={{ backgroundColor: b.color }}>{b.label}</button>
           ))}
           <button type="button" onClick={() => set("badge", "")} className="text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-200 text-gray-400 hover:bg-gray-50">No Badge</button>
         </div>
@@ -616,14 +810,13 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
           <span className="text-sm font-medium text-gray-700">EMI Available for this product</span>
         </label>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Number (with country code)</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Number</label>
           <input value={form.whatsapp_number} onChange={(e) => set("whatsapp_number", e.target.value)} placeholder="+8801XXXXXXXXX" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
-          <p className="text-[11px] text-gray-400 mt-1">Leave blank to hide the WhatsApp button on the product page.</p>
         </div>
       </section>
 
       <div className="flex gap-3">
-        <button type="submit" disabled={saving || success || uploading} className="flex-1 flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95 text-sm">
+        <button type="submit" disabled={saving || success || uploading} className="flex-1 flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-all shadow-sm text-sm">
           {saving && <Loader2 size={15} className="animate-spin"/>}
           {mode === "edit" ? "Save Changes" : "Add Product"}
         </button>

@@ -43,18 +43,28 @@ export async function PUT(
     "product_code", "colors", "storage_variants",
     "storage_prices", "region_prices", "regions",
     "emi_available", "whatsapp_number", "battery_health",
-    // Today's deal
+    // Legacy today's deal
     "is_today_deal", "deal_price", "deal_ends_at",
+    // New: condition-specific prices
+    "brand_new_price", "pre_owned_price",
+    // New: offer system
+    "offer_price_brand_new", "offer_price_pre_owned",
+    "offer_ends_at", "offer_type",
   ];
 
   const payload: Record<string, unknown> = {};
   for (const key of allowed) {
     if (body[key] !== undefined) payload[key] = body[key];
   }
-  // খালি string / ভুল type DB-তে গেলে update fail করে → number/null এ ঠিক করা
+
   const numOrNull = (v: unknown) =>
     v === "" || v === null || v === undefined || Number.isNaN(Number(v)) ? null : Number(v);
-  for (const k of ["original_price", "stock", "deal_price", "battery_health"]) {
+
+  for (const k of [
+    "original_price", "stock", "deal_price", "battery_health",
+    "brand_new_price", "pre_owned_price",
+    "offer_price_brand_new", "offer_price_pre_owned",
+  ]) {
     if (k in payload) payload[k] = numOrNull(payload[k]);
   }
   for (const k of ["price", "rating", "review_count"]) {
@@ -63,12 +73,26 @@ export async function PUT(
       if (n === null) delete payload[k]; else payload[k] = n;
     }
   }
+
+  // brand_new_price → price sync (backward compat)
+  if (payload.brand_new_price != null) {
+    payload.price = payload.brand_new_price;
+  }
+
   if (payload.battery_health != null && (Number(payload.battery_health) < 0 || Number(payload.battery_health) > 100)) {
     return NextResponse.json({ error: "Battery health must be between 0 and 100" }, { status: 400 });
   }
-  if (payload.original_price && payload.price && Number(payload.original_price) <= Number(payload.price)) {
-    return NextResponse.json({ error: "Original price must be greater than sale price" }, { status: 400 });
+
+  // offer_ends_at = "" or explicit null → clear offer
+  if (body.offer_ends_at === "" || body.offer_ends_at === null) {
+    payload.offer_ends_at = null;
   }
+  // Clearing offer: if both offer prices removed, also clear offer_type
+  if (payload.offer_price_brand_new === null && payload.offer_price_pre_owned === null) {
+    payload.offer_type = null;
+    payload.offer_ends_at = null;
+  }
+
   payload.updated_at = new Date().toISOString();
 
   const { data, error } = await supabase
@@ -76,18 +100,4 @@ export async function PUT(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   clearCache("products:");
   return NextResponse.json({ product: data });
-}
-
-// DELETE /api/products/[id]
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  { const denied = await requireAdmin(req); if (denied) return denied; }
-  const { id } = await params;
-  const supabase = getSupabase();
-  const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  clearCache("products:");
-  return NextResponse.json({ message: "Deleted" });
 }

@@ -39,7 +39,6 @@ function getSupabase() {
 
 // GET /api/products
 export async function GET(req: NextRequest) {
-  // 20 sec memory cache — same query বারবার Supabase-এ যাবে না
   const cacheKey = "products:" + req.nextUrl.search;
   const cached = cacheGet<{ products: unknown[] }>(cacheKey);
   if (cached) return NextResponse.json(cached);
@@ -47,16 +46,18 @@ export async function GET(req: NextRequest) {
   const supabase = getSupabase();
   const { searchParams } = new URL(req.url);
 
-  const featured    = searchParams.get("featured");
-  const category    = searchParams.get("category");
-  const condition   = searchParams.get("condition");
-  const deals       = searchParams.get("deals");
-  const badge       = searchParams.get("badge");
-  const q           = searchParams.get("q");
-  const available   = searchParams.get("available");
-  const slug        = searchParams.get("slug");
-  const limit       = searchParams.get("limit");
-  const today_deal  = searchParams.get("today_deal"); // NEW: today's deal filter
+  const featured   = searchParams.get("featured");
+  const category   = searchParams.get("category");
+  const condition  = searchParams.get("condition");
+  const deals      = searchParams.get("deals");
+  const badge      = searchParams.get("badge");
+  const q          = searchParams.get("q");
+  const available  = searchParams.get("available");
+  const slug       = searchParams.get("slug");
+  const limit      = searchParams.get("limit");
+  const today_deal = searchParams.get("today_deal");
+  // New: active_offer=true → products with non-expired offer
+  const active_offer = searchParams.get("active_offer");
 
   let query = supabase
     .from("products")
@@ -73,17 +74,40 @@ export async function GET(req: NextRequest) {
   if (slug)                 query = query.eq("slug", slug);
   if (limit)                query = query.limit(Number(limit));
 
-  // today_deal=true → is_today_deal active AND (deal_ends_at is null OR deal_ends_at > now)
   if (today_deal === "true") {
-    await expireTodaysDeals(supabase); // timer শেষ হলে DB-তেই deal OFF
+    await expireTodaysDeals(supabase);
     query = query
       .eq("is_today_deal", true)
       .or("deal_ends_at.is.null,deal_ends_at.gt." + new Date().toISOString());
   }
 
+  // Active offer filter: offer_price_brand_new OR offer_price_pre_owned set + not expired
+  if (active_offer === "true") {
+    const now = new Date().toISOString();
+    query = query
+      .or(
+        `offer_price_brand_new.not.is.null,offer_price_pre_owned.not.is.null`
+      )
+      .or(`offer_ends_at.is.null,offer_ends_at.gt.${now}`);
+  }
+
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const payload = { products: (data ?? []).map((p) => ({ ...p, image: fixLocalImage(p.image) })) };
+
+  // Server-side: expire offer fields on-the-fly (don't update DB here, just mask)
+  const now = Date.now();
+  const products = (data ?? []).map((p) => {
+    const prod = { ...p, image: fixLocalImage(p.image) };
+    // If offer has expired, mask offer fields so UI doesn't show stale data
+    if (prod.offer_ends_at && new Date(prod.offer_ends_at).getTime() < now) {
+      prod.offer_price_brand_new = null;
+      prod.offer_price_pre_owned = null;
+      prod.offer_type = null;
+    }
+    return prod;
+  });
+
+  const payload = { products };
   cacheSet(cacheKey, payload, 20_000);
   return NextResponse.json(payload);
 }
@@ -103,18 +127,29 @@ export async function POST(req: NextRequest) {
     product_code, colors, storage_variants,
     storage_prices, region_prices, regions,
     emi_available, whatsapp_number, battery_health,
-    // Today's deal fields
+    // Today's deal (legacy)
     is_today_deal, deal_price, deal_ends_at,
+    // New: condition-specific prices
+    brand_new_price, pre_owned_price,
+    // New: offer system
+    offer_price_brand_new, offer_price_pre_owned,
+    offer_ends_at, offer_type,
   } = body;
 
   if (!name || !price || !slug || !image) {
     return NextResponse.json({ error: "name, price, slug and image are required" }, { status: 400 });
   }
 
+  // Resolve: brand_new_price defaults to price if not given
+  const bnPrice = brand_new_price ? Number(brand_new_price) : Number(price);
+  const poPrice = pre_owned_price ? Number(pre_owned_price) : null;
+
   const { data, error } = await supabase.from("products").insert([{
     name, variant,
-    price: Number(price),
+    price: bnPrice,                      // price = brand_new_price (backward compat)
     original_price: original_price ? Number(original_price) : null,
+    brand_new_price: bnPrice,
+    pre_owned_price: poPrice,
     rating: Number(rating ?? 0),
     review_count: Number(review_count ?? 0),
     image, slug, badge, badge_color,
@@ -135,10 +170,15 @@ export async function POST(req: NextRequest) {
     ...(battery_health !== undefined && battery_health !== null && battery_health !== ""
       ? { battery_health: Math.min(100, Math.max(0, Number(battery_health))) }
       : {}),
-    // Today's deal
+    // Legacy today's deal
     is_today_deal: is_today_deal ?? false,
     deal_price:    deal_price ? Number(deal_price) : null,
     deal_ends_at:  deal_ends_at ?? null,
+    // New offer system
+    offer_price_brand_new: offer_price_brand_new ? Number(offer_price_brand_new) : null,
+    offer_price_pre_owned: offer_price_pre_owned ? Number(offer_price_pre_owned) : null,
+    offer_ends_at: offer_ends_at ?? null,
+    offer_type:    offer_type ?? null,
     created_at: new Date().toISOString(),
   }]).select().single();
 
