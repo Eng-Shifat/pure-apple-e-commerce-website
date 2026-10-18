@@ -522,7 +522,8 @@ export default function ProductDetailPage() {
 
           {/* LEFT: Image */}
           <div className="flex flex-col gap-3">
-            <div className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-[400px]">
+            {/* ── Main image with zoom-on-hover ── */}
+            <div className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-[400px] group/imgbox">
               {product.badge && (
                 <span className="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow" style={{ backgroundColor: product.badge_color ?? "#FB5724" }}>{product.badge}</span>
               )}
@@ -535,21 +536,53 @@ export default function ProductDetailPage() {
               <button onClick={handleShare} className="absolute top-24 right-4 w-9 h-9 rounded-full flex items-center justify-center shadow-md z-10 bg-white border border-gray-200 hover:scale-110 transition-all">
                 {copied ? <Check size={16} className="text-green-500"/> : <Share2 size={16} className="text-gray-400"/>}
               </button>
-              {/* Condition badge — image-er bottom-left corner-e */}
+              {/* Condition badge */}
               {product.condition === "pre-owned"
                 ? <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50/95 border border-amber-200 px-2.5 py-1 rounded-full shadow-sm"><Tag size={11}/> Pre-Owned</span>
                 : <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-leaf-700 bg-leaf-50/95 border border-leaf-200 px-2.5 py-1 rounded-full shadow-sm"><BadgeCheck size={11}/> Brand New</span>
               }
-              <div className="relative w-full px-4 h-[260px] md:h-[340px]">
-                <Image src={images[activeImg] ?? "/logo/pure-apple-logo.png"} alt={product.name} fill className="object-contain drop-shadow-xl" sizes="(max-width:768px) 100vw, 50vw" priority/>
+              {/* Zoom container — overflow:hidden is on the parent, image scales inside */}
+              <div className="relative w-full px-4 h-[260px] md:h-[340px] overflow-hidden">
+                <Image
+                  src={images[activeImg] ?? "/logo/pure-apple-logo.png"}
+                  alt={product.name}
+                  fill
+                  className="object-contain drop-shadow-xl transition-transform duration-500 ease-out group-hover/imgbox:scale-125"
+                  sizes="(max-width:768px) 100vw, 50vw"
+                  priority
+                />
               </div>
             </div>
 
+            {/* ── Thumbnail strip with slide animation ── */}
             {images.length > 1 && (
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-2 justify-center flex-wrap">
                 {images.map((src, i) => (
-                  <button key={i} onClick={() => { setActiveImg(i); if (catalogPhone && i < catalogPhone.colors.length) setSelColor(catalogPhone.colors[i].name); }} className={`w-16 h-16 rounded-xl border-2 overflow-hidden bg-white flex items-center justify-center transition-all ${i===activeImg ? "border-brand-500 shadow-md" : "border-gray-200 hover:border-brand-300"}`}>
-                    <div className="relative w-12 h-12"><Image src={src} alt={`View ${i+1}`} fill className="object-contain" sizes="48px"/></div>
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setActiveImg(i);
+                      if (catalogPhone && i < catalogPhone.colors.length) setSelColor(catalogPhone.colors[i].name);
+                    }}
+                    className={`
+                      relative w-16 h-16 rounded-xl border-2 overflow-hidden bg-white
+                      flex items-center justify-center
+                      transition-all duration-300 ease-out
+                      ${i === activeImg
+                        ? "border-brand-500 shadow-[0_4px_14px_rgba(251,87,36,0.25)] scale-105"
+                        : "border-gray-200 hover:border-brand-300 hover:scale-105 opacity-70 hover:opacity-100"
+                      }
+                    `}
+                  >
+                    {/* Active slide indicator bar */}
+                    <span className={`
+                      absolute bottom-0 left-0 right-0 h-[3px] rounded-b-xl
+                      transition-all duration-300
+                      ${i === activeImg ? "bg-brand-500 opacity-100" : "opacity-0"}
+                    `}/>
+                    <div className="relative w-12 h-12">
+                      <Image src={src} alt={`View ${i + 1}`} fill className="object-contain" sizes="48px"/>
+                    </div>
                   </button>
                 ))}
               </div>

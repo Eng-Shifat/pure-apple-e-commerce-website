@@ -59,9 +59,12 @@ function useCountdown(endsAt: string | null) {
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 
+const UNIT_LABELS = ["HRS", "MIN", "SEC"];
+
 function CountdownDisplay({ endsAt }: { endsAt: string }) {
   const time = useCountdown(endsAt);
   if (!time) return null;
+
   if (time.expired) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full">
@@ -69,16 +72,40 @@ function CountdownDisplay({ endsAt }: { endsAt: string }) {
       </span>
     );
   }
+
   return (
-    <div className="flex items-center gap-1 shrink-0">
-      <Timer size={12} className="text-orange-500 shrink-0" />
-      <span className="text-[10px] font-semibold text-gray-500 whitespace-nowrap">Ends in</span>
+    <div className="flex items-center gap-2 shrink-0">
+      {/* "Ends in" label */}
+      <div className="hidden sm:flex flex-col items-center leading-none mr-1">
+        <Timer size={13} className="text-[#FB5724] mb-0.5" />
+        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap">
+          Ends in
+        </span>
+      </div>
+
+      {/* Digit blocks */}
       {[pad(time.h), pad(time.m), pad(time.s)].map((unit, i) => (
-        <span key={i} className="flex items-center gap-0.5">
-          <span className="inline-flex items-center justify-center w-7 h-7 sm:w-9 sm:h-8 rounded-md sm:rounded-lg bg-gray-900 text-white font-mono text-xs sm:text-sm font-extrabold leading-none shadow-sm">
-            {unit}
+        <span key={i} className="flex items-start gap-1">
+          {/* Block */}
+          <span className="flex flex-col items-center">
+            <span
+              className="inline-flex items-center justify-center w-9 h-9 rounded-xl font-mono font-extrabold text-sm text-white leading-none shadow-md"
+              style={{
+                background: "linear-gradient(145deg, #FB5724 0%, #e84e1f 100%)",
+                boxShadow: "0 4px 10px rgba(251,87,36,0.35)",
+              }}
+            >
+              {unit}
+            </span>
+            <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">
+              {UNIT_LABELS[i]}
+            </span>
           </span>
-          {i < 2 && <span className="text-gray-500 font-bold text-xs">:</span>}
+
+          {/* Colon separator (not after last) */}
+          {i < 2 && (
+            <span className="text-[#FB5724] font-extrabold text-base leading-none mt-1.5">:</span>
+          )}
         </span>
       ))}
     </div>
@@ -195,23 +222,27 @@ function DealCard({ deal }: { deal: DealProduct }) {
         {/* ── RIGHT: Info ── */}
         <div className="flex flex-col justify-center gap-2.5 md:gap-4 p-4 md:p-10">
 
-          {/* Flash label + Timer — ek row-te */}
-          <div className="flex items-center justify-between gap-2 flex-nowrap">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-orange-500 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-full whitespace-nowrap">
-                <Zap size={11} className="fill-orange-400" /> Flash Deal
+          {/* Flash label + badge */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-orange-500 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-full whitespace-nowrap">
+              <Zap size={11} className="fill-orange-400" /> Flash Deal
+            </span>
+            {deal.badge && (
+              <span
+                className="text-white text-[11px] font-bold px-3 py-1 rounded-full"
+                style={{ backgroundColor: deal.badge_color ?? "#FB5724" }}
+              >
+                {deal.badge}
               </span>
-              {deal.badge && (
-                <span
-                  className="hidden sm:inline-block text-white text-[11px] font-bold px-3 py-1 rounded-full"
-                  style={{ backgroundColor: deal.badge_color ?? "#FB5724" }}
-                >
-                  {deal.badge}
-                </span>
-              )}
-            </div>
-            {deal.deal_ends_at && <CountdownDisplay endsAt={deal.deal_ends_at} />}
+            )}
           </div>
+
+          {/* Countdown — always visible, own row */}
+          {deal.deal_ends_at && (
+            <div className="flex items-center">
+              <CountdownDisplay endsAt={deal.deal_ends_at} />
+            </div>
+          )}
 
           {/* Name */}
           <Link
