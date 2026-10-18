@@ -10,6 +10,7 @@ import {
   Share2, Check, ChevronLeft, Package, Tag, MessageCircle, CreditCard, X, Timer,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 import type { Product } from "@/types";
 import { phoneBySlug, PHONES, type CatalogPhone } from "@/lib/phoneCatalog";
 import { supabase } from "@/lib/supabase";
@@ -234,7 +235,7 @@ export default function ProductDetailPage() {
   const [loading,     setLoading]     = useState(true);
   const [activeImg,   setActiveImg]   = useState(0);
   const [qty,         setQty]         = useState(1);
-  const [wished,      setWished]      = useState(false);
+  const { toggle: toggleWishlist, isWished } = useWishlistStore();
   const [added,       setAdded]       = useState(false);
   const [showCartBar, setShowCartBar] = useState(false);
   const [copied,      setCopied]      = useState(false);
@@ -583,8 +584,8 @@ export default function ProductDetailPage() {
               {discount && (
                 <span className="absolute top-4 right-4 bg-red-500 text-white text-xs font-extrabold px-2.5 py-1 rounded-full z-10">-{discount}%</span>
               )}
-              <button onClick={() => setWished((w) => !w)} className={`absolute top-14 right-4 w-9 h-9 rounded-full flex items-center justify-center shadow-md z-10 transition-all hover:scale-110 ${wished ? "bg-red-500" : "bg-white border border-gray-200"}`}>
-                <Heart size={16} className={wished ? "fill-white text-white" : "text-gray-400"}/>
+              <button onClick={() => product && toggleWishlist(product as never)} className={`absolute top-14 right-4 w-9 h-9 rounded-full flex items-center justify-center shadow-md z-10 transition-all hover:scale-110 ${product && isWished(product.id) ? "bg-red-500" : "bg-white border border-gray-200"}`}>
+                <Heart size={16} className={product && isWished(product.id) ? "fill-white text-white" : "text-gray-400"}/>
               </button>
               <button onClick={handleShare} className="absolute top-24 right-4 w-9 h-9 rounded-full flex items-center justify-center shadow-md z-10 bg-white border border-gray-200 hover:scale-110 transition-all">
                 {copied ? <Check size={16} className="text-green-500"/> : <Share2 size={16} className="text-gray-400"/>}
@@ -594,13 +595,13 @@ export default function ProductDetailPage() {
                 ? <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50/95 border border-amber-200 px-2.5 py-1 rounded-full shadow-sm"><Tag size={11}/> Pre-Owned</span>
                 : <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-leaf-700 bg-leaf-50/95 border border-leaf-200 px-2.5 py-1 rounded-full shadow-sm"><BadgeCheck size={11}/> Brand New</span>
               }
-              {/* Zoom container — overflow:hidden is on the parent, image scales inside */}
-              <div className="relative w-full px-4 h-[260px] md:h-[340px] overflow-hidden">
+              {/* Zoom container — overflow:hidden on parent clips the scale */}
+              <div className="relative w-full px-4 h-[260px] md:h-[340px]">
                 <Image
                   src={images[activeImg] ?? "/logo/pure-apple-logo.png"}
                   alt={product.name}
                   fill
-                  className="object-contain drop-shadow-xl transition-transform duration-500 ease-out group-hover/imgbox:scale-125"
+                  className="object-contain drop-shadow-xl transition-transform duration-500 ease-out group-hover/imgbox:scale-[1.18] cursor-zoom-in"
                   sizes="(max-width:768px) 100vw, 50vw"
                   priority
                 />
@@ -714,15 +715,15 @@ export default function ProductDetailPage() {
                             key={s}
                             type="button"
                             onClick={() => setSelStorage(s)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
+                            className={`flex flex-col items-start px-3 py-2 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95
                               ${isSelected
                                 ? "bg-gray-900 text-white border-gray-900 shadow-sm"
                                 : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
                               }`}
                           >
-                            {s}
-                            <span className={`font-semibold ${isSelected ? "text-gray-300" : "text-gray-400"}`}>
-                              ৳{(spWithRegion / 1000).toFixed(0)}k
+                            <span>{s}</span>
+                            <span className={`text-[11px] font-semibold mt-0.5 ${isSelected ? "text-gray-300" : "text-orange-500"}`}>
+                              ৳{spWithRegion.toLocaleString("en-BD")}
                             </span>
                           </button>
                         );
@@ -737,26 +738,23 @@ export default function ProductDetailPage() {
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Region</p>
                     <div className="flex flex-wrap gap-1.5">
                       {regionList.map((r) => {
-                        const adj = deltaFor(r);
-                        const adjLabel = adj === 0 ? "" : adj > 0 ? `+${(adj / 1000).toFixed(0)}k` : `${(adj / 1000).toFixed(0)}k`;
+                        const fullPrice = Math.max(0, baseFor(selStorage) + deltaFor(r) - offerDiscount);
                         const isSelected = selRegion === r;
                         return (
                           <button
                             key={r}
                             type="button"
                             onClick={() => setSelRegion(r)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
+                            className={`flex flex-col items-start px-3 py-2 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95
                               ${isSelected
                                 ? "bg-blue-600 text-white border-blue-600 shadow-sm"
                                 : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
                               }`}
                           >
-                            {r}
-                            {adjLabel && (
-                              <span className={`font-semibold ${isSelected ? "text-blue-200" : "text-gray-400"}`}>
-                                ({adjLabel})
-                              </span>
-                            )}
+                            <span>{r}</span>
+                            <span className={`text-[11px] font-semibold mt-0.5 ${isSelected ? "text-blue-200" : "text-orange-500"}`}>
+                              ৳{fullPrice.toLocaleString("en-BD")}
+                            </span>
                           </button>
                         );
                       })}

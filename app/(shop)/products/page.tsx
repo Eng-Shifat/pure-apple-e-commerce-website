@@ -79,7 +79,7 @@ const SLUG_TO_BRAND: Record<string, string> = {
 
 // ─── DB product → SharedProduct ───────────────────────────────
 
-function dbToShared(p: DbProduct): SharedProduct {
+function dbToShared(p: DbProduct, overrideImage?: string): SharedProduct {
   let storageVariants: string[] | undefined;
   let storagePrices:   Record<string, number> | undefined;
   let regionPrices:    Record<string, number> | undefined;
@@ -99,7 +99,7 @@ function dbToShared(p: DbProduct): SharedProduct {
     price:           p.price,
     originalPrice:   p.original_price,
     rating:          p.rating,
-    image:           p.image,
+    image:           overrideImage ?? p.image,
     slug:            p.slug,
     badge:           p.badge,
     badgeColor:      p.badge_color ?? "#FB5724",
@@ -373,29 +373,7 @@ function ProductsPageInner() {
               </ul>
             </div>
 
-            {/* Condition grade (pre-owned only) */}
-            {condition === "pre-owned" && (
-              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
-                <div className="px-4 py-3 border-b border-gray-50">
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Condition Grade</h3>
-                </div>
-                <div className="p-3 space-y-1.5">
-                  {[
-                    { label: "Like New",  desc: "99% perfect condition",    color: "bg-green-100 text-green-700"   },
-                    { label: "Excellent", desc: "Minor signs of use",       color: "bg-blue-100 text-blue-700"    },
-                    { label: "Good",      desc: "Visible wear, functional", color: "bg-yellow-100 text-yellow-700" },
-                  ].map(g => (
-                    <label key={g.label} className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-gray-50 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="mt-0.5 w-3.5 h-3.5 accent-orange-500" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{g.label}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">{g.desc}</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+
 
             {/* Price range */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
@@ -573,11 +551,20 @@ function ProductsPageInner() {
                         <span className="text-xs text-gray-400">{searchPreOwned.length} result{searchPreOwned.length !== 1 ? "s" : ""}</span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
-                        {searchPreOwned.map(p => (
-                          <SharedProductCard key={p.id} product={dbToShared(p)}
-                            onAddToCart={(sp) => addItem({ id: sp.id, name: sp.name, variant: sp.variant ?? "", price: sp.price, original_price: sp.originalPrice, rating: sp.rating ?? 0, review_count: 0, image: sp.image, slug: sp.slug, badge: sp.badge, badge_color: sp.badgeColor } as never)}
-                          />
-                        ))}
+                        {searchPreOwned.map(p => {
+                          // Use brand-new image if available for same product name
+                          const brandNewMatch = allProducts.find(
+                            bp => bp.condition === "brand-new" && bp.name.toLowerCase() === p.name.toLowerCase()
+                          );
+                          const sharedP = dbToShared(p, brandNewMatch?.image);
+                          // Attach pre-owned badge
+                          const withBadge = { ...sharedP, badge: sharedP.badge ?? "Pre-Owned", badgeColor: sharedP.badgeColor ?? "#16a34a" };
+                          return (
+                            <SharedProductCard key={p.id} product={withBadge}
+                              onAddToCart={(sp) => addItem({ id: sp.id, name: sp.name, variant: sp.variant ?? "", price: sp.price, original_price: sp.originalPrice, rating: sp.rating ?? 0, review_count: 0, image: sp.image, slug: sp.slug, badge: sp.badge, badge_color: sp.badgeColor } as never)}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -597,11 +584,21 @@ function ProductsPageInner() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
-                {filtered.map(p => (
-                  <SharedProductCard key={p.id} product={dbToShared(p)}
-                    onAddToCart={(sp) => addItem({ id: sp.id, name: sp.name, variant: sp.variant ?? "", price: sp.price, original_price: sp.originalPrice, rating: sp.rating ?? 0, review_count: 0, image: sp.image, slug: sp.slug, badge: sp.badge, badge_color: sp.badgeColor } as never)}
-                  />
-                ))}
+                {filtered.map(p => {
+                  let sharedP = dbToShared(p);
+                  if (p.condition === "pre-owned") {
+                    const brandNewMatch = allProducts.find(
+                      bp => bp.condition === "brand-new" && bp.name.toLowerCase() === p.name.toLowerCase()
+                    );
+                    sharedP = dbToShared(p, brandNewMatch?.image);
+                    sharedP = { ...sharedP, badge: sharedP.badge ?? "Pre-Owned", badgeColor: sharedP.badgeColor ?? "#16a34a" };
+                  }
+                  return (
+                    <SharedProductCard key={p.id} product={sharedP}
+                      onAddToCart={(sp) => addItem({ id: sp.id, name: sp.name, variant: sp.variant ?? "", price: sp.price, original_price: sp.originalPrice, rating: sp.rating ?? 0, review_count: 0, image: sp.image, slug: sp.slug, badge: sp.badge, badge_color: sp.badgeColor } as never)}
+                    />
+                  );
+                })}
               </div>
             )}
 
