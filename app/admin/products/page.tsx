@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   Search, RefreshCw, Package, ChevronDown,
   Flame, Star, Eye, EyeOff, AlertCircle, CheckCircle,
-  Loader2, X, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown,
+  Loader2, X, ArrowUpDown, ArrowUp, ArrowDown,
   Zap, Timer, Tag,
 } from "lucide-react";
 
@@ -614,9 +614,9 @@ export default function AdminProductsPage() {
         )}
 
         {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-2.5 mb-4">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           {/* Search */}
-          <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100 transition-all shadow-sm">
+          <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-3.5 py-2 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100 transition-all shadow-sm">
             <Search size={14} className="text-gray-400 shrink-0" />
             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search products…"
@@ -627,37 +627,29 @@ export default function AdminProductsPage() {
               </button>
             )}
           </div>
-
-          {/* Category */}
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 shadow-sm">
-            <SlidersHorizontal size={13} className="text-gray-400" />
-            <select value={category} onChange={e => setCategory(e.target.value)}
-              className="text-sm text-gray-700 bg-transparent outline-none cursor-pointer capitalize">
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>{c === "All" ? "All Categories" : capFirst(c)}</option>
-              ))}
-            </select>
-          </div>
-
           <span className="text-xs text-gray-400 font-medium ml-auto">
             {displayed.length} / {products.length} products
           </span>
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mb-0 pb-3 border-b border-gray-200">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Star size={12} className="text-orange-500 fill-orange-500" /> Popular = Homepage popular section
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Flame size={12} className="text-red-500 fill-red-100" /> Hot Deal = Homepage deals section
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Eye size={12} className="text-green-600" /> Published = visible in shop
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400 italic">
-            ✏️ Click price / stock / badge to edit inline
-          </div>
+        {/* Brand filter pills */}
+        <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-gray-200">
+          {CATEGORIES.map(c => {
+            const isActive = category === c;
+            return (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+                  isActive
+                    ? "bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-200"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-orange-300 hover:text-orange-500"
+                }`}
+              >
+                {c === "All" ? "All" : capFirst(c)}
+              </button>
+            );
+          })}
         </div>
 
         {/* ── Sticky Table Header Row ── */}
@@ -732,7 +724,11 @@ export default function AdminProductsPage() {
                     <div className="min-w-0">
                       <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={p.name}>{p.name}</p>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        <span className="text-[10px] font-semibold text-gray-400 capitalize">{p.category}</span>
+                        <span className={`text-[10px] font-semibold capitalize px-1.5 py-0.5 rounded-full transition-colors ${
+                          category !== "All" && p.category === category
+                            ? "bg-orange-100 text-orange-600"
+                            : "text-gray-400"
+                        }`}>{p.category}</span>
                         <span className="w-1 h-1 rounded-full bg-gray-300" />
                         <span className={`text-[10px] font-semibold ${p.condition === "brand-new" ? "text-blue-500" : "text-green-600"}`}>
                           {p.condition === "brand-new" ? "Brand New" : "Pre-Owned"}
