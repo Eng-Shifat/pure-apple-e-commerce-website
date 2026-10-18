@@ -708,23 +708,19 @@ export default function ProductDetailPage() {
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Storage</p>
                     <div className="flex flex-wrap gap-1.5">
                       {storageVariants.map((s) => {
-                        const spWithRegion = Math.max(0, baseFor(s) + deltaFor(selRegion) - offerDiscount);
                         const isSelected = selStorage === s;
                         return (
                           <button
                             key={s}
                             type="button"
                             onClick={() => setSelStorage(s)}
-                            className={`flex flex-col items-start px-3 py-2 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95
+                            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
                               ${isSelected
                                 ? "bg-gray-900 text-white border-gray-900 shadow-sm"
                                 : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
                               }`}
                           >
-                            <span>{s}</span>
-                            <span className={`text-[11px] font-semibold mt-0.5 ${isSelected ? "text-gray-300" : "text-orange-500"}`}>
-                              ৳{spWithRegion.toLocaleString("en-BD")}
-                            </span>
+                            {s}
                           </button>
                         );
                       })}
@@ -738,23 +734,19 @@ export default function ProductDetailPage() {
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Region</p>
                     <div className="flex flex-wrap gap-1.5">
                       {regionList.map((r) => {
-                        const fullPrice = Math.max(0, baseFor(selStorage) + deltaFor(r) - offerDiscount);
                         const isSelected = selRegion === r;
                         return (
                           <button
                             key={r}
                             type="button"
                             onClick={() => setSelRegion(r)}
-                            className={`flex flex-col items-start px-3 py-2 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95
+                            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
                               ${isSelected
                                 ? "bg-blue-600 text-white border-blue-600 shadow-sm"
                                 : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
                               }`}
                           >
-                            <span>{r}</span>
-                            <span className={`text-[11px] font-semibold mt-0.5 ${isSelected ? "text-blue-200" : "text-orange-500"}`}>
-                              ৳{fullPrice.toLocaleString("en-BD")}
-                            </span>
+                            {r}
                           </button>
                         );
                       })}
