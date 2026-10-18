@@ -110,7 +110,7 @@ function dbToShared(p: DbProduct): SharedProduct {
     storagePrices,
     regionList,
     regionPrices,
-    colors:          colorList?.map(c => ({ name: c, image: p.image })),
+    colors:          colorList?.map(c => ({ name: c, hex: "", image: p.image })),
   };
 }
 
