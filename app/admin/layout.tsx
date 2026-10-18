@@ -87,7 +87,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </span>
             </span>
           </Link>
-          <p className="text-[10px] text-gray-400 mt-2 font-medium uppercase tracking-wider">Admin Panel</p>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV.map(({ label, href, icon: Icon }) => {
