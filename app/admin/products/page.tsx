@@ -7,7 +7,7 @@ import {
   Search, RefreshCw, Package, ChevronDown,
   Flame, Star, Eye, EyeOff, AlertCircle, CheckCircle,
   Loader2, X, ArrowUpDown, ArrowUp, ArrowDown,
-  Zap, Timer, Tag, Plus, ExternalLink,
+  Zap, Timer, Tag, Plus, ExternalLink, Trash2,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -217,6 +217,8 @@ export default function AdminProductsPage() {
   const [sortKey,    setSortKey]    = useState<SortKey>("category");
   const [sortAsc,    setSortAsc]    = useState(true);
   const [toggling,   setToggling]   = useState<Record<string, boolean>>({});
+  const [delConfirm, setDelConfirm] = useState<Product | null>(null);
+  const [deleting,   setDeleting]   = useState(false);
 
   // ── Quick-Add modal state ──
   const [qaModal,    setQaModal]    = useState(false);
@@ -286,6 +288,21 @@ export default function AdminProductsPage() {
       showToast("Deal cleared ✓", true);
     } catch {
       showToast("Failed to clear deal ✗", false);
+    }
+  }
+
+  async function deleteProduct(id: string) {
+    setDeleting(true);
+    try {
+      const res = await adminFetch(`/api/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setProducts(prev => prev.filter(p => p.id !== id));
+      setDelConfirm(null);
+      showToast("Product deleted ✓", true);
+    } catch {
+      showToast("Delete failed ✗", false);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -379,6 +396,48 @@ export default function AdminProductsPage() {
         }`}>
           {toast.ok ? <CheckCircle size={16} className="text-green-500" /> : <AlertCircle size={16} className="text-red-400" />}
           {toast.msg}
+        </div>
+      )}
+
+      {/* ── Delete Confirm Modal ── */}
+      {delConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="bg-red-50 px-6 pt-6 pb-4 flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <Trash2 size={18} className="text-red-500" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-base">Delete Product?</p>
+                <p className="text-sm text-gray-500 mt-0.5">এই কাজ undo করা যাবে না।</p>
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200">
+                  <img src={safeImg(delConfirm.image)} alt={delConfirm.name} className="w-full h-full object-contain p-1" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm text-gray-900 truncate">{delConfirm.name}</p>
+                  <p className="text-xs text-gray-400 capitalize">{delConfirm.category} · {delConfirm.condition === "brand-new" ? "Brand New" : "Pre-Owned"}</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 flex gap-3">
+              <button
+                onClick={() => setDelConfirm(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteProduct(delConfirm.id)}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -641,34 +700,69 @@ export default function AdminProductsPage() {
           </span>
         </div>
 
-        {/* Brand / Category filter pills */}
+        {/* Brand / Category filter — grouped dropdown */}
         {(() => {
           const PHONE_BRANDS   = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
           const ACCESSORIES    = ["charger","speaker","earbuds","powerbank","cables","accessories"];
-          const pill = (c: string) => {
-            const isActive = category === c;
-            return (
+          const isPhone = PHONE_BRANDS.includes(category);
+          const isAcc   = ACCESSORIES.includes(category);
+          return (
+            <div className="flex flex-wrap gap-2 mb-2 items-center">
+              {/* All pill */}
               <button
-                key={c}
-                onClick={() => { setCategory(c); setCondition("all"); }}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
-                  isActive
+                onClick={() => { setCategory("All"); setCondition("all"); }}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                  category === "All"
+                    ? "bg-gray-800 text-white border-gray-800 shadow-sm"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-gray-700"
+                }`}
+              >All</button>
+
+              {/* Phones dropdown */}
+              <div className="relative group">
+                <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                  isPhone
+                    ? "bg-blue-500 text-white border-blue-500 shadow-sm shadow-blue-200"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-600"
+                }`}>
+                  📱 {isPhone ? capFirst(category) : "Phones"}
+                  <ChevronDown size={11} />
+                </button>
+                <div className="absolute top-full left-0 mt-1.5 z-30 bg-white border border-gray-200 rounded-2xl shadow-xl py-2 min-w-[160px] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150">
+                  <p className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Phone Brands</p>
+                  {PHONE_BRANDS.map(c => (
+                    <button key={c} onClick={() => { setCategory(c); setCondition("all"); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        category === c ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      }`}>
+                      {capFirst(c)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Accessories dropdown */}
+              <div className="relative group">
+                <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                  isAcc
                     ? "bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-200"
                     : "bg-white text-gray-500 border-gray-200 hover:border-orange-300 hover:text-orange-500"
-                }`}
-              >
-                {c === "All" ? "All" : capFirst(c)}
-              </button>
-            );
-          };
-          return (
-            <div className="flex flex-wrap gap-1.5 mb-2 items-center">
-              {pill("All")}
-              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mx-1">Phones</span>
-              {PHONE_BRANDS.map(pill)}
-              <span className="w-px h-4 bg-gray-200 mx-1" />
-              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mx-1">Accessories</span>
-              {ACCESSORIES.map(pill)}
+                }`}>
+                  🔌 {isAcc ? capFirst(category) : "Accessories"}
+                  <ChevronDown size={11} />
+                </button>
+                <div className="absolute top-full left-0 mt-1.5 z-30 bg-white border border-gray-200 rounded-2xl shadow-xl py-2 min-w-[160px] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150">
+                  <p className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Accessories</p>
+                  {ACCESSORIES.map(c => (
+                    <button key={c} onClick={() => { setCategory(c); setCondition("all"); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        category === c ? "bg-orange-50 text-orange-600" : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      }`}>
+                      {capFirst(c)}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           );
         })()}
@@ -729,7 +823,7 @@ export default function AdminProductsPage() {
         {/* ── Sticky Table Header Row ── */}
         <div className="bg-white border-x border-t border-gray-200 rounded-t-2xl mt-4">
           <div className="grid items-center text-[11px] font-bold uppercase tracking-wider text-gray-400 px-4 py-3 border-b-2 border-gray-100"
-            style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 90px 90px 90px 70px" }}>
+            style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 90px 90px 90px 110px" }}>
             <button onClick={() => handleSort("name")} className="flex items-center gap-1.5 hover:text-gray-700 transition-colors text-left">
               <span>Product</span> <SortIcon col="name" />
             </button>
@@ -776,13 +870,18 @@ export default function AdminProductsPage() {
             </div>
           ) : (
             displayed.map((p, idx) => {
-              const isOdd = idx % 2 !== 0;
+              // Colorful row tinting by category group
+              const PHONE_SET = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
+              const ACC_SET   = ["charger","speaker","earbuds","powerbank","cables","accessories"];
+              const rowBg = PHONE_SET.includes(p.category)
+                ? idx % 2 === 0 ? "bg-blue-50/30" : "bg-blue-50/60"
+                : ACC_SET.includes(p.category)
+                  ? idx % 2 === 0 ? "bg-orange-50/30" : "bg-orange-50/60"
+                  : idx % 2 === 0 ? "bg-white" : "bg-gray-50/40";
               return (
                 <div key={p.id}
-                  className={`grid items-center px-4 py-3 border-b border-gray-50 hover:bg-orange-50/40 transition-colors duration-150 ${
-                    isOdd ? "bg-gray-50/40" : "bg-white"
-                  } ${!p.is_published ? "opacity-50" : ""}`}
-                  style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 90px 90px 90px 70px" }}>
+                  className={`grid items-center px-4 py-3 border-b border-gray-100 hover:bg-yellow-50/50 transition-colors duration-150 ${rowBg} ${!p.is_published ? "opacity-50" : ""}`}
+                  style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 90px 90px 90px 110px" }}>
 
                   {/* Product */}
                   <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -881,11 +980,17 @@ export default function AdminProductsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex justify-center">
+                  <div className="flex items-center justify-center gap-1.5">
                     <Link href={`/admin/products/${p.id}/edit`}
-                      className="text-xs font-bold text-orange-500 hover:text-orange-700 hover:underline underline-offset-2 transition-colors whitespace-nowrap">
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-orange-500 bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors whitespace-nowrap">
                       Edit →
                     </Link>
+                    <button
+                      onClick={() => setDelConfirm(p)}
+                      className="p-1.5 rounded-lg text-red-400 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
+                      title="Delete product">
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
               );

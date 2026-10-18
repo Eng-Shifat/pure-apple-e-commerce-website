@@ -101,3 +101,17 @@ export async function PUT(
   clearCache("products:");
   return NextResponse.json({ product: data });
 }
+
+// DELETE /api/products/[id]
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  { const denied = await requireAdmin(req); if (denied) return denied; }
+  const { id } = await params;
+  const supabase = getSupabase();
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  clearCache("products:");
+  return NextResponse.json({ success: true });
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore, verifyAdminOnServer, recentlyVerifiedAdmin } from "@/store/authStore";
@@ -75,11 +76,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
       <aside className="w-60 shrink-0 h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col overflow-y-auto">
-        <div className="px-5 py-5 border-b border-gray-100">
+        <div className="px-5 py-4 border-b border-gray-100">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-lg font-extrabold text-orange-500">Pure Apple</span>
+            <Image
+              src="/logo/pure-apple-logo.svg"
+              alt="Pure Apple"
+              width={110}
+              height={34}
+              priority
+              style={{ width: "auto", height: 34 }}
+            />
           </Link>
-          <p className="text-[10px] text-gray-400 mt-0.5 font-medium uppercase tracking-wider">Admin Panel</p>
+          <p className="text-[10px] text-gray-400 mt-1 font-medium uppercase tracking-wider">Admin Panel</p>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV.map(({ label, href, icon: Icon }) => {
