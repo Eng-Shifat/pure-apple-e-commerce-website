@@ -618,10 +618,10 @@ export default function AdminProductsPage() {
           </div>
         )}
 
-        {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
+        {/* ── Search + Today's Deal — same row ── */}
+        <div className="flex items-center gap-3 mb-3">
           {/* Search */}
-          <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-white border border-gray-200 rounded-xl px-3.5 py-2 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100 transition-all shadow-sm">
+          <div className="flex items-center gap-2 flex-1 bg-white border border-gray-200 rounded-xl px-3.5 py-2 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100 transition-all shadow-sm">
             <Search size={14} className="text-gray-400 shrink-0" />
             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search products…"
@@ -632,8 +632,48 @@ export default function AdminProductsPage() {
               </button>
             )}
           </div>
-          <span className="text-xs text-gray-400 font-medium ml-auto">
-            {displayed.length} / {products.length} products
+
+          {/* Today's Deal — compact inline */}
+          <div className="flex items-center gap-2 shrink-0 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2">
+            <Zap size={14} className="text-orange-500 shrink-0" />
+            {activeDeal ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={safeImg(activeDeal.image)} alt={activeDeal.name}
+                  className="w-6 h-6 rounded-lg object-contain bg-white border border-orange-200 p-0.5 shrink-0" />
+                <span className="font-semibold text-gray-800 text-xs truncate max-w-[120px]">{activeDeal.name}</span>
+                <span className="text-xs font-bold text-orange-600 shrink-0">
+                  ৳{(activeDeal.deal_price ?? activeDeal.price).toLocaleString("en-BD")}
+                </span>
+                <button
+                  onClick={() => {
+                    setDealProduct(activeDeal);
+                    setDealPrice(activeDeal.deal_price && activeDeal.deal_price < activeDeal.price ? String(activeDeal.deal_price) : "");
+                    setDealEndsAt(activeDeal.deal_ends_at ? activeDeal.deal_ends_at.slice(0, 16) : "");
+                    setDealModal(true);
+                  }}
+                  className="text-[11px] font-bold text-orange-500 hover:text-orange-700 shrink-0 transition-colors"
+                >Edit</button>
+                <button onClick={() => clearDeal(activeDeal.id)}
+                  className="text-[11px] font-bold text-red-400 hover:text-red-600 shrink-0 transition-colors">
+                  <X size={12} />
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-xs text-gray-500 font-medium">No active deal</span>
+                <button
+                  onClick={() => setDealModal(true)}
+                  className="px-3 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-colors active:scale-95 flex items-center gap-1 shrink-0"
+                >
+                  <Zap size={11} /> Set Deal
+                </button>
+              </>
+            )}
+          </div>
+
+          <span className="text-xs text-gray-400 font-medium shrink-0">
+            {displayed.length} / {products.length}
           </span>
         </div>
 
@@ -733,72 +773,8 @@ export default function AdminProductsPage() {
           );
         })()}
 
-        {/* ── Today's Deal panel — sticky, above table header ── */}
-        <div className="mt-4 rounded-t-2xl border border-orange-200 bg-orange-50 px-5 py-3.5 flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 shrink-0">
-            <Zap size={15} className="text-orange-500 fill-orange-100" />
-            <span className="font-extrabold text-gray-800 text-sm">Today&apos;s Deal</span>
-          </div>
-
-          {activeDeal ? (
-            <div className="flex flex-wrap items-center gap-3 flex-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={safeImg(activeDeal.image)} alt={activeDeal.name}
-                className="w-9 h-9 rounded-xl object-contain bg-white border border-orange-200 p-1" />
-              <div className="min-w-0">
-                <p className="font-bold text-gray-900 text-sm truncate">{activeDeal.name}</p>
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="text-[11px] font-bold text-orange-600">
-                    Deal: ৳{(activeDeal.deal_price ?? activeDeal.price).toLocaleString("en-BD")}
-                  </span>
-                  {activeDeal.deal_ends_at && (
-                    <span className="flex items-center gap-1 text-[10px] text-gray-500 font-semibold bg-white border border-gray-200 px-2 py-0.5 rounded-full">
-                      <Timer size={9} />
-                      {new Date(activeDeal.deal_ends_at) > new Date()
-                        ? `Ends ${new Date(activeDeal.deal_ends_at).toLocaleString("en-BD", { dateStyle: "short", timeStyle: "short" })}`
-                        : "Expired"}
-                    </span>
-                  )}
-                  {!activeDeal.deal_ends_at && (
-                    <span className="text-[10px] text-gray-400 font-medium">No expiry set</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 ml-auto shrink-0">
-                <button
-                  onClick={() => {
-                    setDealProduct(activeDeal);
-                    setDealPrice(activeDeal.deal_price && activeDeal.deal_price < activeDeal.price ? String(activeDeal.deal_price) : "");
-                    setDealEndsAt(activeDeal.deal_ends_at ? activeDeal.deal_ends_at.slice(0, 16) : "");
-                    setDealModal(true);
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-white border border-orange-300 text-orange-600 text-xs font-bold hover:bg-orange-50 transition-colors shadow-sm"
-                >
-                  Change Deal
-                </button>
-                <button
-                  onClick={() => clearDeal(activeDeal.id)}
-                  className="px-3.5 py-1.5 rounded-xl bg-white border border-red-200 text-red-500 text-xs font-bold hover:bg-red-50 transition-colors shadow-sm"
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 flex-1">
-              <span className="text-sm text-gray-500">No active deal right now.</span>
-              <button
-                onClick={() => setDealModal(true)}
-                className="ml-auto px-4 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-colors shadow-md shadow-orange-200 active:scale-95 flex items-center gap-1.5"
-              >
-                <Zap size={13} /> Set Today&apos;s Deal
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* ── Table Header Row ── */}
-        <div className="bg-white border-x border-t border-orange-100">
+        <div className="bg-white border-x border-t border-gray-200 rounded-t-2xl mt-2">
           <div className="grid items-center text-[11px] font-bold uppercase tracking-wider text-gray-400 px-4 py-3 border-b-2 border-gray-100"
             style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 90px 90px 90px 110px" }}>
             <button onClick={() => handleSort("name")} className="flex items-center gap-1.5 hover:text-gray-700 transition-colors text-left">
