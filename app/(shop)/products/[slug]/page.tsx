@@ -611,68 +611,75 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* ── Storage + Region (এক row-তে) ── */}
-            <div className="mt-4 flex flex-wrap items-stretch gap-3">
-            {/* ── Storage Selector ── */}
-            {storageVariants.length > 0 && (
-              <div className="flex-1 basis-[240px] p-3.5 bg-white border border-gray-100 rounded-2xl">
-                <p className="text-sm font-bold text-gray-700 mb-2.5">Storage:</p>
-                <div className="flex flex-wrap gap-2">
-                  {storageVariants.map((s) => {
-                    const spWithRegion = Math.max(0, baseFor(s) + deltaFor(selRegion) - dealDiscount);
-                    const isSelected = selStorage === s;
-                    return (
-                      <button key={s} type="button" onClick={() => setSelStorage(s)}
-                        className={`flex flex-col items-center px-3.5 py-2.5 rounded-xl border-2 transition-all min-w-[72px]
-                          ${isSelected
-                            ? "border-[#FB5724] bg-orange-50 shadow-[0_2px_8px_rgba(251,87,36,0.15)]"
-                            : "border-gray-200 text-gray-500 hover:border-orange-200 bg-white"
-                          }`}
-                      >
-                        <span className={`text-sm font-extrabold ${isSelected ? "text-[#FB5724]" : "text-gray-700"}`}>{s}</span>
-                        {spWithRegion !== undefined && (
-                          <span className={`text-[10px] font-semibold mt-0.5 ${isSelected ? "text-orange-500" : "text-gray-400"}`}>
-                            ৳{spWithRegion.toLocaleString("en-BD")}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* ── Storage + Region ── */}
+            {(storageVariants.length > 0 || regionList.length > 0) && (
+              <div className="mt-4 p-3.5 bg-white border border-gray-100 rounded-2xl space-y-3">
+
+                {/* Storage row */}
+                {storageVariants.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Storage</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {storageVariants.map((s) => {
+                        const spWithRegion = Math.max(0, baseFor(s) + deltaFor(selRegion) - dealDiscount);
+                        const isSelected = selStorage === s;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setSelStorage(s)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
+                              ${isSelected
+                                ? "bg-gray-900 text-white border-gray-900 shadow-sm"
+                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                              }`}
+                          >
+                            {s}
+                            <span className={`font-semibold ${isSelected ? "text-gray-300" : "text-gray-400"}`}>
+                              ৳{(spWithRegion / 1000).toFixed(0)}k
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Region row */}
+                {regionList.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Region</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {regionList.map((r) => {
+                        const adj = deltaFor(r);
+                        const adjLabel = adj === 0 ? "" : adj > 0 ? `+${(adj / 1000).toFixed(0)}k` : `${(adj / 1000).toFixed(0)}k`;
+                        const isSelected = selRegion === r;
+                        return (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => setSelRegion(r)}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
+                              ${isSelected
+                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                              }`}
+                          >
+                            {r}
+                            {adjLabel && (
+                              <span className={`font-semibold ${isSelected ? "text-blue-200" : "text-gray-400"}`}>
+                                ({adjLabel})
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
-
-            {/* ── Region Selector ── */}
-            {regionList.length > 0 && (
-              <div className="flex-1 basis-[240px] p-3.5 bg-white border border-gray-100 rounded-2xl">
-                <p className="text-sm font-bold text-gray-700 mb-2.5">
-                  Region:
-                  <span className="ml-2 text-[11px] font-normal text-gray-400">প্রতিটি region-এর price আলাদা</span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {regionList.map((r) => {
-                    const rPrice = Math.max(0, baseFor(selStorage) + deltaFor(r) - dealDiscount);
-                    const isSelected = selRegion === r;
-                    return (
-                      <button key={r} type="button" onClick={() => setSelRegion(r)}
-                        className={`flex flex-col items-center px-4 py-2.5 rounded-xl border-2 transition-all min-w-[64px]
-                          ${isSelected
-                            ? "border-gray-800 bg-gray-800 shadow-sm"
-                            : "border-gray-200 bg-white hover:border-gray-400"
-                          }`}
-                      >
-                        <span className={`text-sm font-extrabold ${isSelected ? "text-white" : "text-gray-700"}`}>{r}</span>
-                        <span className={`text-[10px] font-semibold mt-0.5 ${isSelected ? "text-gray-300" : "text-gray-400"}`}>
-                          ৳{rPrice.toLocaleString("en-BD")}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            </div>
 
             {/* Key points */}
             <ul className="mt-4 space-y-1.5">

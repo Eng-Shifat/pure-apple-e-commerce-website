@@ -12,7 +12,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingCart, Zap } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import type { ColorVariant } from "@/lib/phoneCatalog";
 import ColorSwatches from "./ColorSwatches";
 import { useWishlistStore } from "@/store/wishlistStore";
@@ -59,43 +59,25 @@ interface SharedProductCardProps {
 export default function SharedProductCard({ product, onAddToCart }: SharedProductCardProps) {
   const { toggle, isWished } = useWishlistStore();
   const wished = isWished(product.id);
-  const [added,      setAdded]      = useState(false);
-  const [colorIdx,   setColorIdx]   = useState(0);
-  const [storageIdx, setStorageIdx] = useState(0);
-  const [regionIdx,  setRegionIdx]  = useState(0);
+  const [added,    setAdded]    = useState(false);
+  const [colorIdx, setColorIdx] = useState(0);
 
   const colors: ColorVariant[] = Array.isArray(product.colors)
     ? product.colors.filter((c) => c && typeof c === "object" && c.image)
     : [];
   const activeColor = colors[colorIdx];
 
-  // ─── Storage & Region variant pricing ────────────────────────
-  const storageVariants = product.storageVariants ?? [];
-  const storagePrices   = product.storagePrices   ?? {};
-  const regionList      = product.regionList      ?? [];
-  const regionPrices    = product.regionPrices    ?? {};
-
-  const hasStorageVariants = storageVariants.length > 1;
-  const hasRegionVariants  = regionList.length > 0;
-
-  const activeStorage = storageVariants[storageIdx] ?? "";
-  const activeRegion  = regionList[regionIdx]       ?? "";
-
-  // Live price = storage price + region adjustment
-  const computedPrice = useMemo(() => {
-    let base = product.price;
-    if (hasStorageVariants && activeStorage && storagePrices[activeStorage] !== undefined) {
-      base = storagePrices[activeStorage];
+  // ─── Base price (first storage variant) ───────────────────────
+  const computedPrice = (() => {
+    if (product.storageVariants?.length && product.storagePrices) {
+      return product.storagePrices[product.storageVariants[0]] ?? product.price;
     }
-    if (hasRegionVariants && activeRegion && regionPrices[activeRegion] !== undefined) {
-      base = base + (regionPrices[activeRegion] ?? 0);
-    }
-    return Math.max(0, base);
-  }, [product.price, hasStorageVariants, activeStorage, storagePrices, hasRegionVariants, activeRegion, regionPrices]);
+    return product.price;
+  })();
 
   // Display variant label
   const shownImage = activeColor?.image ?? product.image;
-  const storageLabel = activeStorage || product.storage || (product.variant ?? "").split(" – ")[0];
+  const storageLabel = product.storage || (product.variant ?? "").split(" – ")[0];
   const shownVariant = activeColor
     ? `${storageLabel ? storageLabel + " – " : ""}${activeColor.name}`
     : (storageLabel || product.variant || "");
@@ -106,14 +88,13 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
       : null;
 
   function handleAddToCart() {
-    const variantLabel = [activeStorage, activeRegion, activeColor?.name].filter(Boolean).join(" – ");
     onAddToCart?.(
       {
         ...product,
         price: computedPrice,
-        id:      activeColor ? `${product.id}:${activeColor.name}` : product.id,
-        image:   activeColor?.image ?? product.image,
-        variant: variantLabel || product.variant || "",
+        id:    activeColor ? `${product.id}:${activeColor.name}` : product.id,
+        image: activeColor?.image ?? product.image,
+        variant: activeColor?.name || product.variant || "",
       }
     );
     setAdded(true);
@@ -205,80 +186,11 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
             <ColorSwatches colors={colors} active={colorIdx} onSelect={setColorIdx} />
           )}
 
-          {/* ── Storage Variant Selector ── */}
-          {hasStorageVariants && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {storageVariants.map((s, i) => (
-                <button
-                  key={s}
-                  onClick={() => setStorageIdx(i)}
-                  className={`text-[9px] font-bold px-2 py-0.5 rounded-full border transition-all duration-150
-                    ${storageIdx === i
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "border-gray-200 text-gray-600 hover:border-gray-400"
-                    }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
 
-          {/* ── Region Selector ── */}
-          {hasRegionVariants && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {regionList.map((r, i) => {
-                const adj = regionPrices[r] ?? 0;
-                const adjLabel = adj === 0 ? "" : adj > 0 ? `+${(adj/1000).toFixed(0)}k` : `${(adj/1000).toFixed(0)}k`;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => setRegionIdx(i)}
-                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full border transition-all duration-150
-                      ${regionIdx === i
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "border-gray-200 text-gray-600 hover:border-blue-400"
-                      }`}
-                    title={adj !== 0 ? `Price adjustment: ৳${adj.toLocaleString("en-BD")}` : "Base price"}
-                  >
-                    {r}{adjLabel ? ` (${adjLabel})` : ""}
-                  </button>
-                );
-              })}
-            </div>
-          )}
 
-          {/* Specs pills */}
-          {product.specs && (
-            <div className="flex items-center flex-nowrap gap-1 mt-1.5 w-full min-w-0">
-              {product.specs.screen && (
-                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 leading-none">
-                  📱 {product.specs.screen}
-                </span>
-              )}
-              {product.specs.ram && (
-                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 leading-none">
-                  💾 {product.specs.ram}
-                </span>
-              )}
-              {product.specs.camera && (
-                <span className="inline-flex items-center gap-0.5 whitespace-nowrap shrink-0 text-[9px] text-gray-500 bg-gray-100 rounded px-1.5 py-0.5 leading-none">
-                  📷 {product.specs.camera}
-                </span>
-              )}
-            </div>
-          )}
 
           {/* ── Price block ── */}
           <div className="mt-auto pt-2">
-            {(product.showStartingFrom && !hasStorageVariants) && (
-              <p className="text-[9px] text-gray-400 mb-0.5 uppercase tracking-wide">Starting from</p>
-            )}
-            {hasStorageVariants && (
-              <p className="text-[9px] text-gray-400 mb-0.5 uppercase tracking-wide">
-                {activeStorage || "Base"} price
-              </p>
-            )}
             <div className="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
               {/* Live price */}
               <span className="text-gray-900 font-extrabold text-base tracking-tight leading-none">
