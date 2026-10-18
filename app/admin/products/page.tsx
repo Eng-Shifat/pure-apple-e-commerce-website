@@ -399,6 +399,7 @@ export default function AdminProductsPage() {
         </div>
       )}
 
+
       {/* ── Delete Confirm Modal ── */}
       {delConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -483,70 +484,6 @@ export default function AdminProductsPage() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* ── Today's Deal panel ── */}
-        <div className="mb-5 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 shrink-0">
-            <Zap size={16} className="text-orange-500 fill-orange-100" />
-            <span className="font-extrabold text-gray-800 text-sm">Today&apos;s Deal</span>
-          </div>
-
-          {activeDeal ? (
-            <div className="flex flex-wrap items-center gap-3 flex-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={safeImg(activeDeal.image)} alt={activeDeal.name}
-                className="w-10 h-10 rounded-xl object-contain bg-white border border-orange-200 p-1" />
-              <div className="min-w-0">
-                <p className="font-bold text-gray-900 text-sm truncate">{activeDeal.name}</p>
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="text-[11px] font-bold text-orange-600">
-                    Deal: ৳{(activeDeal.deal_price ?? activeDeal.price).toLocaleString("en-BD")}
-                  </span>
-                  {activeDeal.deal_ends_at && (
-                    <span className="flex items-center gap-1 text-[10px] text-gray-500 font-semibold bg-white border border-gray-200 px-2 py-0.5 rounded-full">
-                      <Timer size={9} />
-                      {new Date(activeDeal.deal_ends_at) > new Date()
-                        ? `Ends ${new Date(activeDeal.deal_ends_at).toLocaleString("en-BD", { dateStyle: "short", timeStyle: "short" })}`
-                        : "Expired"}
-                    </span>
-                  )}
-                  {!activeDeal.deal_ends_at && (
-                    <span className="text-[10px] text-gray-400 font-medium">No expiry set</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 ml-auto shrink-0">
-                <button
-                  onClick={() => {
-                    setDealProduct(activeDeal);
-                    setDealPrice(activeDeal.deal_price && activeDeal.deal_price < activeDeal.price ? String(activeDeal.deal_price) : "");
-                    setDealEndsAt(activeDeal.deal_ends_at ? activeDeal.deal_ends_at.slice(0, 16) : "");
-                    setDealModal(true);
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-white border border-orange-300 text-orange-600 text-xs font-bold hover:bg-orange-50 transition-colors shadow-sm"
-                >
-                  Change Deal
-                </button>
-                <button
-                  onClick={() => clearDeal(activeDeal.id)}
-                  className="px-3.5 py-1.5 rounded-xl bg-white border border-red-200 text-red-500 text-xs font-bold hover:bg-red-50 transition-colors shadow-sm"
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 flex-1">
-              <span className="text-sm text-gray-500">No active deal right now.</span>
-              <button
-                onClick={() => setDealModal(true)}
-                className="ml-auto px-4 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-colors shadow-md shadow-orange-200 active:scale-95 flex items-center gap-1.5"
-              >
-                <Zap size={13} /> Set Today&apos;s Deal
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Today's Deal Modal */}
@@ -700,14 +637,16 @@ export default function AdminProductsPage() {
           </span>
         </div>
 
-        {/* Brand / Category filter — grouped dropdown */}
+        {/* ── Category + Condition — single combined row ── */}
         {(() => {
-          const PHONE_BRANDS   = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
-          const ACCESSORIES    = ["charger","speaker","earbuds","powerbank","cables","accessories"];
+          const PHONE_BRANDS = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
+          const ACCESSORIES  = ["charger","speaker","earbuds","powerbank","cables","accessories"];
           const isPhone = PHONE_BRANDS.includes(category);
           const isAcc   = ACCESSORIES.includes(category);
+          const showCondition = category !== "All" && !ACCESSORIES.includes(category);
           return (
-            <div className="flex flex-wrap gap-2 mb-2 items-center">
+            <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-gray-200">
+
               {/* All pill */}
               <button
                 onClick={() => { setCategory("All"); setCondition("all"); }}
@@ -763,62 +702,62 @@ export default function AdminProductsPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Condition pills — inline, only for phone brands */}
+              {showCondition && (
+                <>
+                  <span className="text-gray-300 font-light mx-0.5">|</span>
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Condition:</span>
+                  {(["all", "brand-new", "pre-owned"] as const).map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setCondition(c)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+                        condition === c
+                          ? c === "brand-new"
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : c === "pre-owned"
+                              ? "bg-green-600 text-white border-green-600"
+                              : "bg-gray-700 text-white border-gray-700"
+                          : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {c === "all" ? "All" : c === "brand-new" ? "🆕 Brand New" : "♻️ Pre-Owned"}
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* Quick Add buttons — right side */}
+              {showCondition && (
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <Link
+                    href={`/admin/products/new?category=${category}&condition=brand-new`}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+                  >
+                    <Plus size={11} /> Brand New
+                  </Link>
+                  <Link
+                    href={`/admin/products/new?category=${category}&condition=pre-owned`}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+                  >
+                    <Plus size={11} /> Pre-Owned
+                  </Link>
+                </div>
+              )}
+              {isAcc && (
+                <div className="ml-auto">
+                  <Link
+                    href={`/admin/products/new?category=${category}`}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-orange-200 text-orange-600 bg-orange-50 hover:bg-orange-100 transition-colors"
+                  >
+                    <Plus size={11} /> Add {capFirst(category)} Product
+                  </Link>
+                </div>
+              )}
             </div>
           );
         })()}
-
-        {/* Condition sub-filter + Quick Add — phone brands only */}
-        {category !== "All" && !["charger","speaker","earbuds","powerbank","cables","accessories"].includes(category) && (
-          <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-gray-200 animate-in fade-in slide-in-from-top-1 duration-200">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Condition:</span>
-            {(["all", "brand-new", "pre-owned"] as const).map(c => (
-              <button
-                key={c}
-                onClick={() => setCondition(c)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
-                  condition === c
-                    ? c === "brand-new"
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : c === "pre-owned"
-                        ? "bg-green-600 text-white border-green-600"
-                        : "bg-gray-700 text-white border-gray-700"
-                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
-                }`}
-              >
-                {c === "all" ? "All" : c === "brand-new" ? "🆕 Brand New" : "♻️ Pre-Owned"}
-              </button>
-            ))}
-
-            {/* Quick Add buttons */}
-            <div className="flex items-center gap-1.5 ml-auto">
-              <Link
-                href={`/admin/products/new?category=${category}&condition=brand-new`}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
-              >
-                <Plus size={11} /> Brand New
-              </Link>
-              <Link
-                href={`/admin/products/new?category=${category}&condition=pre-owned`}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
-              >
-                <Plus size={11} /> Pre-Owned
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Quick add for accessories (no condition concept) */}
-        {["charger","speaker","earbuds","powerbank","cables","accessories"].includes(category) && (
-          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200 animate-in fade-in duration-200">
-            <Link
-              href={`/admin/products/new?category=${category}`}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-orange-200 text-orange-600 bg-orange-50 hover:bg-orange-100 transition-colors"
-            >
-              <Plus size={11} /> Add {capFirst(category)} Product
-            </Link>
-          </div>
-        )}
-        {category === "All" && <div className="mb-3 border-b border-gray-200" />}
 
         {/* ── Sticky Table Header Row ── */}
         <div className="bg-white border-x border-t border-gray-200 rounded-t-2xl mt-4">
@@ -852,9 +791,74 @@ export default function AdminProductsPage() {
       </div>
 
       {/* ══════════════════════════════════════════════════
-          SCROLLABLE TABLE BODY
+          SCROLLABLE AREA (Today's Deal + Table Body)
       ══════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-8">
+
+        {/* ── Today's Deal panel ── */}
+        <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2 shrink-0">
+            <Zap size={16} className="text-orange-500 fill-orange-100" />
+            <span className="font-extrabold text-gray-800 text-sm">Today&apos;s Deal</span>
+          </div>
+
+          {activeDeal ? (
+            <div className="flex flex-wrap items-center gap-3 flex-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={safeImg(activeDeal.image)} alt={activeDeal.name}
+                className="w-10 h-10 rounded-xl object-contain bg-white border border-orange-200 p-1" />
+              <div className="min-w-0">
+                <p className="font-bold text-gray-900 text-sm truncate">{activeDeal.name}</p>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span className="text-[11px] font-bold text-orange-600">
+                    Deal: ৳{(activeDeal.deal_price ?? activeDeal.price).toLocaleString("en-BD")}
+                  </span>
+                  {activeDeal.deal_ends_at && (
+                    <span className="flex items-center gap-1 text-[10px] text-gray-500 font-semibold bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+                      <Timer size={9} />
+                      {new Date(activeDeal.deal_ends_at) > new Date()
+                        ? `Ends ${new Date(activeDeal.deal_ends_at).toLocaleString("en-BD", { dateStyle: "short", timeStyle: "short" })}`
+                        : "Expired"}
+                    </span>
+                  )}
+                  {!activeDeal.deal_ends_at && (
+                    <span className="text-[10px] text-gray-400 font-medium">No expiry set</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 ml-auto shrink-0">
+                <button
+                  onClick={() => {
+                    setDealProduct(activeDeal);
+                    setDealPrice(activeDeal.deal_price && activeDeal.deal_price < activeDeal.price ? String(activeDeal.deal_price) : "");
+                    setDealEndsAt(activeDeal.deal_ends_at ? activeDeal.deal_ends_at.slice(0, 16) : "");
+                    setDealModal(true);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-white border border-orange-300 text-orange-600 text-xs font-bold hover:bg-orange-50 transition-colors shadow-sm"
+                >
+                  Change Deal
+                </button>
+                <button
+                  onClick={() => clearDeal(activeDeal.id)}
+                  className="px-3.5 py-1.5 rounded-xl bg-white border border-red-200 text-red-500 text-xs font-bold hover:bg-red-50 transition-colors shadow-sm"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 flex-1">
+              <span className="text-sm text-gray-500">No active deal right now.</span>
+              <button
+                onClick={() => setDealModal(true)}
+                className="ml-auto px-4 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-colors shadow-md shadow-orange-200 active:scale-95 flex items-center gap-1.5"
+              >
+                <Zap size={13} /> Set Today&apos;s Deal
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="bg-white border-x border-b border-gray-200 rounded-b-2xl overflow-hidden">
 
           {loading ? (

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import ShineLogo from "@/components/shop/ShineLogo";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore, verifyAdminOnServer, recentlyVerifiedAdmin } from "@/store/authStore";
 import { supabase } from "@/lib/supabase";
@@ -76,18 +76,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
       <aside className="w-60 shrink-0 h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col overflow-y-auto">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/logo/pure-apple-logo.svg"
-              alt="Pure Apple"
-              width={110}
-              height={34}
-              priority
-              style={{ width: "auto", height: 34 }}
-            />
+        <div className="px-4 py-4 border-b border-gray-100">
+          <Link href="/" className="group flex items-center gap-2.5">
+            <ShineLogo height={38} priority />
+            <span className="block h-6 w-[2px] rounded-full bg-gradient-to-b from-green-500 via-orange-500 to-yellow-400 shrink-0" />
+            <span className="flex flex-col leading-none min-w-0">
+              <span className="text-[8px] font-semibold tracking-[0.20em] text-gray-500 uppercase">Mobile &amp;</span>
+              <span className="mt-0.5 text-[9px] font-bold tracking-[0.12em] text-gray-800 uppercase whitespace-nowrap">
+                Gadget <span className="text-orange-500">Shop</span>
+              </span>
+            </span>
           </Link>
-          <p className="text-[10px] text-gray-400 mt-1 font-medium uppercase tracking-wider">Admin Panel</p>
+          <p className="text-[10px] text-gray-400 mt-2 font-medium uppercase tracking-wider">Admin Panel</p>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV.map(({ label, href, icon: Icon }) => {
