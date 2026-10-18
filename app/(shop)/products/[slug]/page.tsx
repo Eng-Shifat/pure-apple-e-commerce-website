@@ -244,10 +244,11 @@ export default function ProductDetailPage() {
   const [selRegion,   setSelRegion]   = useState<string>("");
   const [catalogPhone, setCatalogPhone] = useState<CatalogPhone | null>(null);
   // ── Condition-aware base price ──────────────────────────────────────────────
-  // Brand New price = product.brand_new_price ?? product.price
-  // Pre-Owned price = product.pre_owned_price (এটা brand_new_price থেকে সম্পূর্ণ আলাদা)
+  // Catalog phone হলে catalog থেকে নেয় (double counting এড়াতে)
+  // DB product হলে condition অনুযায়ী brand_new_price বা pre_owned_price
   const conditionBasePrice: number = (() => {
     if (!product) return 0;
+    if (catalogPhone) return catalogPhone.price; // catalog phone: always use catalog price
     if (product.condition === "pre-owned") {
       return product.pre_owned_price ?? product.price;
     }
