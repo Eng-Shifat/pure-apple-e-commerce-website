@@ -73,7 +73,7 @@ function Wipe({ piece, fill, from, to }: { piece: Piece; fill: string; from: num
 const STORAGE_KEY = "pure-apple:splash-seen";
 
 export default function SplashScreen() {
-  // SSR-safe: start as "show", then check localStorage on client
+  // SSR-safe: start as "show", then check sessionStorage on client
   const [phase, setPhase] = useState<"show" | "exit" | "done">("show");
   const [running, setRunning] = useState(false);
   const finishing = useRef(false);
@@ -89,14 +89,14 @@ export default function SplashScreen() {
   useEffect(() => {
     // If user has already seen the splash, skip immediately
     try {
-      if (localStorage.getItem(STORAGE_KEY) === "1") {
+      if (sessionStorage.getItem(STORAGE_KEY) === "1") {
         setPhase("done");
         return;
       }
-    } catch { /* localStorage blocked */ }
+    } catch { /* sessionStorage blocked */ }
 
     // First-ever visit: show the splash, then mark as seen
-    try { localStorage.setItem(STORAGE_KEY, "1"); } catch { /* ignore */ }
+    try { sessionStorage.setItem(STORAGE_KEY, "1"); } catch { /* ignore */ }
 
     // If in-session navigation already saw it (SPA navigation), skip too
     if ((window as any).__paSplashDone) {

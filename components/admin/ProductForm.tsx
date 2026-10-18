@@ -169,7 +169,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   }
 
   // Determine initial condition (URL param overrides for quick-add)
-  const initCondition = initialData.condition ?? urlCondition || "brand-new";
+  const initCondition = (initialData.condition ?? urlCondition) || "brand-new";
 
   const [form, setForm] = useState({
     name:            initialData.name            ?? "",
