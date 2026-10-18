@@ -706,7 +706,7 @@ export default function ProductDetailPage() {
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Storage</p>
                     <div className="flex flex-wrap gap-1.5">
                       {storageVariants.map((s) => {
-                        const spWithRegion = Math.max(0, baseFor(s) + deltaFor(selRegion) - dealDiscount);
+                        const spWithRegion = Math.max(0, baseFor(s) + deltaFor(selRegion) - offerDiscount);
                         const isSelected = selStorage === s;
                         return (
                           <button
