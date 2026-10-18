@@ -572,7 +572,7 @@ export default function ProductDetailPage() {
           {/* LEFT: Image */}
           <div className="flex flex-col gap-3">
             {/* ── Main image with zoom-on-hover ── */}
-            <div className="relative bg-white rounded-3xl border border-gray-100 overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-[400px] group/imgbox">
+            <div className="relative bg-white rounded-3xl border border-gray-100 flex items-center justify-center min-h-[300px] md:min-h-[400px] group/imgbox" style={{ overflow: "visible", zIndex: 1 }}>
               {/* Auto offer badge — offer active থাকলে দেখায়, expire হলে সরে যায় */}
               {activeOfferInfo ? (
                 <span className="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow animate-pulse" style={{ backgroundColor: "#FB5724" }}>
@@ -595,13 +595,13 @@ export default function ProductDetailPage() {
                 ? <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50/95 border border-amber-200 px-2.5 py-1 rounded-full shadow-sm"><Tag size={11}/> Pre-Owned</span>
                 : <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-leaf-700 bg-leaf-50/95 border border-leaf-200 px-2.5 py-1 rounded-full shadow-sm"><BadgeCheck size={11}/> Brand New</span>
               }
-              {/* Zoom container — overflow:hidden on parent clips the scale */}
-              <div className="relative w-full px-4 h-[260px] md:h-[340px]">
+              {/* Zoom container */}
+              <div className="relative w-full px-4 h-[260px] md:h-[340px]" style={{ overflow: "visible" }}>
                 <Image
                   src={images[activeImg] ?? "/logo/pure-apple-logo.png"}
                   alt={product.name}
                   fill
-                  className="object-contain drop-shadow-xl transition-transform duration-500 ease-out group-hover/imgbox:scale-[1.18] cursor-zoom-in"
+                  className="object-contain drop-shadow-xl transition-transform duration-500 ease-out group-hover/imgbox:scale-[1.35] cursor-zoom-in"
                   sizes="(max-width:768px) 100vw, 50vw"
                   priority
                 />

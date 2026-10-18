@@ -70,16 +70,11 @@ function Wipe({ piece, fill, from, to }: { piece: Piece; fill: string; from: num
   );
 }
 
-export default function SplashScreen() {
-  // Only show on hard reload — skip on client-side navigation
-  const alreadySeen =
-    typeof window !== "undefined" && (window as any).__paSplashDone === true;
+const STORAGE_KEY = "pure-apple:splash-seen";
 
-  const [phase, setPhase] = useState<"show" | "exit" | "done">(
-    alreadySeen ? "done" : "show"
-  );
-  // animation only starts once the page is hydrated, so the timeline
-  // and the exit are always in sync and nothing gets cut in the middle
+export default function SplashScreen() {
+  // SSR-safe: start as "show", then check localStorage on client
+  const [phase, setPhase] = useState<"show" | "exit" | "done">("show");
   const [running, setRunning] = useState(false);
   const finishing = useRef(false);
 
@@ -87,18 +82,29 @@ export default function SplashScreen() {
     if (finishing.current) return;
     finishing.current = true;
     setPhase("exit");
-    // tell the rest of the page (3D phone etc.) that it can start loading now
     (window as any).__paSplashDone = true;
     window.dispatchEvent(new Event("pure-apple:splash-done"));
   };
 
   useEffect(() => {
+    // If user has already seen the splash, skip immediately
+    try {
+      if (localStorage.getItem(STORAGE_KEY) === "1") {
+        setPhase("done");
+        return;
+      }
+    } catch { /* localStorage blocked */ }
+
+    // First-ever visit: show the splash, then mark as seen
+    try { localStorage.setItem(STORAGE_KEY, "1"); } catch { /* ignore */ }
+
+    // If in-session navigation already saw it (SPA navigation), skip too
     if ((window as any).__paSplashDone) {
       setPhase("done");
       return;
     }
+
     setRunning(true);
-    // reduced-motion: no animation events will fire, so use a short timer
     let t: ReturnType<typeof setTimeout> | undefined;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       t = setTimeout(finish, 800);
