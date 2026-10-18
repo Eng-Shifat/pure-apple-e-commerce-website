@@ -4,10 +4,13 @@ import Link from "next/link";
 import ProductCard, { Product } from "./ProductCard";
 import { useCartStore } from "@/store/cartStore";
 import { phonesBySlugs, toCardProduct } from "@/lib/phoneCatalog";
+import { useEffect, useState } from "react";
+import { cachedJson } from "@/lib/cachedFetch";
+import { publicPrices } from "@/lib/offers";
 
 const DEAL_SLUGS = ["iphone-15", "galaxy-s25", "google-pixel-8", "oneplus-11r"];
 
-const dealProducts: Product[] = phonesBySlugs(DEAL_SLUGS).map((p) => {
+const FALLBACK: Product[] = phonesBySlugs(DEAL_SLUGS).map((p) => {
   const card = toCardProduct(p);
   const pct = card.originalPrice
     ? Math.round(((card.originalPrice - card.price) / card.originalPrice) * 100)
@@ -15,8 +18,40 @@ const dealProducts: Product[] = phonesBySlugs(DEAL_SLUGS).map((p) => {
   return { ...card, badge: pct ? `${pct}% OFF` : undefined, badgeColor: "#FB5724" };
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function fromApi(r: any): Product {
+  return {
+    id: String(r.id),
+    name: r.name ?? "",
+    variant: r.variant ?? "",
+    ...publicPrices(r),
+    rating: Number(r.rating ?? 0),
+    reviewCount: Number(r.review_count ?? 0),
+    image: r.image ?? "",
+    slug: r.slug ?? "",
+    badge: r.badge ?? undefined,
+    badgeColor: r.badge_color ?? undefined,
+    specs: {
+      screen: r.spec_screen,
+      ram: r.spec_ram,
+      camera: r.spec_camera,
+    },
+  };
+}
+
 export default function BestDeals() {
+  const [products, setProducts] = useState<Product[]>(FALLBACK);
   const addItem = useCartStore((s) => s.addItem);
+
+  useEffect(() => {
+    cachedJson<{ products?: unknown[] }>("/api/products?deals=true&available=true")
+      .then(d => {
+        if (Array.isArray(d.products) && d.products.length > 0) {
+          setProducts(d.products.map(fromApi));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   function handleAddToCart(p: Product) {
     addItem({
@@ -49,7 +84,7 @@ export default function BestDeals() {
           className="flex gap-3 overflow-x-auto sm:hidden pb-4"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {dealProducts.map((product) => (
+          {products.map((product) => (
             <div key={product.id} className="flex-shrink-0 w-[175px]">
               <ProductCard product={product} onAddToCart={handleAddToCart} />
             </div>
@@ -58,7 +93,7 @@ export default function BestDeals() {
 
         {/* Desktop: 4-column grid */}
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
-          {dealProducts.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
           ))}
         </div>

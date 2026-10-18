@@ -157,6 +157,28 @@ function ProductsPageInner() {
   };
 
   const [activeCategory,  setActiveCategory]  = useState("Apple");
+  const [dbProducts,      setDbProducts]      = useState<PhoneModel[]>([]);
+
+  // DB থেকে সব available products fetch করে cache করো
+  useEffect(() => {
+    fetch("/api/products?available=true")
+      .then(r => r.json())
+      .then(d => {
+        if (Array.isArray(d.products)) {
+          setDbProducts(d.products.map((p: Record<string, unknown>) => ({
+            brand: String(p.category ?? ""),
+            name:  String(p.name ?? ""),
+            slug:  String(p.slug ?? ""),
+            startingPrice: Number(p.price ?? 0),
+            image: String(p.image ?? ""),
+            badge: p.badge ? String(p.badge) : undefined,
+            badgeColor: p.badge_color ? String(p.badge_color) : undefined,
+            rating: Number(p.rating ?? 0),
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Sync brand from URL param on mount and when URL changes
   useEffect(() => {
@@ -198,17 +220,31 @@ function ProductsPageInner() {
   // Derive the active price ranges
   const activePriceRanges = PRICE_RANGES.filter((_, i) => priceFilters[i]);
 
-  // Source pool — "All" shows everything, otherwise filter by brand
+  // Source pool — static catalog + DB products merge
   const pool = useMemo(() => {
     if (condition === "pre-owned") {
-      return activeCategory === "All"
+      const base = activeCategory === "All"
         ? APPLE_PREOWNED
         : APPLE_PREOWNED.filter(m => m.brand === activeCategory);
+      const existingSlugs = new Set(base.map(m => m.slug));
+      const fromDb = dbProducts.filter(p =>
+        !existingSlugs.has(p.slug) &&
+        (activeCategory === "All" ||
+          p.brand.toLowerCase() === activeCategory.toLowerCase())
+      );
+      return [...base, ...fromDb];
     }
-    return activeCategory === "All"
+    const base = activeCategory === "All"
       ? ALL_MODELS
       : ALL_MODELS.filter(m => m.brand === activeCategory);
-  }, [condition, activeCategory]);
+    const existingSlugs = new Set(base.map(m => m.slug));
+    const fromDb = dbProducts.filter(p =>
+      !existingSlugs.has(p.slug) &&
+      (activeCategory === "All" ||
+        p.brand.toLowerCase() === activeCategory.toLowerCase())
+    );
+    return [...base, ...fromDb];
+  }, [condition, activeCategory, dbProducts]);
 
   // Apply search + price filter + sort
   const filtered = useMemo(() => {

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (!(file instanceof File)) return NextResponse.json({ error: "file required" }, { status: 400 });
   const ext = ALLOWED[file.type];
   if (!ext) return NextResponse.json({ error: "Only JPG, PNG, WEBP or GIF allowed" }, { status: 400 });
-  if (file.size > 1024 * 1024) return NextResponse.json({ error: "Max 1 MB" }, { status: 400 });
+  if (file.size > 10 * 1024) return NextResponse.json({ error: "Max 10 KB" }, { status: 400 });
 
   const supabase = getSupabaseAdmin();
   const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;

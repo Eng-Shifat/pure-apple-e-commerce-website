@@ -750,14 +750,11 @@ export default function AdminProductsPage() {
                     />
                   </div>
 
-                  {/* Price */}
+                  {/* Price — read-only; change via Edit page */}
                   <div>
-                    <InlineEdit
-                      value={p.price}
-                      type="number"
-                      prefix="৳"
-                      onSave={v => patch(p.id, { price: Number(v) })}
-                    />
+                    <span className="font-semibold text-gray-800 text-sm">
+                      ৳{p.price.toLocaleString("en-BD")}
+                    </span>
                     {p.original_price ? (
                       <p className="text-[10px] text-gray-400 line-through mt-0.5">৳{p.original_price.toLocaleString("en-BD")}</p>
                     ) : null}

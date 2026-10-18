@@ -2,7 +2,7 @@
 
 // app/(shop)/category/[slug]/CategoryPageClient.tsx
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, SlidersHorizontal, ChevronDown } from "lucide-react";
@@ -290,21 +290,56 @@ function SortDropdown({
   );
 }
 
+// ── DB product → PhoneModel ─────────────────────────────────────
+function dbToPhoneModel(p: Record<string, unknown>): PhoneModel {
+  return {
+    brand:         String(p.category ?? ""),
+    name:          String(p.name ?? ""),
+    slug:          String(p.slug ?? ""),
+    startingPrice: Number(p.price ?? 0),
+    image:         String(p.image ?? ""),
+    badge:         p.badge ? String(p.badge) : undefined,
+    badgeColor:    p.badge_color ? String(p.badge_color) : undefined,
+    rating:        Number(p.rating ?? 0),
+  };
+}
+
 // ── Main Component ─────────────────────────────────────────────
 export default function CategoryPageClient({ slug, label, icon, description, isEnabled }: Props) {
   const [showComingSoon, setShowComingSoon] = useState(!isEnabled);
   const [activeBrand,    setActiveBrand]    = useState("All");
   const [priceRange,     setPriceRange]     = useState(0);
   const [sortBy,         setSortBy]         = useState<"featured" | "price-asc" | "price-desc">("featured");
+  const [dbProducts,     setDbProducts]     = useState<PhoneModel[]>([]);
   const addItem = useCartStore((s) => s.addItem);
 
   const iconSrc = ICON_MAP[slug];
 
+  // DB থেকে এই category-র products fetch
+  useEffect(() => {
+    if (!isEnabled) return;
+    fetch(`/api/products?category=${encodeURIComponent(slug)}&available=true`)
+      .then(r => r.json())
+      .then(d => {
+        if (Array.isArray(d.products)) {
+          setDbProducts(d.products.map(dbToPhoneModel));
+        }
+      })
+      .catch(() => {});
+  }, [slug, isEnabled]);
+
   const allProducts = useMemo(() => {
-    if (slug === "iphone")  return ALL_PHONES.filter((p) => p.brand === "Apple");
-    if (slug === "android") return ALL_PHONES.filter((p) => p.brand !== "Apple");
-    return OTHER_PRODUCTS[slug] ?? [];
-  }, [slug]);
+    // Static catalog থেকে base products
+    let base: PhoneModel[];
+    if (slug === "iphone")  base = ALL_PHONES.filter((p) => p.brand === "Apple");
+    else if (slug === "android") base = ALL_PHONES.filter((p) => p.brand !== "Apple");
+    else base = OTHER_PRODUCTS[slug] ?? [];
+
+    // DB products merge — slug duplicate হলে DB version প্রাধান্য পাবে
+    const existingSlugs = new Set(base.map(p => p.slug));
+    const newFromDb = dbProducts.filter(p => !existingSlugs.has(p.slug));
+    return [...base, ...newFromDb];
+  }, [slug, dbProducts]);
 
   // Distinct brands for the dropdown
   const brands = useMemo(() => {
