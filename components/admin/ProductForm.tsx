@@ -179,8 +179,8 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   async function handleImageUpload(file: File) {
     setImageSizeError("");
     setImageSize(file.size);
-    if (file.size > 100 * 1024) {
-      setImageSizeError(`File is ${(file.size / 1024).toFixed(1)} KB — max 100 KB.`);
+    if (file.size > 10 * 1024) {
+      setImageSizeError(`File is ${(file.size / 1024).toFixed(0)} KB — max 10 KB.`);
       setLocalPreview("");
       return;
     }
@@ -487,14 +487,14 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
                 <input type="file" accept="image/*" disabled={uploading} className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file); }}/>
               </label>
               <span className="text-xs text-gray-400">or paste URL below</span>
-              <span className="text-[11px] font-semibold text-orange-500 bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg">Max 100 KB</span>
+              <span className="text-[11px] font-semibold text-orange-500 bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg"> Max 10 KB</span>
             </div>
             {imageSizeError && (
               <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-xl">
                 <X size={13} className="shrink-0"/>{imageSizeError}
               </div>
             )}
-            {imageSize !== null && imageSize <= 100 * 1024 && !imageSizeError && (
+            {imageSize !== null && imageSize <= 10 * 1024 && !imageSizeError && (
               <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-2 rounded-xl">
                 <CheckCircle size={13} className="shrink-0"/> Image size: {(imageSize / 1024).toFixed(1)} KB ✓
               </div>
@@ -518,7 +518,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
               )}
             </div>
             {imageSize !== null && (
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${imageSize > 100 * 1024 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${imageSize > 10 * 1024 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
                 {(imageSize / 1024).toFixed(1)} KB {imageSize > 100 * 1024 ? "✗" : "✓"}
               </span>
             )}

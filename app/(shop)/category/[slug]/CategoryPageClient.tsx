@@ -1,17 +1,17 @@
 "use client";
 
-// app/(shop)/category/[slug]/CategoryPageClient.tsx
+// SAVE PATH: app/(shop)/category/[slug]/CategoryPageClient.tsx
+// ─── সম্পূর্ণ DB-driven — কোনো static/demo catalog নেই ──────────
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { ChevronRight, SlidersHorizontal, ChevronDown, Loader2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import ComingSoonModal from "@/components/shop/ComingSoonModal";
 import SharedProductCard, { type SharedProduct } from "@/components/shop/SharedProductCard";
-import { PHONES, type ColorVariant, type BrandKey } from "@/lib/phoneCatalog";
 
-// ── Icon image map (same images as MobileCategories) ──────────
+// ── Icon image map ─────────────────────────────────────────────
 const ICON_MAP: Record<string, string> = {
   android:     "/icon/android.png",
   iphone:      "/icon/iPhone.png",
@@ -23,80 +23,70 @@ const ICON_MAP: Record<string, string> = {
   accessories: "/icon/accessories.png",
 };
 
-// CSS filter → brand orange (#FB5724)
 const BRAND_FILTER =
   "brightness(0) saturate(100%) invert(42%) sepia(97%) saturate(631%) hue-rotate(342deg) brightness(98%) contrast(97%)";
 
-// ─── Product data ──────────────────────────────────────────────
-interface PhoneModel {
+// ─── DB product interface ──────────────────────────────────────
+interface DbProduct {
+  id: string;
   name: string;
   slug: string;
-  startingPrice: number;
+  category: string;
+  condition: "brand-new" | "pre-owned";
+  price: number;
+  original_price?: number;
+  rating?: number;
+  review_count?: number;
   image: string;
   badge?: string;
-  badgeColor?: string;
-  rating?: number;
-  discount?: number;
-  brand: string;
-  colors?: ColorVariant[];
-  storage?: string;
+  badge_color?: string;
+  storage_variants?: string;
+  storage_prices?:   string;
+  region_prices?:    string;
+  regions?:          string;
+  colors?:           string;
 }
 
-const BRAND_LABEL: Record<BrandKey, string> = {
-  apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi", realme: "Realme",
-  google: "Google", vivo: "Vivo", iqoo: "iQOO", honor: "Honor", motorola: "Motorola", nothing: "Nothing",
+const BRAND_LABEL: Record<string, string> = {
+  apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi",
+  realme: "Realme", nothing: "Nothing", motorola: "Motorola", vivo: "Vivo",
+  honor: "Honor", iqoo: "iQOO", google: "Google",
 };
 
-const ALL_PHONES: PhoneModel[] = PHONES.map((p) => ({
-  brand: BRAND_LABEL[p.brand],
-  name: p.name,
-  slug: p.slug,
-  startingPrice: p.price,
-  image: p.colors[0].image,
-  badge: p.badge,
-  badgeColor: p.badgeColor,
-  rating: p.rating,
-  discount: p.originalPrice ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : undefined,
-  colors: p.colors,
-  storage: p.storage,
-}));
+// ─── DB product → SharedProduct ───────────────────────────────
+function dbToShared(p: DbProduct): SharedProduct {
+  let storageVariants: string[] | undefined;
+  let storagePrices:   Record<string, number> | undefined;
+  let regionPrices:    Record<string, number> | undefined;
+  let regionList:      string[] | undefined;
+  let colorList:       string[] | undefined;
 
-const OTHER_PRODUCTS: Record<string, PhoneModel[]> = {
-  charger: [
-    { brand: "Anker",  name: "Anker 65W GaN Charger",   slug: "anker-65w-gan",   startingPrice: 3500,  image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
-    { brand: "Baseus", name: "Baseus 100W PD Charger",   slug: "baseus-100w",     startingPrice: 4200,  image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.7 },
-    { brand: "Apple",  name: "Apple 20W USB-C",          slug: "apple-20w-usbc",  startingPrice: 2800,  image: "/images/products/iPhone16.webp", rating: 4.5 },
-    { brand: "Xiaomi", name: "Xiaomi 120W HyperCharge",  slug: "xiaomi-120w",     startingPrice: 3200,  image: "/images/products/iPhone16.webp", badge: "New",  badgeColor: "#7C3AED", rating: 4.6 },
-  ],
-  speaker: [
-    { brand: "JBL",  name: "JBL Charge 5",   slug: "jbl-charge-5",  startingPrice: 18000, image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.7 },
-    { brand: "Sony", name: "Sony SRS-XB43",  slug: "sony-srs-xb43", startingPrice: 25000, image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
-    { brand: "JBL",  name: "JBL Flip 6",     slug: "jbl-flip-6",    startingPrice: 12000, image: "/images/products/iPhone16.webp", rating: 4.6 },
-    { brand: "Sony", name: "Sony SRS-XE200", slug: "sony-srs-xe200",startingPrice: 9500,  image: "/images/products/iPhone16.webp", rating: 4.4 },
-  ],
-  earbuds: [
-    { brand: "Apple",   name: "AirPods Pro 2nd Gen", slug: "airpods-pro-2",     startingPrice: 38000, image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.9 },
-    { brand: "Samsung", name: "Galaxy Buds2 Pro",    slug: "galaxy-buds2-pro",  startingPrice: 18000, image: "/images/products/iPhone16.webp", rating: 4.6 },
-    { brand: "OnePlus", name: "OnePlus Buds Pro 2",  slug: "oneplus-buds-pro-2",startingPrice: 14000, image: "/images/products/iPhone16.webp", badge: "Sale", badgeColor: "#4FAE53", rating: 4.5 },
-    { brand: "JBL",     name: "JBL Tune Flex",       slug: "jbl-tune-flex",     startingPrice: 6500,  image: "/images/products/iPhone16.webp", rating: 4.3 },
-  ],
-  powerbank: [
-    { brand: "Anker",  name: "Anker 20000mAh 65W",    slug: "anker-pb-20k",  startingPrice: 5500,  image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.8 },
-    { brand: "Baseus", name: "Baseus 30000mAh 65W",   slug: "baseus-pb-30k", startingPrice: 6800,  image: "/images/products/iPhone16.webp", badge: "New",  badgeColor: "#7C3AED", rating: 4.7 },
-    { brand: "Xiaomi", name: "Xiaomi 10000mAh 22.5W", slug: "xiaomi-pb-10k", startingPrice: 2200,  image: "/images/products/iPhone16.webp", rating: 4.5 },
-  ],
-  cables: [
-    { brand: "Anker",  name: "Anker USB-C to USB-C 2m", slug: "anker-usbc-2m",     startingPrice: 1200, image: "/images/products/iPhone16.webp", badge: "Best Seller", badgeColor: "#4FAE53", rating: 4.7 },
-    { brand: "Apple",  name: "Apple Lightning 2m",       slug: "apple-lightning-2m",startingPrice: 2500, image: "/images/products/iPhone16.webp", badge: "Original",    badgeColor: "#1d1d1f", rating: 4.6 },
-    { brand: "Baseus", name: "Baseus 100W USB-C 3m",     slug: "baseus-usbc-100w",  startingPrice: 1800, image: "/images/products/iPhone16.webp", rating: 4.5 },
-  ],
-  accessories: [
-    { brand: "Spigen", name: "Spigen iPhone 16 Case",  slug: "spigen-ip16-case", startingPrice: 1800, image: "/images/products/iPhone16.webp", badge: "Hot",  badgeColor: "#FB5724", rating: 4.7 },
-    { brand: "ZAGG",   name: "ZAGG Glass Screen Guard", slug: "zagg-glass",       startingPrice: 2200, image: "/images/products/iPhone16.webp", rating: 4.5 },
-    { brand: "ESR",    name: "ESR Magsafe Case",        slug: "esr-magsafe",      startingPrice: 1500, image: "/images/products/iPhone16.webp", badge: "New",  badgeColor: "#7C3AED", rating: 4.4 },
-    { brand: "Anker",  name: "Anker MagSafe Charger",   slug: "anker-magsafe",    startingPrice: 3200, image: "/images/products/iPhone16.webp", rating: 4.6 },
-  ],
-};
+  try { if (p.storage_variants) storageVariants = JSON.parse(p.storage_variants); } catch {}
+  try { if (p.storage_prices)   storagePrices   = JSON.parse(p.storage_prices);   } catch {}
+  try { if (p.region_prices)    regionPrices    = JSON.parse(p.region_prices);     } catch {}
+  if (p.regions) regionList = p.regions.split(",").map(r => r.trim()).filter(Boolean);
+  try { if (p.colors) colorList = JSON.parse(p.colors); } catch {}
+
+  return {
+    id:              p.id,
+    name:            p.name,
+    brand:           BRAND_LABEL[p.category] ?? p.category,
+    price:           p.price,
+    originalPrice:   p.original_price,
+    rating:          p.rating,
+    image:           p.image,
+    slug:            p.slug,
+    badge:           p.badge,
+    badgeColor:      p.badge_color ?? "#FB5724",
+    showStartingFrom: !!(storageVariants && storageVariants.length > 1),
+    storage:         storageVariants?.join(" / "),
+    storageVariants,
+    storagePrices,
+    regionList,
+    regionPrices,
+    colors:          colorList?.map(c => ({ name: c, image: p.image })),
+  };
+}
 
 // ── Price ranges ───────────────────────────────────────────────
 const PRICE_RANGES = [
@@ -107,38 +97,7 @@ const PRICE_RANGES = [
   { label: "৳1L এর উপরে",    min: 100001, max: Infinity  },
 ];
 
-// ── modelToShared ──────────────────────────────────────────────
-function modelToShared(model: PhoneModel): SharedProduct {
-  const originalPrice = model.discount
-    ? Math.round(model.startingPrice / (1 - model.discount / 100))
-    : undefined;
-  return {
-    id: model.slug,
-    name: model.name,
-    brand: model.brand,
-    price: model.startingPrice,
-    originalPrice,
-    rating: model.rating,
-    image: model.image,
-    slug: model.slug,
-    storage: model.storage,
-    colors: model.colors,
-    badge: model.badge,
-    badgeColor: model.badgeColor ?? "#FB5724",
-    showStartingFrom: true,
-  };
-}
-
-// ── Props ──────────────────────────────────────────────────────
-interface Props {
-  slug: string;
-  label: string;
-  icon: string;
-  description: string;
-  isEnabled: boolean;
-}
-
-// ── FiltersDropdown — Price + Brand combined ───────────────────
+// ── FiltersDropdown ────────────────────────────────────────────
 function FiltersDropdown({
   brands,
   activeBrand,
@@ -176,19 +135,13 @@ function FiltersDropdown({
 
       {open && (
         <>
-          {/* Backdrop */}
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-
           <div className="absolute top-full left-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-xl z-40 w-56 overflow-hidden">
-
-            {/* Price Range */}
             <div className="px-3 pt-3 pb-2">
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">দাম অনুযায়ী</p>
               <div className="flex flex-col gap-0.5">
                 {PRICE_RANGES.map((r, i) => (
-                  <button
-                    key={i}
-                    onClick={() => onPriceChange(i)}
+                  <button key={i} onClick={() => onPriceChange(i)}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors
                       ${priceRange === i
                         ? "bg-orange-50 text-orange-600 font-semibold"
@@ -201,7 +154,6 @@ function FiltersDropdown({
               </div>
             </div>
 
-            {/* Brand — শুধু তখনই দেখাবে যদি ২টার বেশি brand থাকে */}
             {brands.length > 2 && (
               <>
                 <div className="h-px bg-gray-100 mx-3" />
@@ -209,9 +161,7 @@ function FiltersDropdown({
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Brand অনুযায়ী</p>
                   <div className="flex flex-col gap-0.5">
                     {brands.map((b) => (
-                      <button
-                        key={b}
-                        onClick={() => onBrandChange(b)}
+                      <button key={b} onClick={() => onBrandChange(b)}
                         className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors
                           ${activeBrand === b
                             ? "bg-orange-50 text-orange-600 font-semibold"
@@ -226,7 +176,6 @@ function FiltersDropdown({
               </>
             )}
 
-            {/* Clear all */}
             {hasFilter && (
               <>
                 <div className="h-px bg-gray-100" />
@@ -290,18 +239,13 @@ function SortDropdown({
   );
 }
 
-// ── DB product → PhoneModel ─────────────────────────────────────
-function dbToPhoneModel(p: Record<string, unknown>): PhoneModel {
-  return {
-    brand:         String(p.category ?? ""),
-    name:          String(p.name ?? ""),
-    slug:          String(p.slug ?? ""),
-    startingPrice: Number(p.price ?? 0),
-    image:         String(p.image ?? ""),
-    badge:         p.badge ? String(p.badge) : undefined,
-    badgeColor:    p.badge_color ? String(p.badge_color) : undefined,
-    rating:        Number(p.rating ?? 0),
-  };
+// ── Props ──────────────────────────────────────────────────────
+interface Props {
+  slug: string;
+  label: string;
+  icon: string;
+  description: string;
+  isEnabled: boolean;
 }
 
 // ── Main Component ─────────────────────────────────────────────
@@ -310,52 +254,60 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
   const [activeBrand,    setActiveBrand]    = useState("All");
   const [priceRange,     setPriceRange]     = useState(0);
   const [sortBy,         setSortBy]         = useState<"featured" | "price-asc" | "price-desc">("featured");
-  const [dbProducts,     setDbProducts]     = useState<PhoneModel[]>([]);
+  const [dbProducts,     setDbProducts]     = useState<DbProduct[]>([]);
+  const [loading,        setLoading]        = useState(true);
   const addItem = useCartStore((s) => s.addItem);
 
   const iconSrc = ICON_MAP[slug];
 
-  // DB থেকে এই category-র products fetch
+  // ── DB থেকে এই category-র products fetch ──
   useEffect(() => {
-    if (!isEnabled) return;
-    fetch(`/api/products?category=${encodeURIComponent(slug)}&available=true`)
+    if (!isEnabled) { setLoading(false); return; }
+
+    setLoading(true);
+    // iphone slug → apple category, android slug → সব non-apple brands
+    const categoryParam =
+      slug === "iphone"  ? "apple" :
+      slug === "android" ? "" :       // android: সব brand fetch করে client-side filter
+      slug;
+
+    const url = slug === "android"
+      ? "/api/products?available=true"
+      : `/api/products?category=${encodeURIComponent(categoryParam)}&available=true`;
+
+    fetch(url)
       .then(r => r.json())
       .then(d => {
         if (Array.isArray(d.products)) {
-          setDbProducts(d.products.map(dbToPhoneModel));
+          let products = d.products as DbProduct[];
+          // android = apple বাদে সব
+          if (slug === "android") {
+            products = products.filter(p => p.category !== "apple");
+          }
+          setDbProducts(products);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [slug, isEnabled]);
 
-  const allProducts = useMemo(() => {
-    // Static catalog থেকে base products
-    let base: PhoneModel[];
-    if (slug === "iphone")  base = ALL_PHONES.filter((p) => p.brand === "Apple");
-    else if (slug === "android") base = ALL_PHONES.filter((p) => p.brand !== "Apple");
-    else base = OTHER_PRODUCTS[slug] ?? [];
-
-    // DB products merge — slug duplicate হলে DB version প্রাধান্য পাবে
-    const existingSlugs = new Set(base.map(p => p.slug));
-    const newFromDb = dbProducts.filter(p => !existingSlugs.has(p.slug));
-    return [...base, ...newFromDb];
-  }, [slug, dbProducts]);
-
-  // Distinct brands for the dropdown
+  // ── Distinct brands for filter dropdown ──
   const brands = useMemo(() => {
-    const b = [...new Set(allProducts.map((p) => p.brand))];
+    const b = [...new Set(dbProducts.map((p) => BRAND_LABEL[p.category] ?? p.category))];
     return ["All", ...b];
-  }, [allProducts]);
+  }, [dbProducts]);
 
   const filtered = useMemo(() => {
-    let list = [...allProducts];
-    if (activeBrand !== "All") list = list.filter((p) => p.brand === activeBrand);
+    let list = [...dbProducts];
+    if (activeBrand !== "All") {
+      list = list.filter((p) => (BRAND_LABEL[p.category] ?? p.category) === activeBrand);
+    }
     const range = PRICE_RANGES[priceRange];
-    list = list.filter((p) => p.startingPrice >= range.min && p.startingPrice <= range.max);
-    if (sortBy === "price-asc")  list.sort((a, b) => a.startingPrice - b.startingPrice);
-    if (sortBy === "price-desc") list.sort((a, b) => b.startingPrice - a.startingPrice);
+    list = list.filter((p) => p.price >= range.min && p.price <= range.max);
+    if (sortBy === "price-asc")  list.sort((a, b) => a.price - b.price);
+    if (sortBy === "price-desc") list.sort((a, b) => b.price - a.price);
     return list;
-  }, [allProducts, activeBrand, priceRange, sortBy]);
+  }, [dbProducts, activeBrand, priceRange, sortBy]);
 
   if (!isEnabled || showComingSoon) {
     return (
@@ -368,7 +320,6 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
   }
 
   return (
-    /* overflow-x-hidden → cards grid কখনো page width ছাড়াবে না */
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
 
       {/* Breadcrumb */}
@@ -383,17 +334,9 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
       {/* Category Hero */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-4 flex items-center gap-3">
-          {/* Icon */}
           <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
             {iconSrc ? (
-              <Image
-                src={iconSrc}
-                alt={label}
-                width={36}
-                height={36}
-                className="object-contain"
-                style={{ filter: BRAND_FILTER }}
-              />
+              <Image src={iconSrc} alt={label} width={36} height={36} className="object-contain" style={{ filter: BRAND_FILTER }} />
             ) : (
               <span className="text-2xl">{icon}</span>
             )}
@@ -403,7 +346,7 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
             <p className="text-xs text-gray-400 mt-0.5 truncate">{description}</p>
           </div>
           <div className="shrink-0 bg-orange-50 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full border border-orange-100">
-            {filtered.length} items
+            {loading ? "…" : `${filtered.length} items`}
           </div>
         </div>
       </div>
@@ -426,11 +369,16 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
 
       {/* Product Grid */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-6 pb-8">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400">
+            <Loader2 size={28} className="animate-spin text-orange-400" />
+            <p className="text-sm font-medium">Loading products…</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-gray-400">
             <p className="text-3xl mb-3">🔍</p>
             <p className="font-semibold text-gray-600">কোনো product পাওয়া যায়নি</p>
-            <p className="text-sm mt-1">Filter পরিবর্তন করে আবার চেষ্টা করুন</p>
+            <p className="text-sm mt-1">Admin panel থেকে product যোগ করুন অথবা filter পরিবর্তন করুন</p>
             <button
               onClick={() => { setActiveBrand("All"); setPriceRange(0); }}
               className="mt-4 text-orange-500 text-sm font-semibold underline"
@@ -439,25 +387,18 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
             </button>
           </div>
         ) : (
-          /*
-           * isolate → stacking context তৈরি করে badge z-index সঠিক রাখে।
-           * grid-cols-2 → default 2 col; sm: 3; lg: 4.
-           * gap-x-3 gap-y-6 → card-এর উপরের pt-4 (badge space) মিলিয়ে
-           *   vertical gap ঠিক দেখায়।
-           * w-full + min-w-0 on each cell → grid blowout বন্ধ।
-           */
           <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 isolate">
-            {filtered.map((model) => (
+            {filtered.map((p) => (
               <SharedProductCard
-                key={model.slug}
-                product={modelToShared(model)}
-                onAddToCart={(p) => {
+                key={p.id}
+                product={dbToShared(p)}
+                onAddToCart={(sp) => {
                   addItem({
-                    id: p.id, name: p.name, variant: p.variant ?? "",
-                    price: p.price, original_price: p.originalPrice,
-                    rating: p.rating ?? 0, review_count: 0,
-                    image: p.image, slug: p.slug,
-                    badge: p.badge, badge_color: p.badgeColor,
+                    id: sp.id, name: sp.name, variant: sp.variant ?? "",
+                    price: sp.price, original_price: sp.originalPrice,
+                    rating: sp.rating ?? 0, review_count: 0,
+                    image: sp.image, slug: sp.slug,
+                    badge: sp.badge, badge_color: sp.badgeColor,
                   } as never);
                 }}
               />

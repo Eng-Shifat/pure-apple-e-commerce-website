@@ -1,318 +1,232 @@
 "use client";
 
+// SAVE PATH: app/(shop)/products/page.tsx
+// ─── সম্পূর্ণ DB-driven — কোনো static catalog নেই ───────────
+
 import { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ChevronRight, SlidersHorizontal, X,
-  BadgeCheck, RefreshCw, Search,
+  BadgeCheck, RefreshCw, Search, Loader2,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
-import type { Product } from "@/types";
 import { BrandLogo } from "@/components/shop/BrandIcons";
 import SharedProductCard, { type SharedProduct } from "@/components/shop/SharedProductCard";
-import { PHONES, type ColorVariant, type BrandKey } from "@/lib/phoneCatalog";
 
-// ─── Data ────────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────
 
 type Condition = "brand-new" | "pre-owned";
 
-interface PhoneModel {
+interface DbProduct {
+  id: string;
   name: string;
   slug: string;
-  startingPrice: number;
+  category: string;          // brand slug — e.g. "apple", "samsung"
+  condition: Condition;
+  price: number;
+  original_price?: number;
+  rating?: number;
+  review_count?: number;
   image: string;
   badge?: string;
-  badgeColor?: string;
-  rating?: number;
-  discount?: number;
-  brand: string;
-  colors?: ColorVariant[];
-  storage?: string;
+  badge_color?: string;
+  storage_variants?: string; // JSON array  e.g. ["128GB","256GB"]
+  storage_prices?:   string; // JSON object e.g. {"256GB":174999}
+  region_prices?:    string; // JSON object e.g. {"HK":0,"JP":-2000}
+  regions?:          string; // comma-separated e.g. "HK,JP"
+  colors?:           string; // JSON array
+  is_available?:     boolean;
 }
 
-const BRAND_LABEL: Record<BrandKey, string> = {
-  apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi", realme: "Realme",
-  google: "Google", vivo: "Vivo", iqoo: "iQOO", honor: "Honor", motorola: "Motorola", nothing: "Nothing",
+// ─── Brand constants ──────────────────────────────────────────
+
+const BRAND_LABEL: Record<string, string> = {
+  apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi",
+  realme: "Realme", nothing: "Nothing", motorola: "Motorola", vivo: "Vivo",
+  honor: "Honor", iqoo: "iQOO", google: "Google",
 };
 
-// সব brand-new model এখন lib/phoneCatalog.ts থেকে আসে (color অনুযায়ী ছবি সহ)
-const ALL_MODELS: PhoneModel[] = PHONES.map((p) => ({
-  brand: BRAND_LABEL[p.brand],
-  name: p.name,
-  slug: p.slug,
-  startingPrice: p.price,
-  image: p.colors[0].image,
-  badge: p.badge,
-  badgeColor: p.badgeColor,
-  rating: p.rating,
-  discount: p.originalPrice ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : undefined,
-  colors: p.colors,
-  storage: p.storage,
-}));
-
-// Apple Pre-Owned
-const APPLE_PREOWNED_RAW: PhoneModel[] = [
-  { brand:"Apple", name:"iPhone 18 Pro Max", slug:"po-18-pro-max", startingPrice:149999, image:"/images/products/iPhone16.webp", badge:"Like New", badgeColor:"#4FAE53", rating:4.9 },
-  { brand:"Apple", name:"iPhone 18 Pro",     slug:"po-18-pro",     startingPrice:129999, image:"/images/products/iPhone16.webp", badge:"Like New", badgeColor:"#4FAE53", rating:4.9 },
-  { brand:"Apple", name:"iPhone 17 Pro Max", slug:"po-17-pro-max", startingPrice:114999, image:"/images/products/iPhone16.webp", rating:4.8 },
-  { brand:"Apple", name:"iPhone 17 Pro",     slug:"po-17-pro",     startingPrice:99999,  image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 17",         slug:"po-17",         startingPrice:84999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 17 Air",     slug:"po-17-air",     startingPrice:89999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 16 Pro Max", slug:"po-16-pro-max", startingPrice:104999, image:"/images/products/iPhone16.webp", badge:"Popular", badgeColor:"#FB5724", rating:4.8 },
-  { brand:"Apple", name:"iPhone 16 Pro",     slug:"po-16-pro",     startingPrice:89999,  image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 16",         slug:"po-16",         startingPrice:72999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 16e",        slug:"po-16e",        startingPrice:54999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 15 Pro Max", slug:"po-15-pro-max", startingPrice:89999,  image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 15 Pro",     slug:"po-15-pro",     startingPrice:74999,  image:"/images/products/iPhone16.webp", rating:4.7 },
-  { brand:"Apple", name:"iPhone 15",         slug:"po-15",         startingPrice:59999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 15 Plus",    slug:"po-15-plus",    startingPrice:64999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 14 Pro Max", slug:"po-14-pro-max", startingPrice:74999,  image:"/images/products/iPhone16.webp", rating:4.6 },
-  { brand:"Apple", name:"iPhone 14 Pro",     slug:"po-14-pro",     startingPrice:62999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 14",         slug:"po-14",         startingPrice:49999,  image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Apple", name:"iPhone 14 Plus",    slug:"po-14-plus",    startingPrice:54999,  image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Apple", name:"iPhone 13 Pro Max", slug:"po-13-pro-max", startingPrice:59999,  image:"/images/products/iPhone16.webp", rating:4.5 },
-  { brand:"Apple", name:"iPhone 13 Pro",     slug:"po-13-pro",     startingPrice:49999,  image:"/images/products/iPhone16.webp", rating:4.4 },
-  { brand:"Apple", name:"iPhone 13",         slug:"po-13",         startingPrice:39999,  image:"/images/products/iPhone16.webp", rating:4.3 },
-  { brand:"Apple", name:"iPhone 12 Pro Max", slug:"po-12-pro-max", startingPrice:44999,  image:"/images/products/iPhone16.webp", rating:4.3 },
-  { brand:"Apple", name:"iPhone 12 Pro",     slug:"po-12-pro",     startingPrice:36999,  image:"/images/products/iPhone16.webp", rating:4.2 },
-  { brand:"Apple", name:"iPhone 12",         slug:"po-12",         startingPrice:29999,  image:"/images/products/iPhone16.webp", rating:4.1 },
-  { brand:"Apple", name:"iPhone 11 Pro Max", slug:"po-11-pro-max", startingPrice:34999,  image:"/images/products/iPhone16.webp", rating:4.2 },
-  { brand:"Apple", name:"iPhone 11 Pro",     slug:"po-11-pro",     startingPrice:27999,  image:"/images/products/iPhone16.webp", rating:4.1 },
-  { brand:"Apple", name:"iPhone 11",         slug:"po-11",         startingPrice:22999,  image:"/images/products/iPhone16.webp", rating:4.0 },
-  { brand:"Apple", name:"iPhone XS Max",     slug:"po-xs-max",     startingPrice:19999,  image:"/images/products/iPhone16.webp", rating:3.9 },
-  { brand:"Apple", name:"iPhone XS",         slug:"po-xs",         startingPrice:16999,  image:"/images/products/iPhone16.webp", rating:3.9 },
-  { brand:"Apple", name:"iPhone XR",         slug:"po-xr",         startingPrice:14999,  image:"/images/products/iPhone16.webp", rating:3.8 },
-  { brand:"Apple", name:"iPhone SE",         slug:"po-se",         startingPrice:11999,  image:"/images/products/iPhone16.webp", rating:3.7 },
-  { brand:"Apple", name:"iPhone 8",          slug:"po-8",          startingPrice:8999,   image:"/images/products/iPhone16.webp", rating:3.5 },
-];
-
-// ছবি আছে এমন model-ই দেখানো হয়; ছবি/color catalog থেকে নেওয়া
-const APPLE_PREOWNED: PhoneModel[] = APPLE_PREOWNED_RAW.flatMap((m) => {
-  const match = PHONES.find((p) => p.brand === "apple" && p.name === m.name);
-  return match ? [{ ...m, image: match.colors[0].image, colors: match.colors, storage: match.storage }] : [];
-});
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
 const CATEGORIES = [
-  { label:"All",      key:"all",      bgFill:"#FB5724", logoColor:"text-orange-500" },
-  { label:"Apple",    key:"apple",    bgFill:"#1d1d1f", logoColor:"text-gray-800"   },
-  { label:"Samsung",  key:"samsung",  bgFill:"#1428A0", logoColor:"text-blue-700"   },
-  { label:"OnePlus",  key:"oneplus",  bgFill:"#EF1B25", logoColor:"text-red-600"    },
-  { label:"Redmi",    key:"redmi",    bgFill:"#FB5724", logoColor:"text-orange-600" },
-  { label:"Realme",   key:"realme",   bgFill:"#FCC10B", logoColor:"text-yellow-600" },
-  { label:"Nothing",  key:"nothing",  bgFill:"#111827", logoColor:"text-gray-800"   },
-  { label:"Motorola", key:"motorola", bgFill:"#0099E6", logoColor:"text-blue-500"   },
-  { label:"Vivo",     key:"vivo",     bgFill:"#415FFF", logoColor:"text-indigo-600" },
-  { label:"Honor",    key:"honor",    bgFill:"#CC0000", logoColor:"text-red-700"    },
-  { label:"iQOO",     key:"iqoo",     bgFill:"#0B0B0B", logoColor:"text-gray-900"   },
-  { label:"Google",   key:"google",   bgFill:"#4285F4", logoColor:"text-blue-600"   },
+  { label: "All",      key: "all",      bgFill: "#FB5724", logoColor: "text-orange-500" },
+  { label: "Apple",    key: "apple",    bgFill: "#1d1d1f", logoColor: "text-gray-800"   },
+  { label: "Samsung",  key: "samsung",  bgFill: "#1428A0", logoColor: "text-blue-700"   },
+  { label: "OnePlus",  key: "oneplus",  bgFill: "#EF1B25", logoColor: "text-red-600"    },
+  { label: "Redmi",    key: "redmi",    bgFill: "#FB5724", logoColor: "text-orange-600" },
+  { label: "Realme",   key: "realme",   bgFill: "#FCC10B", logoColor: "text-yellow-600" },
+  { label: "Nothing",  key: "nothing",  bgFill: "#111827", logoColor: "text-gray-800"   },
+  { label: "Motorola", key: "motorola", bgFill: "#0099E6", logoColor: "text-blue-500"   },
+  { label: "Vivo",     key: "vivo",     bgFill: "#415FFF", logoColor: "text-indigo-600" },
+  { label: "Honor",    key: "honor",    bgFill: "#CC0000", logoColor: "text-red-700"    },
+  { label: "iQOO",     key: "iqoo",     bgFill: "#0B0B0B", logoColor: "text-gray-900"   },
+  { label: "Google",   key: "google",   bgFill: "#4285F4", logoColor: "text-blue-600"   },
 ];
 
 const PRICE_RANGES = [
-  { label:"Under ৳30,000",    min:0,      max:29999  },
-  { label:"৳30,000 – ৳60,000", min:30000,  max:60000  },
-  { label:"৳60,000 – ৳1 Lakh", min:60001,  max:100000 },
-  { label:"Above ৳1 Lakh",    min:100001, max:Infinity},
+  { label: "Under ৳30,000",     min: 0,      max: 29999   },
+  { label: "৳30,000 – ৳60,000", min: 30000,  max: 60000   },
+  { label: "৳60,000 – ৳1 Lakh", min: 60001,  max: 100000  },
+  { label: "Above ৳1 Lakh",     min: 100001, max: Infinity },
 ];
 
 type SortKey = "featured" | "price-asc" | "price-desc" | "rating";
 
-// ─── Model Card helper (uses SharedProductCard) ──────────────────────────────
+const SLUG_TO_BRAND: Record<string, string> = {
+  apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi",
+  realme: "Realme", nothing: "Nothing", motorola: "Motorola", vivo: "Vivo",
+  honor: "Honor", iqoo: "iQOO", google: "Google",
+};
 
-function modelToShared(model: PhoneModel, isPreOwned: boolean): SharedProduct {
-  const originalPrice = model.discount
-    ? Math.round(model.startingPrice / (1 - model.discount / 100))
-    : undefined;
+// ─── DB product → SharedProduct ───────────────────────────────
+
+function dbToShared(p: DbProduct): SharedProduct {
+  let storageVariants: string[] | undefined;
+  let storagePrices:   Record<string, number> | undefined;
+  let regionPrices:    Record<string, number> | undefined;
+  let regionList:      string[] | undefined;
+  let colorList:       string[] | undefined;
+
+  try { if (p.storage_variants) storageVariants = JSON.parse(p.storage_variants); } catch {}
+  try { if (p.storage_prices)   storagePrices   = JSON.parse(p.storage_prices);   } catch {}
+  try { if (p.region_prices)    regionPrices    = JSON.parse(p.region_prices);     } catch {}
+  if (p.regions) regionList = p.regions.split(",").map(r => r.trim()).filter(Boolean);
+  try { if (p.colors) colorList = JSON.parse(p.colors); } catch {}
+
   return {
-    id: model.slug,
-    name: model.name,
-    brand: model.brand,
-    price: model.startingPrice,
-    originalPrice,
-    rating: model.rating,
-    image: model.image,
-    slug: model.slug,
-    storage: model.storage,
-    colors: model.colors,
-    badge: isPreOwned ? "Pre-Owned" : model.badge,
-    badgeColor: isPreOwned ? "#4FAE53" : (model.badgeColor ?? "#FB5724"),
-    showStartingFrom: true,
+    id:              p.id,
+    name:            p.name,
+    brand:           BRAND_LABEL[p.category] ?? p.category,
+    price:           p.price,
+    originalPrice:   p.original_price,
+    rating:          p.rating,
+    image:           p.image,
+    slug:            p.slug,
+    badge:           p.badge,
+    badgeColor:      p.badge_color ?? "#FB5724",
+    showStartingFrom: !!(storageVariants && storageVariants.length > 1),
+    // Extended for variant pricing
+    storage:         storageVariants?.join(" / "),
+    storageVariants,
+    storagePrices,
+    regionList,
+    regionPrices,
+    colors:          colorList?.map(c => ({ name: c, image: p.image })),
   };
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────
 
 function ProductsPageInner() {
-  const [condition,       setCondition]       = useState<Condition>("brand-new");
   const searchParams = useSearchParams();
   const addItem = useCartStore(s => s.addItem);
 
-  // Map URL slug (e.g. "apple") → brand name (e.g. "Apple")
-  const SLUG_TO_BRAND: Record<string, string> = {
-    all: "All", apple: "Apple", samsung: "Samsung", oneplus: "OnePlus",
-    redmi: "Redmi", realme: "Realme", nothing: "Nothing",
-    motorola: "Motorola", vivo: "Vivo", honor: "Honor", iqoo: "iQOO", google: "Google",
-  };
+  const [condition,      setCondition]      = useState<Condition>("brand-new");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [allProducts,    setAllProducts]    = useState<DbProduct[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [sidebarOpen,    setSidebarOpen]    = useState(false);
+  const [search,         setSearch]         = useState(searchParams.get("q") ?? "");
+  const [sortKey,        setSortKey]        = useState<SortKey>("featured");
+  const [priceFilters,   setPriceFilters]   = useState<boolean[]>([false, false, false, false]);
+  const [brandsVisible,  setBrandsVisible]  = useState(false);
+  const brandsRef = useRef<HTMLUListElement>(null);
 
-  const [activeCategory,  setActiveCategory]  = useState("Apple");
-  const [dbProducts,      setDbProducts]      = useState<PhoneModel[]>([]);
-
-  // DB থেকে সব available products fetch করে cache করো
+  // ── Fetch ALL products once ──
   useEffect(() => {
+    setLoading(true);
     fetch("/api/products?available=true")
       .then(r => r.json())
       .then(d => {
-        if (Array.isArray(d.products)) {
-          setDbProducts(d.products.map((p: Record<string, unknown>) => ({
-            brand: String(p.category ?? ""),
-            name:  String(p.name ?? ""),
-            slug:  String(p.slug ?? ""),
-            startingPrice: Number(p.price ?? 0),
-            image: String(p.image ?? ""),
-            badge: p.badge ? String(p.badge) : undefined,
-            badgeColor: p.badge_color ? String(p.badge_color) : undefined,
-            rating: Number(p.rating ?? 0),
-          })));
-        }
+        if (Array.isArray(d.products)) setAllProducts(d.products as DbProduct[]);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  // Sync brand from URL param on mount and when URL changes
+  // ── Sync URL params ──
   useEffect(() => {
     const categoryParam = searchParams.get("category") ?? "";
     const brand = SLUG_TO_BRAND[categoryParam.toLowerCase()];
-    // If no param or unrecognized → default to "All"
     setActiveCategory(brand ?? "All");
-    // Sync ?q= search query from URL (set by MobileBottomNav / MobileSearchBar)
-    const qParam = searchParams.get("q") ?? "";
-    setSearch(qParam);
+    setSearch(searchParams.get("q") ?? "");
   }, [searchParams]);
-  const [sidebarOpen,     setSidebarOpen]     = useState(false);
-  const [search,          setSearch]          = useState(searchParams.get("q") ?? "");
-  const [sortKey,         setSortKey]         = useState<SortKey>("featured");
-  const [priceFilters,    setPriceFilters]    = useState<boolean[]>([false,false,false,false]);
-  const [brandsVisible,   setBrandsVisible]   = useState(false);
-  const brandsRef = useRef<HTMLUListElement>(null);
 
-  // Trigger brand logo animation on mount (and when sidebar opens on mobile)
+  // ── Brand logo animation ──
   useEffect(() => {
-    const timer = setTimeout(() => setBrandsVisible(true), 80);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setBrandsVisible(true), 80);
+    return () => clearTimeout(t);
   }, []);
-
-  // Re-animate when mobile sidebar opens
   useEffect(() => {
     if (sidebarOpen) {
       setBrandsVisible(false);
-      const timer = setTimeout(() => setBrandsVisible(true), 60);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setBrandsVisible(true), 60);
+      return () => clearTimeout(t);
     }
   }, [sidebarOpen]);
 
-  // Toggle a price range checkbox
   function togglePrice(i: number) {
     setPriceFilters(prev => prev.map((v, idx) => idx === i ? !v : v));
   }
 
-  // Derive the active price ranges
   const activePriceRanges = PRICE_RANGES.filter((_, i) => priceFilters[i]);
 
-  // Source pool — static catalog + DB products merge
+  // ── Filtered pool — condition + category + search + price ──
   const pool = useMemo(() => {
-    if (condition === "pre-owned") {
-      const base = activeCategory === "All"
-        ? APPLE_PREOWNED
-        : APPLE_PREOWNED.filter(m => m.brand === activeCategory);
-      const existingSlugs = new Set(base.map(m => m.slug));
-      const fromDb = dbProducts.filter(p =>
-        !existingSlugs.has(p.slug) &&
-        (activeCategory === "All" ||
-          p.brand.toLowerCase() === activeCategory.toLowerCase())
-      );
-      return [...base, ...fromDb];
+    let list = allProducts.filter(p => p.condition === condition);
+    if (activeCategory !== "All") {
+      list = list.filter(p => (BRAND_LABEL[p.category] ?? p.category) === activeCategory);
     }
-    const base = activeCategory === "All"
-      ? ALL_MODELS
-      : ALL_MODELS.filter(m => m.brand === activeCategory);
-    const existingSlugs = new Set(base.map(m => m.slug));
-    const fromDb = dbProducts.filter(p =>
-      !existingSlugs.has(p.slug) &&
-      (activeCategory === "All" ||
-        p.brand.toLowerCase() === activeCategory.toLowerCase())
-    );
-    return [...base, ...fromDb];
-  }, [condition, activeCategory, dbProducts]);
+    return list;
+  }, [allProducts, condition, activeCategory]);
 
-  // Apply search + price filter + sort
   const filtered = useMemo(() => {
     let list = pool;
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(m => m.name.toLowerCase().includes(q));
+      list = list.filter(p => p.name.toLowerCase().includes(q));
     }
     if (activePriceRanges.length > 0) {
-      list = list.filter(m =>
-        activePriceRanges.some(r => m.startingPrice >= r.min && m.startingPrice <= r.max)
+      list = list.filter(p =>
+        activePriceRanges.some(r => p.price >= r.min && p.price <= r.max)
       );
     }
     return [...list].sort((a, b) => {
-      if (sortKey === "price-asc")  return a.startingPrice - b.startingPrice;
-      if (sortKey === "price-desc") return b.startingPrice - a.startingPrice;
+      if (sortKey === "price-asc")  return a.price - b.price;
+      if (sortKey === "price-desc") return b.price - a.price;
       if (sortKey === "rating")     return (b.rating ?? 0) - (a.rating ?? 0);
-      return 0;
+      return 0; // featured = DB order (created_at desc)
     });
   }, [pool, search, activePriceRanges, sortKey]);
 
-  // Search comparison mode — যখন search active, brand-new এবং pre-owned দুটোই দেখানো হয়
+  // ── Search mode: show both conditions at once ──
   const isSearchMode = search.trim().length > 0;
+  const searchBrandNew = useMemo(() => {
+    if (!isSearchMode) return [];
+    const q = search.toLowerCase();
+    let list = allProducts.filter(p => p.condition === "brand-new" && p.name.toLowerCase().includes(q));
+    if (activeCategory !== "All") list = list.filter(p => (BRAND_LABEL[p.category] ?? p.category) === activeCategory);
+    return list;
+  }, [isSearchMode, search, allProducts, activeCategory]);
 
-  const applyFiltersAndSort = (list: PhoneModel[]) => {
-    let result = [...list];
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(m => m.name.toLowerCase().includes(q));
-    }
-    if (activePriceRanges.length > 0) {
-      result = result.filter(m =>
-        activePriceRanges.some(r => m.startingPrice >= r.min && m.startingPrice <= r.max)
-      );
-    }
-    return result.sort((a, b) => {
-      if (sortKey === "price-asc")  return a.startingPrice - b.startingPrice;
-      if (sortKey === "price-desc") return b.startingPrice - a.startingPrice;
-      if (sortKey === "rating")     return (b.rating ?? 0) - (a.rating ?? 0);
-      return 0;
-    });
-  };
+  const searchPreOwned = useMemo(() => {
+    if (!isSearchMode) return [];
+    const q = search.toLowerCase();
+    let list = allProducts.filter(p => p.condition === "pre-owned" && p.name.toLowerCase().includes(q));
+    if (activeCategory !== "All") list = list.filter(p => (BRAND_LABEL[p.category] ?? p.category) === activeCategory);
+    return list;
+  }, [isSearchMode, search, allProducts, activeCategory]);
 
-  const brandNewPool = useMemo(() =>
-    activeCategory === "All" ? ALL_MODELS : ALL_MODELS.filter(m => m.brand === activeCategory),
-    [activeCategory]
-  );
-  const preOwnedPool = useMemo(() =>
-    activeCategory === "All" ? APPLE_PREOWNED : APPLE_PREOWNED.filter(m => m.brand === activeCategory),
-    [activeCategory]
-  );
-
-  const searchBrandNew  = useMemo(() => isSearchMode ? applyFiltersAndSort(brandNewPool)  : [], [isSearchMode, brandNewPool, search, activePriceRanges, sortKey]);
-  const searchPreOwned  = useMemo(() => isSearchMode ? applyFiltersAndSort(preOwnedPool)  : [], [isSearchMode, preOwnedPool,  search, activePriceRanges, sortKey]);
-
-  // When switching brand, reset filters
   function handleBrandClick(brand: string) {
     setActiveCategory(brand);
-    setPriceFilters([false,false,false,false]);
+    setPriceFilters([false, false, false, false]);
     setSearch("");
     setSidebarOpen(false);
   }
 
-  // When switching condition, reset filters
   function handleConditionSwitch(c: Condition) {
     setCondition(c);
-    setActiveCategory("Apple");
-    setPriceFilters([false,false,false,false]);
+    setActiveCategory("All");
+    setPriceFilters([false, false, false, false]);
     setSearch("");
   }
 
@@ -322,7 +236,6 @@ function ProductsPageInner() {
       {/* ── Page Header ── */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
             <Link href="/" className="hover:text-orange-500 transition-colors">Home</Link>
             <ChevronRight size={12} />
@@ -336,7 +249,9 @@ function ProductsPageInner() {
               <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
                 {activeCategory === "All" ? "All Smartphones" : `${activeCategory} Smartphones`}
               </h1>
-              <p className="text-gray-400 text-sm mt-0.5">{filtered.length} models available</p>
+              <p className="text-gray-400 text-sm mt-0.5">
+                {loading ? "Loading…" : `${isSearchMode ? searchBrandNew.length + searchPreOwned.length : filtered.length} models available`}
+              </p>
             </div>
 
             {/* Condition toggle */}
@@ -379,7 +294,7 @@ function ProductsPageInner() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-6">
 
-          {/* ── Sidebar ── */}
+          {/* Sidebar backdrop (mobile) */}
           {sidebarOpen && (
             <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
           )}
@@ -418,24 +333,19 @@ function ProductsPageInner() {
                   >
                     <button onClick={() => handleBrandClick(cat.label)}
                       className="group/sb relative w-full flex items-center px-4 py-2.5 text-sm font-semibold overflow-hidden">
-
-                      {/* ── BG: hover sweep OR active solid fill ── */}
-                      <span
-                        aria-hidden
+                      <span aria-hidden
                         className={`absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] rounded-r-lg ${
                           activeCategory === cat.label
-                            ? "translate-x-0"                                         // active → always filled
-                            : "translate-x-[-101%] group-hover/sb:translate-x-0"     // idle → sweep in on hover
+                            ? "translate-x-0"
+                            : "translate-x-[-101%] group-hover/sb:translate-x-0"
                         }`}
                         style={{ backgroundColor: cat.bgFill }}
                       />
-
-                      {/* ── Logo: visible when idle, sweeps out when hovered/active ── */}
                       <span className={`
                         relative z-10 flex items-center justify-center w-5 h-5 shrink-0 mr-2.5
                         transition-all duration-300 ease-in-out
                         ${activeCategory === cat.label
-                          ? "translate-x-10 opacity-0 scale-50"                       // active → already gone
+                          ? "translate-x-10 opacity-0 scale-50"
                           : "group-hover/sb:translate-x-10 group-hover/sb:opacity-0 group-hover/sb:scale-50"
                         }
                         ${cat.logoColor}
@@ -445,18 +355,15 @@ function ProductsPageInner() {
                           : <BrandLogo brand={cat.key} className="w-4 h-4" />
                         }
                       </span>
-
-                      {/* ── Label: shifts left, turns white on hover/active ── */}
                       <span className={`
                         relative z-10 flex-1 text-left transition-all duration-300 ease-in-out
                         ${activeCategory === cat.label
-                          ? "-translate-x-7 text-white"                               // active → already shifted + white
+                          ? "-translate-x-7 text-white"
                           : "text-gray-600 group-hover/sb:-translate-x-7 group-hover/sb:text-white"
                         }
                       `}>
                         {cat.label}
                       </span>
-
                       {activeCategory === cat.label && (
                         <ChevronRight size={14} className="relative z-10 text-white/70 shrink-0" />
                       )}
@@ -474,9 +381,9 @@ function ProductsPageInner() {
                 </div>
                 <div className="p-3 space-y-1.5">
                   {[
-                    { label:"Like New",  desc:"99% perfect condition",    color:"bg-green-100 text-green-700" },
-                    { label:"Excellent", desc:"Minor signs of use",       color:"bg-blue-100 text-blue-700"  },
-                    { label:"Good",      desc:"Visible wear, functional", color:"bg-yellow-100 text-yellow-700" },
+                    { label: "Like New",  desc: "99% perfect condition",    color: "bg-green-100 text-green-700"   },
+                    { label: "Excellent", desc: "Minor signs of use",       color: "bg-blue-100 text-blue-700"    },
+                    { label: "Good",      desc: "Visible wear, functional", color: "bg-yellow-100 text-yellow-700" },
                   ].map(g => (
                     <label key={g.label} className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-gray-50 cursor-pointer">
                       <input type="checkbox" defaultChecked className="mt-0.5 w-3.5 h-3.5 accent-orange-500" />
@@ -490,12 +397,12 @@ function ProductsPageInner() {
               </div>
             )}
 
-            {/* Price range — FUNCTIONAL */}
+            {/* Price range */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Price Range</h3>
                 {priceFilters.some(Boolean) && (
-                  <button onClick={() => setPriceFilters([false,false,false,false])}
+                  <button onClick={() => setPriceFilters([false, false, false, false])}
                     className="text-[10px] text-orange-500 font-semibold hover:underline">
                     Clear
                   </button>
@@ -516,8 +423,6 @@ function ProductsPageInner() {
                   </label>
                 ))}
               </div>
-
-              {/* Live count indicator */}
               {priceFilters.some(Boolean) && (
                 <div className="px-4 pb-3">
                   <p className="text-xs text-orange-500 font-medium">
@@ -533,7 +438,6 @@ function ProductsPageInner() {
 
             {/* Toolbar */}
             <div className="flex items-center gap-3 mb-5 flex-wrap">
-              {/* Mobile filter button */}
               <button onClick={() => setSidebarOpen(true)}
                 className="lg:hidden flex items-center gap-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:border-orange-300 transition-all">
                 <SlidersHorizontal size={15} />
@@ -545,14 +449,13 @@ function ProductsPageInner() {
                 )}
               </button>
 
-              {/* Search */}
               <div className="flex items-center gap-2 flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-3 py-2 focus-within:border-orange-400 transition-colors">
                 <Search size={14} className="text-gray-400 shrink-0" />
                 <input
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder={`Search ${activeCategory} models…`}
+                  placeholder={`Search ${activeCategory === "All" ? "phones" : activeCategory} models…`}
                   className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent min-w-0"
                 />
                 {search && (
@@ -562,7 +465,6 @@ function ProductsPageInner() {
                 )}
               </div>
 
-              {/* Sort */}
               <select
                 value={sortKey}
                 onChange={e => setSortKey(e.target.value as SortKey)}
@@ -581,20 +483,16 @@ function ProductsPageInner() {
                 {priceFilters.map((on, i) => on && (
                   <span key={i} className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-3 py-1 rounded-full">
                     {PRICE_RANGES[i].label}
-                    <button onClick={() => togglePrice(i)} className="hover:text-orange-800">
-                      <X size={11} />
-                    </button>
+                    <button onClick={() => togglePrice(i)} className="hover:text-orange-800"><X size={11} /></button>
                   </span>
                 ))}
                 {search && (
                   <span className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-3 py-1 rounded-full">
                     &ldquo;{search}&rdquo;
-                    <button onClick={() => setSearch("")} className="hover:text-orange-800">
-                      <X size={11} />
-                    </button>
+                    <button onClick={() => setSearch("")} className="hover:text-orange-800"><X size={11} /></button>
                   </span>
                 )}
-                <button onClick={() => { setPriceFilters([false,false,false,false]); setSearch(""); }}
+                <button onClick={() => { setPriceFilters([false, false, false, false]); setSearch(""); }}
                   className="text-xs text-gray-400 hover:text-gray-600 underline">
                   Clear all
                 </button>
@@ -611,28 +509,35 @@ function ProductsPageInner() {
                   ? <><BadgeCheck size={13} /> Brand New{activeCategory !== "All" ? ` — ${activeCategory}` : ""}</>
                   : <><RefreshCw size={12} /> Pre-Owned{activeCategory !== "All" ? ` — ${activeCategory}` : ""}</>}
               </div>
-              <span className="text-xs text-gray-400">
-                {isSearchMode
-                  ? `${searchBrandNew.length + searchPreOwned.length} result${(searchBrandNew.length + searchPreOwned.length) !== 1 ? "s" : ""}`
-                  : `${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
-              </span>
+              {!loading && (
+                <span className="text-xs text-gray-400">
+                  {isSearchMode
+                    ? `${searchBrandNew.length + searchPreOwned.length} result${(searchBrandNew.length + searchPreOwned.length) !== 1 ? "s" : ""}`
+                    : `${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
+                </span>
+              )}
             </div>
 
-            {/* ── Search Comparison Mode ── */}
-            {isSearchMode ? (
+            {/* Loading state */}
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-400">
+                <Loader2 size={28} className="animate-spin text-orange-400" />
+                <p className="text-sm font-medium">Loading products…</p>
+              </div>
+
+            /* ── Search Mode — both conditions ── */
+            ) : isSearchMode ? (
               searchBrandNew.length === 0 && searchPreOwned.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-4xl mb-3">🔍</p>
                   <p className="text-gray-500 font-semibold">No models found for &ldquo;{search}&rdquo;</p>
                   <p className="text-gray-400 text-sm mt-1">Try a different search term.</p>
-                  <button onClick={() => setSearch("")}
-                    className="mt-4 text-sm text-orange-500 font-semibold hover:underline">
+                  <button onClick={() => setSearch("")} className="mt-4 text-sm text-orange-500 font-semibold hover:underline">
                     Clear search
                   </button>
                 </div>
               ) : (
                 <div className="space-y-8 pt-2">
-                  {/* Brand New results */}
                   {searchBrandNew.length > 0 && (
                     <div>
                       <div className="flex items-center gap-2 mb-3">
@@ -642,20 +547,15 @@ function ProductsPageInner() {
                         <span className="text-xs text-gray-400">{searchBrandNew.length} result{searchBrandNew.length !== 1 ? "s" : ""}</span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
-                        {searchBrandNew.map(model => (
-                          <SharedProductCard
-                            key={model.slug}
-                            product={modelToShared(model, false)}
-                            onAddToCart={(p) => {
-                              addItem({ id: p.id, name: p.name, variant: p.variant ?? "", price: p.price, original_price: p.originalPrice, rating: p.rating ?? 0, review_count: 0, image: p.image, slug: p.slug, badge: p.badge, badge_color: p.badgeColor } as never);
-                            }}
+                        {searchBrandNew.map(p => (
+                          <SharedProductCard key={p.id} product={dbToShared(p)}
+                            onAddToCart={(sp) => addItem({ id: sp.id, name: sp.name, variant: sp.variant ?? "", price: sp.price, original_price: sp.originalPrice, rating: sp.rating ?? 0, review_count: 0, image: sp.image, slug: sp.slug, badge: sp.badge, badge_color: sp.badgeColor } as never)}
                           />
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Divider */}
                   {searchBrandNew.length > 0 && searchPreOwned.length > 0 && (
                     <div className="flex items-center gap-4">
                       <div className="flex-1 h-px bg-gray-200" />
@@ -664,7 +564,6 @@ function ProductsPageInner() {
                     </div>
                   )}
 
-                  {/* Pre-Owned results */}
                   {searchPreOwned.length > 0 && (
                     <div>
                       <div className="flex items-center gap-2 mb-3">
@@ -672,18 +571,11 @@ function ProductsPageInner() {
                           <RefreshCw size={12} /> Pre-Owned
                         </div>
                         <span className="text-xs text-gray-400">{searchPreOwned.length} result{searchPreOwned.length !== 1 ? "s" : ""}</span>
-                        <span className="text-[11px] text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full font-medium">
-                          Save up to {Math.round((1 - searchPreOwned[0].startingPrice / (searchBrandNew.find(m => m.name === searchPreOwned[0].name)?.startingPrice ?? searchPreOwned[0].startingPrice)) * 100)}% vs Brand New
-                        </span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
-                        {searchPreOwned.map(model => (
-                          <SharedProductCard
-                            key={model.slug}
-                            product={modelToShared(model, true)}
-                            onAddToCart={(p) => {
-                              addItem({ id: p.id, name: p.name, variant: p.variant ?? "", price: p.price, original_price: p.originalPrice, rating: p.rating ?? 0, review_count: 0, image: p.image, slug: p.slug, badge: p.badge, badge_color: p.badgeColor } as never);
-                            }}
+                        {searchPreOwned.map(p => (
+                          <SharedProductCard key={p.id} product={dbToShared(p)}
+                            onAddToCart={(sp) => addItem({ id: sp.id, name: sp.name, variant: sp.variant ?? "", price: sp.price, original_price: sp.originalPrice, rating: sp.rating ?? 0, review_count: 0, image: sp.image, slug: sp.slug, badge: sp.badge, badge_color: sp.badgeColor } as never)}
                           />
                         ))}
                       </div>
@@ -691,35 +583,30 @@ function ProductsPageInner() {
                   )}
                 </div>
               )
+
+            /* ── Normal Mode ── */
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-4xl mb-3">🔍</p>
+                <p className="text-gray-500 font-semibold">No {condition === "brand-new" ? "Brand New" : "Pre-Owned"} models found</p>
+                <p className="text-gray-400 text-sm mt-1">Try adjusting your filters or add products from the admin panel.</p>
+                <button onClick={() => { setPriceFilters([false, false, false, false]); setSearch(""); }}
+                  className="mt-4 text-sm text-orange-500 font-semibold hover:underline">
+                  Clear all filters
+                </button>
+              </div>
             ) : (
-              /* ── Normal Mode (no search) ── */
-              filtered.length === 0 ? (
-                <div className="text-center py-20">
-                  <p className="text-4xl mb-3">🔍</p>
-                  <p className="text-gray-500 font-semibold">No models found</p>
-                  <p className="text-gray-400 text-sm mt-1">Try adjusting your filters or search term.</p>
-                  <button onClick={() => { setPriceFilters([false,false,false,false]); setSearch(""); }}
-                    className="mt-4 text-sm text-orange-500 font-semibold hover:underline">
-                    Clear all filters
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
-                  {filtered.map(model => (
-                    <SharedProductCard
-                      key={model.slug}
-                      product={modelToShared(model, condition === "pre-owned")}
-                      onAddToCart={(p) => {
-                        addItem({ id: p.id, name: p.name, variant: p.variant ?? "", price: p.price, original_price: p.originalPrice, rating: p.rating ?? 0, review_count: 0, image: p.image, slug: p.slug, badge: p.badge, badge_color: p.badgeColor } as never);
-                      }}
-                    />
-                  ))}
-                </div>
-              )
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
+                {filtered.map(p => (
+                  <SharedProductCard key={p.id} product={dbToShared(p)}
+                    onAddToCart={(sp) => addItem({ id: sp.id, name: sp.name, variant: sp.variant ?? "", price: sp.price, original_price: sp.originalPrice, rating: sp.rating ?? 0, review_count: 0, image: sp.image, slug: sp.slug, badge: sp.badge, badge_color: sp.badgeColor } as never)}
+                  />
+                ))}
+              </div>
             )}
 
             {/* Pre-owned trust section */}
-            {condition === "pre-owned" && filtered.length > 0 && (
+            {!loading && condition === "pre-owned" && filtered.length > 0 && (
               <div className="mt-10 bg-gradient-to-br from-green-50 to-white border border-green-200 rounded-2xl p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
@@ -731,7 +618,7 @@ function ProductsPageInner() {
                       Every pre-owned device goes through a rigorous 30-point inspection. Graded honestly — what you see is what you get. Backed by 6-month warranty and 7-day hassle-free returns.
                     </p>
                     <div className="flex flex-wrap gap-2 mt-3">
-                      {["Verified Genuine","6-Month Warranty","7-Day Return","Expert Inspected"].map(tag => (
+                      {["Verified Genuine", "6-Month Warranty", "7-Day Return", "Expert Inspected"].map(tag => (
                         <span key={tag} className="text-[11px] font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">{tag}</span>
                       ))}
                     </div>
