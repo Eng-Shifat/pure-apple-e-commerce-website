@@ -3,7 +3,7 @@
 
 import { adminFetch } from "@/lib/adminFetch";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Upload, Loader2, CheckCircle, X, Plus, Trash2, Tag, Timer, AlertCircle } from "lucide-react";
 
@@ -60,8 +60,11 @@ const BADGE_PRESETS = [
 ];
 
 const CATEGORIES = [
+  // Phone brands
+  { label: "── Phone Brands ──", value: "", disabled: true },
   { label: "Apple",    value: "apple"    },
   { label: "Samsung",  value: "samsung"  },
+  { label: "Google",   value: "google"   },
   { label: "OnePlus",  value: "oneplus"  },
   { label: "Redmi",    value: "redmi"    },
   { label: "Realme",   value: "realme"   },
@@ -70,6 +73,14 @@ const CATEGORIES = [
   { label: "Vivo",     value: "vivo"     },
   { label: "Honor",    value: "honor"    },
   { label: "iQOO",     value: "iqoo"     },
+  // Accessories
+  { label: "── Accessories ──",  value: "", disabled: true },
+  { label: "Charger",     value: "charger"     },
+  { label: "Speaker",     value: "speaker"     },
+  { label: "Ear Buds",    value: "earbuds"     },
+  { label: "Power Bank",  value: "powerbank"   },
+  { label: "Cables",      value: "cables"      },
+  { label: "Accessories", value: "accessories" },
 ];
 
 const OFFER_TYPES = ["Offer", "Today's Deal", "Flash Sale", "Weekend Deal", "Clearance"];
@@ -112,6 +123,10 @@ function toDatetimeLocal(iso: string | null | undefined): string {
 
 export default function ProductForm({ initialData = {}, mode = "create" }: ProductFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Pre-fill from URL query params (used by quick-add buttons in admin products list)
+  const urlCategory  = mode === "create" ? (searchParams.get("category")  ?? "") : "";
+  const urlCondition = mode === "create" ? (searchParams.get("condition")  ?? "") : "";
   const [saving,    setSaving]    = useState(false);
   const [success,   setSuccess]   = useState(false);
   const [error,     setError]     = useState("");
@@ -153,8 +168,8 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     setRegionPrices((prev) => { const n = { ...prev }; delete n[r]; return n; });
   }
 
-  // Determine initial condition
-  const initCondition = initialData.condition ?? "brand-new";
+  // Determine initial condition (URL param overrides for quick-add)
+  const initCondition = initialData.condition ?? urlCondition || "brand-new";
 
   const [form, setForm] = useState({
     name:            initialData.name            ?? "",
@@ -172,7 +187,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     spec_ram:        initialData.spec_ram          ?? "",
     spec_camera:     initialData.spec_camera       ?? "",
     is_featured:     initialData.is_featured       ?? false,
-    category:        initialData.category          ?? "",
+    category:        initialData.category          ?? urlCategory,
     condition:       initCondition,
     stock:           String(initialData.stock      ?? ""),
     product_code:    initialData.product_code      ?? "",
@@ -408,7 +423,11 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             <label className="block text-xs font-semibold text-gray-600 mb-1">Brand / Category *</label>
             <select required value={form.category} onChange={(e) => set("category", e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 bg-white">
               <option value="">-- Select Brand --</option>
-              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              {CATEGORIES.map((c, i) => (
+                <option key={`${c.value}-${i}`} value={c.value} disabled={(c as { disabled?: boolean }).disabled}>
+                  {c.label}
+                </option>
+              ))}
             </select>
           </div>
           <div>

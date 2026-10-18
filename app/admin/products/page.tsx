@@ -7,7 +7,7 @@ import {
   Search, RefreshCw, Package, ChevronDown,
   Flame, Star, Eye, EyeOff, AlertCircle, CheckCircle,
   Loader2, X, ArrowUpDown, ArrowUp, ArrowDown,
-  Zap, Timer, Tag,
+  Zap, Timer, Tag, Plus, ExternalLink,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -47,8 +47,11 @@ const BADGE_PRESETS = [
 ];
 
 const CATEGORIES = [
-  "All","apple","samsung","google","oneplus",
-  "redmi","realme","vivo","iqoo","honor","motorola","nothing",
+  "All",
+  // Phone brands
+  "apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing",
+  // Accessories
+  "charger","speaker","earbuds","powerbank","cables","accessories",
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -205,14 +208,19 @@ function InlineEdit({ value, type = "text", onSave, prefix }: {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AdminProductsPage() {
-  const [products,  setProducts]  = useState<Product[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [search,    setSearch]    = useState("");
-  const [category,  setCategory]  = useState("All");
-  const [toast,     setToast]     = useState<{ msg: string; ok: boolean } | null>(null);
-  const [sortKey,   setSortKey]   = useState<SortKey>("category");
-  const [sortAsc,   setSortAsc]   = useState(true);
-  const [toggling,  setToggling]  = useState<Record<string, boolean>>({});
+  const [products,   setProducts]   = useState<Product[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [search,     setSearch]     = useState("");
+  const [category,   setCategory]   = useState("All");
+  const [condition,  setCondition]  = useState<"all" | "brand-new" | "pre-owned">("all");
+  const [toast,      setToast]      = useState<{ msg: string; ok: boolean } | null>(null);
+  const [sortKey,    setSortKey]    = useState<SortKey>("category");
+  const [sortAsc,    setSortAsc]    = useState(true);
+  const [toggling,   setToggling]   = useState<Record<string, boolean>>({});
+
+  // ── Quick-Add modal state ──
+  const [qaModal,    setQaModal]    = useState(false);
+  const [qaCondition,setQaCondition]= useState<"brand-new" | "pre-owned">("brand-new");
 
   // ── Today's Deal state ──
   const [dealModal,    setDealModal]    = useState(false);
@@ -330,7 +338,8 @@ export default function AdminProductsPage() {
       const q = search.toLowerCase();
       return (
         (!q || p.name.toLowerCase().includes(q) || p.slug.includes(q)) &&
-        (category === "All" || p.category === category)
+        (category === "All" || p.category === category) &&
+        (condition === "all" || p.condition === condition)
       );
     })
     .sort((a, b) => {
@@ -632,14 +641,16 @@ export default function AdminProductsPage() {
           </span>
         </div>
 
-        {/* Brand filter pills */}
-        <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-gray-200">
-          {CATEGORIES.map(c => {
+        {/* Brand / Category filter pills */}
+        {(() => {
+          const PHONE_BRANDS   = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
+          const ACCESSORIES    = ["charger","speaker","earbuds","powerbank","cables","accessories"];
+          const pill = (c: string) => {
             const isActive = category === c;
             return (
               <button
                 key={c}
-                onClick={() => setCategory(c)}
+                onClick={() => { setCategory(c); setCondition("all"); }}
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
                   isActive
                     ? "bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-200"
@@ -649,8 +660,71 @@ export default function AdminProductsPage() {
                 {c === "All" ? "All" : capFirst(c)}
               </button>
             );
-          })}
-        </div>
+          };
+          return (
+            <div className="flex flex-wrap gap-1.5 mb-2 items-center">
+              {pill("All")}
+              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mx-1">Phones</span>
+              {PHONE_BRANDS.map(pill)}
+              <span className="w-px h-4 bg-gray-200 mx-1" />
+              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mx-1">Accessories</span>
+              {ACCESSORIES.map(pill)}
+            </div>
+          );
+        })()}
+
+        {/* Condition sub-filter + Quick Add — phone brands only */}
+        {category !== "All" && !["charger","speaker","earbuds","powerbank","cables","accessories"].includes(category) && (
+          <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-gray-200 animate-in fade-in slide-in-from-top-1 duration-200">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Condition:</span>
+            {(["all", "brand-new", "pre-owned"] as const).map(c => (
+              <button
+                key={c}
+                onClick={() => setCondition(c)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
+                  condition === c
+                    ? c === "brand-new"
+                      ? "bg-blue-500 text-white border-blue-500"
+                      : c === "pre-owned"
+                        ? "bg-green-600 text-white border-green-600"
+                        : "bg-gray-700 text-white border-gray-700"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+                }`}
+              >
+                {c === "all" ? "All" : c === "brand-new" ? "🆕 Brand New" : "♻️ Pre-Owned"}
+              </button>
+            ))}
+
+            {/* Quick Add buttons */}
+            <div className="flex items-center gap-1.5 ml-auto">
+              <Link
+                href={`/admin/products/new?category=${category}&condition=brand-new`}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+              >
+                <Plus size={11} /> Brand New
+              </Link>
+              <Link
+                href={`/admin/products/new?category=${category}&condition=pre-owned`}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+              >
+                <Plus size={11} /> Pre-Owned
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Quick add for accessories (no condition concept) */}
+        {["charger","speaker","earbuds","powerbank","cables","accessories"].includes(category) && (
+          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200 animate-in fade-in duration-200">
+            <Link
+              href={`/admin/products/new?category=${category}`}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-orange-200 text-orange-600 bg-orange-50 hover:bg-orange-100 transition-colors"
+            >
+              <Plus size={11} /> Add {capFirst(category)} Product
+            </Link>
+          </div>
+        )}
+        {category === "All" && <div className="mb-3 border-b border-gray-200" />}
 
         {/* ── Sticky Table Header Row ── */}
         <div className="bg-white border-x border-t border-gray-200 rounded-t-2xl mt-4">
