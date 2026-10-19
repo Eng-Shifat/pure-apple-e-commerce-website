@@ -225,7 +225,6 @@ function ProductsPageInner() {
 
   function handleConditionSwitch(c: Condition) {
     setCondition(c);
-    setActiveCategory("All");
     setPriceFilters([false, false, false, false]);
     setSearch("");
   }

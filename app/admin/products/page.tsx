@@ -494,6 +494,36 @@ export default function AdminProductsPage() {
           ))}
         </div>
 
+        {/* No-photo unpublished products warning */}
+        {(() => {
+          const noPhotoUnpub = products.filter(p => !p.is_published && (!p.image || p.image.trim() === "" || p.image.startsWith("file:")));
+          if (noPhotoUnpub.length === 0) return null;
+          return (
+            <div className="mb-3 bg-amber-50 border border-amber-300 rounded-2xl px-5 py-3 flex items-start gap-3">
+              <AlertCircle size={18} className="text-amber-500 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-amber-800">
+                  {noPhotoUnpub.length} টি product unpublish আছে — photo নেই
+                </p>
+                <p className="text-xs text-amber-600 mt-0.5">
+                  নিচের product গুলোতে photo যোগ করুন, তারপর publish করুন:
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {noPhotoUnpub.slice(0, 8).map(p => (
+                    <Link key={p.id} href={`/admin/products/${p.id}/edit`}
+                      className="text-[11px] font-semibold text-amber-700 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full hover:bg-amber-200 transition-colors">
+                      {p.name}
+                    </Link>
+                  ))}
+                  {noPhotoUnpub.length > 8 && (
+                    <span className="text-[11px] text-amber-500 px-2 py-1">+{noPhotoUnpub.length - 8} more</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Today's Deal Modal */}
         {dealModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
