@@ -324,9 +324,12 @@ export default function Footer() {
               href="https://www.facebook.com/share/1H6KcCFaeR/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#FB5724] font-bold tracking-wide hover:underline"
+              className="inline-flex items-center gap-1 font-extrabold tracking-wide hover:opacity-90 transition-opacity"
             >
-              FDIT
+              <span className="bg-[#FB5724] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md tracking-wider">
+                FDIT
+              </span>
+              <span className="text-[#FB5724] font-bold">Company</span>
             </a>
           </p>
         </div>
