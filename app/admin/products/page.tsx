@@ -343,6 +343,14 @@ export default function AdminProductsPage() {
   }
 
   async function toggle(id: string, key: ToggleKey, current: boolean) {
+    // Photo ছাড়া publish করা যাবে না
+    if (key === "is_published" && !current) {
+      const product = products.find(p => p.id === id);
+      if (!product?.image || product.image.trim() === "") {
+        showToast("Photo যোগ করুন — ছবি ছাড়া product publish করা যাবে না", false);
+        return;
+      }
+    }
     setToggling(t => ({ ...t, [`${id}-${key}`]: true }));
     setProducts(prev => prev.map(p => p.id === id ? { ...p, [key]: !current } : p));
     await patch(id, { [key]: !current });

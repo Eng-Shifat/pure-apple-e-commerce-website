@@ -394,13 +394,17 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
             <p className="text-sm font-medium">Loading products…</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-16 text-center text-gray-400">
-            <p className="text-3xl mb-3">🔍</p>
-            <p className="font-semibold text-gray-600">কোনো product পাওয়া যায়নি</p>
-            <p className="text-sm mt-1">Admin panel থেকে product যোগ করুন অথবা filter পরিবর্তন করুন</p>
+          <div className="flex flex-col items-center justify-center py-20 px-6">
+            <div className="w-20 h-20 rounded-3xl bg-orange-50 flex items-center justify-center mb-5 shadow-sm">
+              <span className="text-4xl">📦</span>
+            </div>
+            <h3 className="text-lg font-extrabold text-gray-800 mb-1">কোনো product পাওয়া যায়নি</h3>
+            <p className="text-sm text-gray-400 text-center max-w-xs">
+              এই category তে এখনো কোনো product add করা হয়নি অথবা আপনার filter এ কোনো product match করেনি।
+            </p>
             <button
               onClick={() => { setActiveBrand("All"); setPriceRange(0); }}
-              className="mt-4 text-orange-500 text-sm font-semibold underline"
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold transition-colors shadow-md shadow-orange-100 active:scale-95"
             >
               সব filter সরান
             </button>
