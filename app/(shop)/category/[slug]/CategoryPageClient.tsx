@@ -89,13 +89,27 @@ function dbToShared(p: DbProduct): SharedProduct {
 }
 
 // ── Price ranges ───────────────────────────────────────────────
-const PRICE_RANGES = [
+const PHONE_PRICE_RANGES = [
   { label: "সব দাম",           min: 0,      max: Infinity },
   { label: "৳10,000 এর নিচে", min: 0,      max: 9999     },
   { label: "৳10k – ৳50k",    min: 10000,  max: 50000    },
   { label: "৳50k – ৳1L",     min: 50001,  max: 100000   },
   { label: "৳1L এর উপরে",    min: 100001, max: Infinity  },
 ];
+
+const ACCESSORY_PRICE_RANGES = [
+  { label: "সব দাম",          min: 0,     max: Infinity },
+  { label: "৳500 এর নিচে",   min: 0,     max: 499      },
+  { label: "৳500 – ৳1,500",  min: 500,   max: 1500     },
+  { label: "৳1,500 – ৳5,000",min: 1501,  max: 5000     },
+  { label: "৳5,000 এর উপরে", min: 5001,  max: Infinity  },
+];
+
+const ACCESSORY_SLUGS = ["charger","speaker","earbuds","powerbank","cables","accessories"];
+
+function getPriceRanges(slug: string) {
+  return ACCESSORY_SLUGS.includes(slug) ? ACCESSORY_PRICE_RANGES : PHONE_PRICE_RANGES;
+}
 
 // ── FiltersDropdown ────────────────────────────────────────────
 function FiltersDropdown({
@@ -259,6 +273,7 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
   const addItem = useCartStore((s) => s.addItem);
 
   const iconSrc = ICON_MAP[slug];
+  const PRICE_RANGES = getPriceRanges(slug);
 
   // ── DB থেকে এই category-র products fetch ──
   useEffect(() => {
@@ -331,23 +346,24 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
         </div>
       </div>
 
-      {/* Category Hero */}
+      {/* Category Hero — single clean row */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-4 flex items-center gap-3">
-          <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+          <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
             {iconSrc ? (
-              <Image src={iconSrc} alt={label} width={36} height={36} className="object-contain" style={{ filter: BRAND_FILTER }} />
+              <Image src={iconSrc} alt={label} width={28} height={28} className="object-contain" style={{ filter: BRAND_FILTER }} />
             ) : (
-              <span className="text-2xl">{icon}</span>
+              <span className="text-xl">{icon}</span>
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-extrabold text-gray-900">{label}</h1>
-            <p className="text-xs text-gray-400 mt-0.5 truncate">{description}</p>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <h1 className="text-base font-extrabold text-gray-900 shrink-0">{label}</h1>
+            <span className="text-gray-300">·</span>
+            <p className="text-xs text-gray-400 truncate">{description}</p>
           </div>
-          <div className="shrink-0 bg-orange-50 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full border border-orange-100">
+          <span className="shrink-0 text-xs font-bold text-orange-600">
             {loading ? "…" : `${filtered.length} items`}
-          </div>
+          </span>
         </div>
       </div>
 

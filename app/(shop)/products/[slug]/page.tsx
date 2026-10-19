@@ -812,31 +812,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Trust badges */}
-            <div className="mt-5 rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-leaf-50 via-white to-brand-50 border-b border-gray-100">
-                <BadgeCheck size={14} className="text-leaf-600" />
-                <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-700">Pure Apple Promise</p>
-              </div>
-              <div className="grid grid-cols-2 divide-x divide-y divide-gray-100 [&>*:nth-child(-n+2)]:border-t-0">
-                {[
-                  { icon: Shield,     label:warrantyTile.label, sub:warrantyTile.sub, tile:"bg-brand-50 text-brand-500 ring-brand-100" },
-                  { icon: Truck,      label:"Free Delivery",   sub:"Dhaka & nationwide", tile:"bg-sky-50 text-sky-600 ring-sky-100" },
-                  { icon: RefreshCw,  label:"15 Days Replacement", sub:"Hassle-free",    tile:"bg-amber-50 text-amber-600 ring-amber-100" },
-                  { icon: BadgeCheck, label:"100% Genuine",    sub:"Verified authentic", tile:"bg-leaf-50 text-leaf-600 ring-leaf-100" },
-                ].map(({ icon: Icon, label, sub, tile }) => (
-                  <div key={label} className="flex items-center gap-3 px-3.5 py-3.5">
-                    <div className={`w-10 h-10 rounded-xl ring-1 flex items-center justify-center shrink-0 ${tile}`}>
-                      <Icon size={18} strokeWidth={2.1}/>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-bold text-gray-900 leading-tight">{label}</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{sub}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
           </div>
         </div>
 
