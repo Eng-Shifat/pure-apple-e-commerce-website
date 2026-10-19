@@ -54,16 +54,16 @@ function ClientMarquee() {
       <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
 
       <div
-        className="flex gap-3 sm:gap-4 w-max"
+        className="flex gap-3 sm:gap-4 w-max marquee-track"
         style={{
-          animation: "marquee 35s linear infinite",
+          animation: "marquee 60s linear infinite",
         }}
       >
         {doubled.map((src, i) => (
           <div
             key={i}
             className="relative shrink-0 rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm hover:border-brand-200 hover:shadow-md transition-all duration-300"
-            style={{ width: 130, height: 170 }}
+            style={{ width: 200, height: 260 }}
           >
             {/* Fallback bg */}
             <div className="absolute inset-0 bg-gradient-to-br from-brand-50 to-gray-100" />
@@ -83,7 +83,7 @@ function ClientMarquee() {
           0%   { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
-        div:hover > div[style] {
+        .marquee-track:hover {
           animation-play-state: paused;
         }
       `}</style>
