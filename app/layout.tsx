@@ -15,10 +15,16 @@ export const metadata: Metadata = {
   description:
     "Shop the latest smartphones from Apple, Samsung, Google, OnePlus and more at the best prices with secure payment.",
   keywords: ["smartphones", "apple", "samsung", "google pixel", "oneplus", "buy phone online"],
+  icons: {
+    icon: "/logo/pure-apple-logo.webp",
+    shortcut: "/logo/pure-apple-logo.webp",
+    apple: "/logo/pure-apple-logo.webp",
+  },
   openGraph: {
     title: "Pure Apple",
     description: "Better Tech, Brighter Tomorrow.",
     type: "website",
+    images: [{ url: "/logo/pure-apple-logo.webp" }],
   },
 };
 

@@ -12,7 +12,6 @@ import {
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import type { Product } from "@/types";
-import { phoneBySlug, PHONES, type CatalogPhone } from "@/lib/phoneCatalog";
 import { supabase } from "@/lib/supabase";
 
 function fixImage(src: string | undefined) {
@@ -23,20 +22,6 @@ function parseArr(val: string | undefined): string[] {
   if (!val) return [];
   try { const p = JSON.parse(val); return Array.isArray(p) ? p : []; } catch { return []; }
 }
-
-// Catalog phone → page-এর Product shape
-function catalogToProduct(p: CatalogPhone): Product {
-  return {
-    id: p.id, name: p.name, variant: "", price: p.price, original_price: p.originalPrice,
-    rating: p.rating, review_count: p.reviewCount, image: p.colors[0].image, slug: p.slug,
-    badge: p.badge, badge_color: p.badgeColor,
-    spec_screen: p.specs.screen, spec_ram: p.specs.ram, spec_camera: p.specs.camera,
-    category: p.brand, condition: "brand-new", is_available: true,
-    colors: JSON.stringify(p.colors.map((c) => c.name)),
-    storage_variants: JSON.stringify([p.storage]),
-  } as Product;
-}
-
 
 // ── Related card ──
 function RelatedCard({ p }: { p: Product }) {
@@ -53,7 +38,6 @@ function RelatedCard({ p }: { p: Product }) {
       <div className="p-3 flex flex-col flex-1">
         <p className="text-xs text-gray-400 mb-0.5 truncate">{p.category ?? "Phone"}</p>
         <h3 className="text-sm font-bold text-gray-900 line-clamp-2 flex-1">{p.name}</h3>
-
         <div className="flex items-end gap-2 mt-2">
           <span className="font-extrabold text-gray-900 text-sm">৳{p.price.toLocaleString("en-BD")}</span>
           {p.original_price && <span className="text-xs line-through text-gray-400">৳{p.original_price.toLocaleString("en-BD")}</span>}
@@ -63,7 +47,6 @@ function RelatedCard({ p }: { p: Product }) {
     </Link>
   );
 }
-
 
 // ── Sticky Cart Bar ──
 function StickyCartBar({
@@ -75,18 +58,9 @@ function StickyCartBar({
     <div className="fixed bottom-0 left-0 right-0 z-50" style={{ animation: "slideUp 0.25s ease-out" }}>
       <div className="bg-white border-t-2 border-brand-500 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-          {/* Product thumbnail */}
           <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
-            <Image
-              src={fixImage(product.image)}
-              alt={product.name}
-              fill
-              className="object-contain p-1"
-              sizes="48px"
-            />
+            <Image src={fixImage(product.image)} alt={product.name} fill className="object-contain p-1" sizes="48px"/>
           </div>
-
-          {/* Info */}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-gray-900 truncate">{product.name}</p>
             <div className="flex items-center gap-2 flex-wrap mt-0.5">
@@ -95,31 +69,17 @@ function StickyCartBar({
               <span className="text-xs text-gray-400">Qty: <strong>{qty}</strong></span>
             </div>
           </div>
-
-          {/* Price */}
           <div className="shrink-0 text-right hidden sm:block">
             <p className="text-xs text-gray-400">Total</p>
             <p className="text-sm font-extrabold text-gray-900">৳{(price * qty).toLocaleString("en-BD")}</p>
           </div>
-
-          {/* Added badge */}
           <div className="shrink-0 flex items-center gap-1.5 bg-green-500 text-white text-xs font-bold px-3 py-2 rounded-full">
             <Check size={13}/> Added to Cart
           </div>
-
-          {/* View Cart */}
-          <Link
-            href="/cart"
-            className="shrink-0 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors active:scale-95 whitespace-nowrap"
-          >
+          <Link href="/cart" className="shrink-0 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors active:scale-95 whitespace-nowrap">
             View Cart
           </Link>
-
-          {/* Dismiss */}
-          <button
-            onClick={onDismiss}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors"
-          >
+          <button onClick={onDismiss} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">
             <X size={14}/>
           </button>
         </div>
@@ -128,7 +88,7 @@ function StickyCartBar({
   );
 }
 
-// ── Deal Banner shown on product page when product is today's deal ──────────
+// ── Deal countdown hook ──
 function useDealCountdown(endsAt: string | null) {
   const calc = () => {
     if (!endsAt) return null;
@@ -149,10 +109,7 @@ function useDealCountdown(endsAt: string | null) {
 function padN(n: number) { return String(n).padStart(2, "0"); }
 
 function DealBanner({ id, dealPrice, regularPrice, dealEndsAt }: {
-  id?: string;
-  dealPrice: number;
-  regularPrice: number;
-  dealEndsAt: string | null;
+  id?: string; dealPrice: number; regularPrice: number; dealEndsAt: string | null;
 }) {
   const time = useDealCountdown(dealEndsAt);
   const discount = regularPrice > dealPrice
@@ -166,7 +123,6 @@ function DealBanner({ id, dealPrice, regularPrice, dealEndsAt }: {
       style={{ background: "linear-gradient(135deg, #fff4ec 0%, #fffdf5 100%)" }}
     >
       <div className="flex flex-wrap items-center gap-4 px-5 py-4">
-        {/* Flash icon + label */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-orange-500 shadow-md shadow-orange-200">
             <Zap size={18} className="text-white fill-white" />
@@ -176,11 +132,7 @@ function DealBanner({ id, dealPrice, regularPrice, dealEndsAt }: {
             <p className="text-sm font-extrabold text-gray-900 leading-tight">Today&apos;s Deal</p>
           </div>
         </div>
-
-        {/* Divider */}
         <div className="hidden sm:block w-px h-10 bg-orange-200" />
-
-        {/* Price block */}
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-2xl font-extrabold text-orange-500">৳{dealPrice.toLocaleString("en-BD")}</span>
           {regularPrice > dealPrice && (
@@ -192,8 +144,6 @@ function DealBanner({ id, dealPrice, regularPrice, dealEndsAt }: {
             </span>
           )}
         </div>
-
-        {/* Timer */}
         {dealEndsAt && time && !time.expired && (
           <>
             <div className="hidden sm:block w-px h-10 bg-orange-200" />
@@ -209,14 +159,11 @@ function DealBanner({ id, dealPrice, regularPrice, dealEndsAt }: {
             </div>
           </>
         )}
-
         {dealEndsAt && time?.expired && (
           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full ml-auto">
             <Timer size={12} /> Deal Ended
           </span>
         )}
-
-        {/* Right label */}
         <div className="ml-auto shrink-0 hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-orange-600 bg-orange-100 border border-orange-200 px-3 py-1.5 rounded-full">
           <Zap size={11} className="fill-orange-500 text-orange-500" />
           This product is part of today&apos;s special deal
@@ -242,17 +189,14 @@ export default function ProductDetailPage() {
   const [added,       setAdded]       = useState(false);
   const [showCartBar, setShowCartBar] = useState(false);
   const [copied,      setCopied]      = useState(false);
-  const [activeTab,   setActiveTab]   = useState<"specs"|"description"|"reviews">("specs");
+  const [activeTab,   setActiveTab]   = useState<"specs"|"description">("specs");
   const [selColor,    setSelColor]    = useState<string>("");
   const [selStorage,  setSelStorage]  = useState<string>("");
   const [selRegion,   setSelRegion]   = useState<string>("");
-  const [catalogPhone, setCatalogPhone] = useState<CatalogPhone | null>(null);
+
   // ── Condition-aware base price ──────────────────────────────────────────────
-  // Catalog phone হলে catalog থেকে নেয় (double counting এড়াতে)
-  // DB product হলে condition অনুযায়ী brand_new_price বা pre_owned_price
   const conditionBasePrice: number = (() => {
     if (!product) return 0;
-    if (catalogPhone) return catalogPhone.price; // catalog phone: always use catalog price
     if (product.condition === "pre-owned") {
       return product.pre_owned_price ?? product.price;
     }
@@ -260,7 +204,6 @@ export default function ProductDetailPage() {
   })();
 
   // ── Active offer/deal resolution (time-based, auto-expire) ───────────────
-  // Priority: new offer system > legacy today's deal
   const activeOfferInfo: { offer_price: number; offer_ends_at: string | null; offer_label: string } | null = (() => {
     if (!product) return null;
     const now = Date.now();
@@ -294,17 +237,12 @@ export default function ProductDetailPage() {
     return null;
   })();
 
-  // backward compat alias so DealBanner still works
-  const dealInfo = activeOfferInfo ? {
-    deal_price: activeOfferInfo.offer_price,
-    deal_ends_at: activeOfferInfo.offer_ends_at,
-  } : null;
-
   const addItem = useCartStore((s) => s.addItem);
 
   // Reset "Added!" state when user changes qty/color/storage
   useEffect(() => { setAdded(false); }, [qty, selColor, selStorage]);
 
+  // ── Fetch product from DB only ──
   useEffect(() => {
     setLoading(true);
     fetch(`/api/products?slug=${slug}`)
@@ -313,64 +251,47 @@ export default function ProductDetailPage() {
         const found: Product | undefined = Array.isArray(d.products)
           ? d.products.find((p: Product) => p.slug === slug)
           : undefined;
-        const fromCatalog = !found ? phoneBySlug(slug) : undefined;
-        setCatalogPhone(fromCatalog ?? null);
-        setProduct(found ?? (fromCatalog ? catalogToProduct(fromCatalog) : null));
-        if (fromCatalog) {
-          setSelColor(fromCatalog.colors[0].name);
-          setSelStorage(fromCatalog.storageVariants?.[0] ?? fromCatalog.storage);
-          setSelRegion(fromCatalog.regions?.[0] ?? "HK");
-          setActiveImg(0);
-          setRelated(
-            PHONES.filter((x) => x.brand === fromCatalog.brand && x.slug !== slug).slice(0, 8).map(catalogToProduct)
-          );
+
+        if (!found) {
+          setProduct(null);
+          setLoading(false);
+          return;
         }
 
-        if (found) {
-          const colors = parseArr(found.colors);
-          const storages = parseArr(found.storage_variants);
-          const regions = found.regions ? found.regions.split(",").map((r) => r.trim()) : [];
-          if (colors.length)   setSelColor(colors[0]);
-          if (storages.length) setSelStorage(storages[0]);
-          if (regions.length)  setSelRegion(regions[0]);
-          if (found.category) {
-            fetch(`/api/products?category=${encodeURIComponent(found.category)}&available=true`)
-              .then((r) => r.json())
-              .then((rd) => {
-                if (Array.isArray(rd.products))
-                  setRelated(rd.products.filter((p: Product) => p.slug !== slug).slice(0, 8));
-              }).catch(() => {});
-          }
+        setProduct(found);
+
+        const colors = parseArr(found.colors);
+        const storages = parseArr(found.storage_variants);
+        const regions = found.regions ? found.regions.split(",").map((r) => r.trim()) : [];
+        if (colors.length)   setSelColor(colors[0]);
+        if (storages.length) setSelStorage(storages[0]);
+        if (regions.length)  setSelRegion(regions[0]);
+
+        // Load related products (same category)
+        if (found.category) {
+          fetch(`/api/products?category=${encodeURIComponent(found.category)}&available=true`)
+            .then((r) => r.json())
+            .then((rd) => {
+              if (Array.isArray(rd.products))
+                setRelated(rd.products.filter((p: Product) => p.slug !== slug).slice(0, 8));
+            }).catch(() => {});
         }
       })
-      .catch(() => {
-        // API না চললেও catalog-এর product দেখাবে
-        const c = phoneBySlug(slug);
-        if (!c) return;
-        setCatalogPhone(c);
-        setProduct(catalogToProduct(c));
-        setSelColor(c.colors[0].name);
-        setSelStorage(c.storageVariants?.[0] ?? c.storage);
-        setSelRegion(c.regions?.[0] ?? "HK");
-        setRelated(PHONES.filter((x) => x.brand === c.brand && x.slug !== slug).slice(0, 8).map(catalogToProduct));
-      })
+      .catch(() => setProduct(null))
       .finally(() => setLoading(false));
   }, [slug]);
 
-  // ── Live update: admin যা বদলাবে (দাম, battery %, stock, deal ইত্যাদি) সাথে সাথে এই পেজে আসবে ──
-  const liveId = product?.id;
-  const liveDb = !!product && !catalogPhone;
+  // ── Live update via Supabase realtime ──
   useEffect(() => {
-    if (!liveId || !liveDb) return;
+    if (!product?.id) return;
     const channel = supabase
-      .channel(`product-live-${liveId}`)
+      .channel(`product-live-${product.id}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "products", filter: `id=eq.${liveId}` },
+        { event: "UPDATE", schema: "public", table: "products", filter: `id=eq.${product.id}` },
         (payload) => setProduct((prev) => (prev ? { ...prev, ...(payload.new as Partial<Product>) } : prev))
       )
       .subscribe();
-    // Realtime বন্ধ থাকলেও আপডেট আসবে: tab-এ ফিরলে ও প্রতি ৩০ সেকেন্ডে নতুন করে আনে
     const refetch = () => {
       if (document.visibilityState === "hidden") return;
       fetch(`/api/products?slug=${slug}`, { cache: "no-store" })
@@ -389,33 +310,27 @@ export default function ProductDetailPage() {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", refetch);
     };
-  }, [liveId, liveDb, slug]);
+  }, [product?.id, slug]);
 
-  // Catalog product হলে: প্রতিটা color-এর ছবি + বাড়তি side ছবি thumbnail হিসেবে
-  const images: string[] = catalogPhone
-    ? [...catalogPhone.colors.map((c) => c.image), ...(catalogPhone.gallery ?? [])]
-    : product ? [fixImage(product.image)] : [];
+  // ── Build image list from DB product ──
+  // Main image first, then parse colors for color-keyed images
+  const colorList = parseArr(product?.colors);
+  // Build image gallery: main image + any additional images stored in image_gallery (future)
+  const images: string[] = product
+    ? [fixImage(product.image)].filter(Boolean)
+    : [];
 
   function pickColor(name: string) {
     setSelColor(name);
-    const idx = catalogPhone?.colors.findIndex((c) => c.name === name) ?? -1;
-    if (idx >= 0) setActiveImg(idx);
   }
-  const colors = catalogPhone
-    ? catalogPhone.colors.map((c) => c.name)
-    : parseArr(product?.colors);
 
-  const storageVariants = catalogPhone?.storageVariants
-    ?? (product?.storage_variants ? parseArr(product.storage_variants) : []);
-
-  const regionList: string[] = catalogPhone?.regions
-    ?? (product?.regions ? product.regions.split(",").map((r) => r.trim()) : []);
+  const storageVariants = product?.storage_variants ? parseArr(product.storage_variants) : [];
+  const regionList: string[] = product?.regions
+    ? product.regions.split(",").map((r) => r.trim()).filter(Boolean)
+    : [];
 
   // ── Dynamic price based on selected storage + region ──
-  // base price of a storage (without region adjustment)
   const baseFor = (storage: string): number => {
-    if (catalogPhone?.storagePrices) return catalogPhone.storagePrices[storage] ?? catalogPhone.price;
-    // প্রথম storage = condition অনুযায়ী সঠিক price (brand-new বা pre-owned)
     if (product && storage === storageVariants[0]) return conditionBasePrice;
     if (product?.storage_prices) {
       try {
@@ -425,9 +340,8 @@ export default function ProductDetailPage() {
     }
     return conditionBasePrice;
   };
-  // region price adjustment (+/-)
+
   const deltaFor = (region: string): number => {
-    if (catalogPhone?.regionPrices) return catalogPhone.regionPrices[region] ?? 0;
     if (product?.region_prices) {
       try {
         const rp: Record<string, number> = JSON.parse(product.region_prices);
@@ -437,17 +351,13 @@ export default function ProductDetailPage() {
     return 0;
   };
 
-  // regular (sale) price for the selected storage + region
   const computedPrice = baseFor(selStorage) + deltaFor(selRegion);
 
-  // Offer discount: offer price flat discount থেকে condition base price বাদ দেওয়া হয়
-  // সব storage/region variant-এ সমান ভাবে apply হয়
   const offerDiscount = activeOfferInfo && product
     ? Math.max(0, conditionBasePrice - activeOfferInfo.offer_price)
     : 0;
   const displayPrice = Math.max(0, computedPrice - offerDiscount);
 
-  // কাটা দাম: Original Price থাকলে সেটা (Sale Price-এর চেয়ে বেশি হলে), না হলে condition base price
   const origGap = product?.original_price && product.original_price > conditionBasePrice
     ? product.original_price - conditionBasePrice : 0;
   const reference = computedPrice + origGap;
@@ -456,15 +366,12 @@ export default function ProductDetailPage() {
   const handleAddToCart = useCallback(() => {
     if (!product) return;
 
-    // Build variant label: Storage · Color · Region (only non-empty parts)
     const variantParts: string[] = [];
     if (selStorage) variantParts.push(selStorage);
     if (selColor)   variantParts.push(selColor);
     if (selRegion)  variantParts.push(`Region: ${selRegion}`);
     const variantLabel = variantParts.join(" · ");
 
-    const chosen = catalogPhone?.colors.find((c) => c.name === selColor);
-    // Unique cart id per variant so same product with diff variants sit as separate lines
     const variantId = variantParts.length
       ? `${product.id}:${variantParts.join("-").replace(/\s+/g, "_")}`
       : product.id;
@@ -475,17 +382,19 @@ export default function ProductDetailPage() {
         id: variantId,
         price: displayPrice,
         original_price: displayOriginal,
-        ...(chosen ? { image: chosen.image } : {}),
         variant: variantLabel || product.variant,
       },
       qty
     );
     setAdded(true);
     setShowCartBar(true);
-  }, [product, qty, addItem, catalogPhone, selColor, selStorage, selRegion, displayPrice, displayOriginal]);
+  }, [product, qty, addItem, selColor, selStorage, selRegion, displayPrice, displayOriginal]);
 
   const handleShare = useCallback(() => {
-    navigator.clipboard.writeText(window.location.href).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   }, []);
 
   // ── Loading skeleton ──
@@ -524,21 +433,16 @@ export default function ProductDetailPage() {
   const discount  = displayOriginal ? Math.round(((displayOriginal - displayPrice) / displayOriginal) * 100) : null;
   const savings   = displayOriginal ? displayOriginal - displayPrice : null;
 
-  // ── Warranty / Replacement (condition + brand অনুযায়ী) ──
   const isPreOwned = product.condition === "pre-owned";
-  const isApple    = (product.category ?? "").toLowerCase() === "apple" || catalogPhone?.brand === "apple";
+  const isApple    = (product.category ?? "").toLowerCase() === "apple";
   const warrantyPoints: string[] = isPreOwned
     ? ["15 Days Replacement Guarantee", "2 Years Service Warranty"]
     : isApple
       ? ["1 Year Apple Official Warranty Support", "15 Days Replacement Guarantee"]
       : ["15 Days Replacement Guarantee", "2 Years Service Warranty"];
-  const warrantyTile = !isPreOwned && isApple
-    ? { label: "1 Year Warranty", sub: "Apple official warranty" }
-    : { label: "2 Years Warranty", sub: "Service warranty" };
   const inStock   = product.is_available !== false;
   const stockCount = product.stock ?? null;
 
-  // WhatsApp message
   const waMsg = encodeURIComponent(`Hi! I'm interested in *${product.name}*${selColor ? ` (${selColor})` : ""}${selStorage ? ` – ${selStorage}` : ""}. Please let me know more. Product link: ${typeof window !== "undefined" ? window.location.href : ""}`);
   const waLink = product.whatsapp_number ? `https://wa.me/${product.whatsapp_number.replace(/\D/g,"")}?text=${waMsg}` : null;
 
@@ -559,7 +463,7 @@ export default function ProductDetailPage() {
           <span className="text-gray-700 font-medium line-clamp-1">{product.name}</span>
         </nav>
 
-        {/* ── Offer / Today's Deal Banner — auto shows when offer active, auto hides when expired ── */}
+        {/* Deal Banner — auto shows when offer active */}
         {activeOfferInfo && (
           <DealBanner
             id="deal"
@@ -574,7 +478,6 @@ export default function ProductDetailPage() {
 
           {/* LEFT: Image */}
           <div className="flex flex-col gap-3">
-            {/* ── Main image with mouse-follow magnifier zoom ── */}
             <div
               ref={imgBoxRef}
               className="relative bg-white rounded-3xl border border-gray-100 flex items-center justify-center min-h-[300px] md:min-h-[400px]"
@@ -589,7 +492,7 @@ export default function ProductDetailPage() {
                 setZoomPos({ x, y });
               }}
             >
-              {/* Auto offer badge — offer active থাকলে দেখায়, expire হলে সরে যায় */}
+              {/* Badge */}
               {activeOfferInfo ? (
                 <span className="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow animate-pulse" style={{ backgroundColor: "#FB5724" }}>
                   🔥 {activeOfferInfo.offer_label}
@@ -628,16 +531,13 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* ── Thumbnail strip with slide animation ── */}
+            {/* Thumbnail strip — only show if multiple images */}
             {images.length > 1 && (
               <div className="flex gap-2 justify-center flex-wrap">
                 {images.map((src, i) => (
                   <button
                     key={i}
-                    onClick={() => {
-                      setActiveImg(i);
-                      if (catalogPhone && i < catalogPhone.colors.length) setSelColor(catalogPhone.colors[i].name);
-                    }}
+                    onClick={() => setActiveImg(i)}
                     className={`
                       relative w-16 h-16 rounded-xl border-2 overflow-hidden bg-white
                       flex items-center justify-center
@@ -648,7 +548,6 @@ export default function ProductDetailPage() {
                       }
                     `}
                   >
-                    {/* Active slide indicator bar */}
                     <span className={`
                       absolute bottom-0 left-0 right-0 h-[3px] rounded-b-xl
                       transition-all duration-300
@@ -700,17 +599,14 @@ export default function ProductDetailPage() {
             </div>
 
             {/* ── Color Selector ── */}
-            {colors.length > 0 && (
+            {colorList.length > 0 && (
               <div className="mt-5">
                 <p className="text-sm font-bold text-gray-700 mb-2">Color: <span className="text-brand-500">{selColor}</span></p>
                 <div className="flex flex-wrap gap-2">
-                  {colors.map((c) => (
+                  {colorList.map((c) => (
                     <button key={c} type="button" onClick={() => pickColor(c)}
                       className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all ${selColor===c ? "border-brand-500 text-brand-700 bg-brand-50" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
                     >
-                      {catalogPhone?.colors.find((x) => x.name === c) && (
-                        <span className="w-4 h-4 rounded-full border border-gray-300" style={{ backgroundColor: catalogPhone.colors.find((x) => x.name === c)!.hex }} />
-                      )}
                       {c}
                     </button>
                   ))}
@@ -721,59 +617,44 @@ export default function ProductDetailPage() {
             {/* ── Storage + Region ── */}
             {(storageVariants.length > 0 || regionList.length > 0) && (
               <div className="mt-4 p-3.5 bg-white border border-gray-100 rounded-2xl space-y-3">
-
-                {/* Storage row */}
                 {storageVariants.length > 0 && (
                   <div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Storage</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {storageVariants.map((s) => {
-                        const isSelected = selStorage === s;
-                        return (
-                          <button
-                            key={s}
-                            type="button"
-                            onClick={() => setSelStorage(s)}
-                            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
-                              ${isSelected
-                                ? "bg-gray-900 text-white border-gray-900 shadow-sm"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                              }`}
-                          >
-                            {s}
-                          </button>
-                        );
-                      })}
+                      {storageVariants.map((s) => (
+                        <button
+                          key={s} type="button" onClick={() => setSelStorage(s)}
+                          className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
+                            ${selStorage === s
+                              ? "bg-gray-900 text-white border-gray-900 shadow-sm"
+                              : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                            }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
-
-                {/* Region row */}
                 {regionList.length > 0 && (
                   <div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Region</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {regionList.map((r) => {
-                        const isSelected = selRegion === r;
-                        return (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => setSelRegion(r)}
-                            className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
-                              ${isSelected
-                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
-                              }`}
-                          >
-                            {r}
-                          </button>
-                        );
-                      })}
+                      {regionList.map((r) => (
+                        <button
+                          key={r} type="button" onClick={() => setSelRegion(r)}
+                          className={`px-4 py-2 rounded-full text-xs font-bold border transition-all duration-150 active:scale-95
+                            ${selRegion === r
+                              ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                              : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                            }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
-
               </div>
             )}
 
@@ -832,7 +713,20 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-
+            {/* Trust badges row */}
+            <div className="grid grid-cols-3 gap-2 mt-5">
+              {[
+                { icon: <Truck size={16}/>,    label: "Free Delivery",    sub: "Inside Dhaka" },
+                { icon: <Shield size={16}/>,   label: "Genuine Product",  sub: "100% Authentic" },
+                { icon: <RefreshCw size={16}/>, label: "Easy Return",     sub: "15 Day Policy" },
+              ].map(({ icon, label, sub }) => (
+                <div key={label} className="flex flex-col items-center text-center p-3 bg-white border border-gray-100 rounded-xl">
+                  <span className="text-brand-500 mb-1">{icon}</span>
+                  <p className="text-[11px] font-bold text-gray-800">{label}</p>
+                  <p className="text-[10px] text-gray-400">{sub}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -864,7 +758,7 @@ export default function ProductDetailPage() {
                     { label:"Display",            value: product.spec_screen || "—" },
                     { label:"RAM / Storage",      value: product.spec_ram || "—" },
                     { label:"Camera",             value: product.spec_camera || "—" },
-                    { label:"Available Colors",   value: colors.length ? colors.join(", ") : "—" },
+                    { label:"Available Colors",   value: colorList.length ? colorList.join(", ") : "—" },
                     { label:"Storage Options",    value: storageVariants.length ? storageVariants.join(", ") : "—" },
                     { label:"Price",              value: `৳${displayPrice.toLocaleString("en-BD")}` },
                     { label:"Original Price",     value: displayOriginal ? `৳${displayOriginal.toLocaleString("en-BD")}` : "—" },
@@ -894,13 +788,11 @@ export default function ProductDetailPage() {
                   {product.spec_camera  && <li>📷 <strong>Camera:</strong> {product.spec_camera}</li>}
                 </ul>
               )}
-              {colors.length > 0     && <p className="mt-3 text-gray-700">🎨 <strong>Colors:</strong> {colors.join(", ")}</p>}
+              {colorList.length > 0     && <p className="mt-3 text-gray-700">🎨 <strong>Colors:</strong> {colorList.join(", ")}</p>}
               {storageVariants.length > 0 && <p className="mt-1 text-gray-700">💾 <strong>Storage:</strong> {storageVariants.join(", ")}</p>}
               <p className="mt-4 text-gray-500 text-xs">* Product images are for illustrative purposes. Actual colour may vary slightly.</p>
             </div>
           )}
-
-
         </div>
 
         {/* ── Sticky Cart Bar ── */}
