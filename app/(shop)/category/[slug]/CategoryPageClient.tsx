@@ -118,12 +118,14 @@ function FiltersDropdown({
   onBrandChange,
   priceRange,
   onPriceChange,
+  ranges,
 }: {
   brands: string[];
   activeBrand: string;
   onBrandChange: (b: string) => void;
   priceRange: number;
   onPriceChange: (i: number) => void;
+  ranges: { label: string; min: number; max: number }[];
 }) {
   const [open, setOpen] = useState(false);
   const hasFilter = activeBrand !== "All" || priceRange !== 0;
@@ -154,7 +156,7 @@ function FiltersDropdown({
             <div className="px-3 pt-3 pb-2">
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">দাম অনুযায়ী</p>
               <div className="flex flex-col gap-0.5">
-                {PRICE_RANGES.map((r, i) => (
+                {ranges.map((r, i) => (
                   <button key={i} onClick={() => onPriceChange(i)}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors
                       ${priceRange === i
@@ -377,6 +379,7 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
               onBrandChange={setActiveBrand}
               priceRange={priceRange}
               onPriceChange={setPriceRange}
+              ranges={PRICE_RANGES}
             />
             <SortDropdown sortBy={sortBy} onChange={setSortBy} />
           </div>

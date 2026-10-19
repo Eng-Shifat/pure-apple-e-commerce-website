@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -234,6 +234,9 @@ export default function ProductDetailPage() {
   const [related,     setRelated]     = useState<Product[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [activeImg,   setActiveImg]   = useState(0);
+  const [isZooming,   setIsZooming]   = useState(false);
+  const [zoomPos,     setZoomPos]     = useState({ x: 50, y: 50 });
+  const imgBoxRef = useRef<HTMLDivElement>(null);
   const [qty,         setQty]         = useState(1);
   const { toggle: toggleWishlist, isWished } = useWishlistStore();
   const [added,       setAdded]       = useState(false);
@@ -571,8 +574,21 @@ export default function ProductDetailPage() {
 
           {/* LEFT: Image */}
           <div className="flex flex-col gap-3">
-            {/* ── Main image with zoom-on-hover ── */}
-            <div className="relative bg-white rounded-3xl border border-gray-100 flex items-center justify-center min-h-[300px] md:min-h-[400px] group/imgbox" style={{ overflow: "visible", zIndex: 1 }}>
+            {/* ── Main image with mouse-follow magnifier zoom ── */}
+            <div
+              ref={imgBoxRef}
+              className="relative bg-white rounded-3xl border border-gray-100 flex items-center justify-center min-h-[300px] md:min-h-[400px]"
+              style={{ overflow: "hidden", zIndex: 1 }}
+              onMouseEnter={() => setIsZooming(true)}
+              onMouseLeave={() => setIsZooming(false)}
+              onMouseMove={(e) => {
+                const rect = imgBoxRef.current?.getBoundingClientRect();
+                if (!rect) return;
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                setZoomPos({ x, y });
+              }}
+            >
               {/* Auto offer badge — offer active থাকলে দেখায়, expire হলে সরে যায় */}
               {activeOfferInfo ? (
                 <span className="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow animate-pulse" style={{ backgroundColor: "#FB5724" }}>
@@ -595,13 +611,17 @@ export default function ProductDetailPage() {
                 ? <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50/95 border border-amber-200 px-2.5 py-1 rounded-full shadow-sm"><Tag size={11}/> Pre-Owned</span>
                 : <span className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1 text-[11px] font-bold text-leaf-700 bg-leaf-50/95 border border-leaf-200 px-2.5 py-1 rounded-full shadow-sm"><BadgeCheck size={11}/> Brand New</span>
               }
-              {/* Zoom container */}
-              <div className="relative w-full px-4 h-[260px] md:h-[340px]" style={{ overflow: "visible" }}>
+              {/* Zoom image */}
+              <div className="relative w-full px-4 h-[260px] md:h-[340px]">
                 <Image
                   src={images[activeImg] ?? "/logo/pure-apple-logo.png"}
                   alt={product.name}
                   fill
-                  className="object-contain drop-shadow-xl transition-transform duration-500 ease-out group-hover/imgbox:scale-[1.35] cursor-zoom-in"
+                  className={`object-contain drop-shadow-xl transition-transform duration-200 ease-out ${isZooming ? "cursor-zoom-in" : "cursor-default"}`}
+                  style={{
+                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                    transform: isZooming ? "scale(2.2)" : "scale(1)",
+                  }}
                   sizes="(max-width:768px) 100vw, 50vw"
                   priority
                 />
