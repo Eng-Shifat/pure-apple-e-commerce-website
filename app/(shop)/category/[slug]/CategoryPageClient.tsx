@@ -350,22 +350,31 @@ export default function CategoryPageClient({ slug, label, icon, description, isE
 
       {/* Category Hero + Filter Bar — single merged row */}
       <div className="bg-white sticky top-0 z-30 border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center gap-3">
-          <div className="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center gap-2 sm:gap-3">
+          {/* Icon — সবসময় দেখাবে */}
+          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-orange-50 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
             {iconSrc ? (
-              <Image src={iconSrc} alt={label} width={24} height={24} className="object-contain" style={{ filter: BRAND_FILTER }} />
+              <Image src={iconSrc} alt={label} width={22} height={22} className="object-contain" style={{ filter: BRAND_FILTER }} />
             ) : (
-              <span className="text-lg">{icon}</span>
+              <span className="text-base sm:text-lg">{icon}</span>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+
+          {/* Label — mobile তে hidden, sm থেকে দেখাবে */}
+          <div className="hidden sm:flex items-center gap-2 flex-1 min-w-0">
             <h1 className="text-sm font-extrabold text-gray-900 shrink-0">{label}</h1>
-            <span className="text-gray-300 hidden sm:block">·</span>
-            <p className="text-xs text-gray-400 truncate hidden sm:block">{description}</p>
+            <span className="text-gray-300">·</span>
+            <p className="text-xs text-gray-400 truncate">{description}</p>
           </div>
-          <span className="shrink-0 text-xs font-bold text-orange-600 mr-2">
+
+          {/* Mobile: flexible spacer */}
+          <div className="flex-1 sm:hidden" />
+
+          {/* Item count */}
+          <span className="shrink-0 text-xs font-bold text-orange-600">
             {loading ? "…" : `${filtered.length} items`}
           </span>
+
           <FiltersDropdown
             brands={brands}
             activeBrand={activeBrand}
