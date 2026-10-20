@@ -112,51 +112,7 @@ export default function AboutClient() {
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-10 lg:pb-12">
 
-          {/* ── MOBILE layout: Founder photo full-width hero card on top ── */}
-          <div className="lg:hidden mb-8">
-            {/* Founder card — mobile: horizontal compact */}
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-white/5">
-              <div className="flex items-stretch gap-0">
-                {/* Photo left */}
-                <div className="relative w-36 sm:w-44 shrink-0" style={{ minHeight: 200 }}>
-                  <Image
-                    src="/images/About/IMG_4992-1.webp"
-                    alt="Sheikh Shanto – Founder & CEO"
-                    fill
-                    sizes="176px"
-                    className="object-cover object-top"
-                    priority
-                  />
-                  {/* right fade */}
-                  <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-r from-transparent to-[#0d2a1a]/80" />
-                </div>
-
-                {/* Text right */}
-                <div className="flex-1 flex flex-col justify-center px-4 py-5 min-w-0">
-                  <span className="inline-block self-start bg-brand-500/20 border border-brand-500/25 text-brand-400 text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest mb-2">
-                    Founder &amp; C.E.O
-                  </span>
-                  <h2 className="text-white font-black text-lg sm:text-xl leading-tight tracking-tight">
-                    Sheikh Shanto
-                  </h2>
-                  <p className="text-gray-400 text-[11px] mt-0.5 mb-3 leading-snug">
-                    Pure Apple<br />Mobile &amp; Gadget Shop
-                  </p>
-                  {/* Social icons */}
-                  <div className="flex gap-1.5 flex-wrap">
-                    {socialLinks.map((s) => (
-                      <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                        className={`w-7 h-7 rounded-lg bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-95 ${s.bg}`}>
-                        {s.icon}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Badge ── */}
+          {/* ── Badge (mobile + desktop) ── */}
           <div className="flex justify-center lg:justify-start mb-5">
             <span className="inline-flex items-center gap-1.5 bg-brand-500/15 border border-brand-500/20 text-brand-400 text-[11px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
@@ -164,7 +120,7 @@ export default function AboutClient() {
             </span>
           </div>
 
-          {/* ── Desktop: side-by-side | Mobile: just text below founder card ── */}
+          {/* ── Desktop: side-by-side | Mobile: text first, founder card below ── */}
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-14 items-start">
 
             {/* LEFT — Text */}
@@ -218,13 +174,13 @@ export default function AboutClient() {
             {/* RIGHT — Founder Card (desktop only) */}
             <div className="hidden lg:block w-72 xl:w-80 shrink-0">
               <div className="rounded-3xl overflow-hidden border border-white/10 bg-white/5 shadow-2xl">
-                <div className="relative w-full" style={{ aspectRatio: "3/4" }}>
+                <div className="relative w-full" style={{ aspectRatio: "4/5" }}>
                   <Image
                     src="/images/About/IMG_4992-1.webp"
                     alt="Sheikh Shanto – Founder & CEO"
                     fill
                     sizes="320px"
-                    className="object-cover object-top"
+                    className="object-cover object-[center_10%]"
                     priority
                   />
                   <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-dark-hero/95 to-transparent" />
@@ -243,6 +199,49 @@ export default function AboutClient() {
                       {s.icon}
                     </a>
                   ))}
+                </div>
+              </div>
+            </div>
+
+            {/* MOBILE — Founder Card below text */}
+            <div className="lg:hidden w-full mt-4">
+              <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-white/5">
+                <div className="flex items-stretch gap-0">
+                  {/* Photo left */}
+                  <div className="relative w-36 sm:w-44 shrink-0" style={{ minHeight: 200 }}>
+                    <Image
+                      src="/images/About/IMG_4992-1.webp"
+                      alt="Sheikh Shanto – Founder & CEO"
+                      fill
+                      sizes="176px"
+                      className="object-cover object-[center_10%]"
+                      priority
+                    />
+                    {/* right fade */}
+                    <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-r from-transparent to-[#0d2a1a]/80" />
+                  </div>
+
+                  {/* Text right */}
+                  <div className="flex-1 flex flex-col justify-center px-4 py-5 min-w-0">
+                    <span className="inline-block self-start bg-brand-500/20 border border-brand-500/25 text-brand-400 text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest mb-2">
+                      Founder &amp; C.E.O
+                    </span>
+                    <h2 className="text-white font-black text-lg sm:text-xl leading-tight tracking-tight">
+                      Sheikh Shanto
+                    </h2>
+                    <p className="text-gray-400 text-[11px] mt-0.5 mb-3 leading-snug">
+                      Pure Apple<br />Mobile &amp; Gadget Shop
+                    </p>
+                    {/* Social icons */}
+                    <div className="flex gap-1.5 flex-wrap">
+                      {socialLinks.map((s) => (
+                        <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                          className={`w-7 h-7 rounded-lg bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all active:scale-95 ${s.bg}`}>
+                          {s.icon}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
