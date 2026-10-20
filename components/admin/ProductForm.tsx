@@ -326,15 +326,29 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const bnPrice = Number(form.brand_new_price);
-    if (!(bnPrice > 0)) {
-      setError("Brand New Price সঠিকভাবে দিন (0-এর বেশি)।");
-      return;
-    }
+    const bnPrice = form.brand_new_price !== "" ? Number(form.brand_new_price) : null;
     const poPrice = form.pre_owned_price !== "" ? Number(form.pre_owned_price) : null;
-    if (form.condition === "pre-owned" && !poPrice) {
-      setError("Pre-Owned condition এর জন্য Pre-Owned Price দিন।");
-      return;
+
+    // Condition-specific validation
+    if (form.condition === "brand-new") {
+      if (!bnPrice || bnPrice <= 0) {
+        setError("Brand New condition এর জন্য Brand New Sale Price দিন।");
+        return;
+      }
+    } else if (form.condition === "pre-owned") {
+      if (!poPrice || poPrice <= 0) {
+        setError("Pre-Owned condition এর জন্য Pre-Owned Sale Price দিন।");
+        return;
+      }
+    } else if (form.condition === "both") {
+      if (!bnPrice || bnPrice <= 0) {
+        setError("Brand New Price সঠিকভাবে দিন।");
+        return;
+      }
+      if (!poPrice || poPrice <= 0) {
+        setError("Pre-Owned Price সঠিকভাবে দিন।");
+        return;
+      }
     }
 
     const batteryStr = String(form.battery_health ?? "").trim();
@@ -345,11 +359,11 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
 
     const bnOffer = form.offer_price_brand_new !== "" ? Number(form.offer_price_brand_new) : null;
     const poOffer = form.offer_price_pre_owned !== "" ? Number(form.offer_price_pre_owned) : null;
-    if (bnOffer !== null && bnOffer >= bnPrice) {
+    if (bnOffer !== null && bnPrice !== null && bnOffer >= bnPrice) {
       setError("Brand New Offer Price অবশ্যই Brand New Price এর চেয়ে কম হতে হবে।");
       return;
     }
-    if (poOffer !== null && poPrice && poOffer >= poPrice) {
+    if (poOffer !== null && poPrice !== null && poOffer >= poPrice) {
       setError("Pre-Owned Offer Price অবশ্যই Pre-Owned Price এর চেয়ে কম হতে হবে।");
       return;
     }
@@ -360,7 +374,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
 
     // First storage = brand_new_price (base), rest from baseStoragePrices
     storageVariants.forEach((s, i) => {
-      const price = i === 0 ? bnPrice : (baseStoragePrices[s] ? Number(baseStoragePrices[s]) : 0);
+      const price = i === 0 ? (bnPrice ?? 0) : (baseStoragePrices[s] ? Number(baseStoragePrices[s]) : 0);
       if (price > 0) finalStoragePrices[s] = price;
     });
 
@@ -400,7 +414,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         image: imageValue,
         brand_new_price: bnPrice,
         pre_owned_price: poPrice,
-        price: bnPrice,
+        price: bnPrice ?? poPrice,
         original_price: origNum,
         offer_price_brand_new: bnOffer,
         offer_price_pre_owned: poOffer,
@@ -525,8 +539,8 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Brand New Sale Price (৳) *</label>
-              <input required type="number" value={form.brand_new_price} onChange={(e) => set("brand_new_price", e.target.value)} placeholder="e.g. 114499" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 bg-white"/>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Brand New Sale Price (৳) {isBrandNew && "*"}</label>
+              <input type="number" required={isBrandNew} value={form.brand_new_price} onChange={(e) => set("brand_new_price", e.target.value)} placeholder="e.g. 114499" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 bg-white"/>
               <p className="text-[10px] text-gray-400 mt-1">কাস্টমার brand new কিনলে এই দামে পাবে</p>
             </div>
             <div>
