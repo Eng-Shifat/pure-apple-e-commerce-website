@@ -393,7 +393,7 @@ export default function AdminProductsPage() {
     unpublished:  products.filter(p => !p.is_published).length,
     popular:      products.filter(p => p.is_featured).length,
     hotDeals:     products.filter(p => p.is_hot_deal).length,
-    missingPhoto: products.filter(p => !p.image || p.image.trim() === "" || p.image.trim() === "null" || p.image.startsWith("file:")).length,
+    missingPhoto: products.filter(p => !p.image || !/^(\/|https?:\/\/)/.test(p.image.trim())).length,
   };
 
   return (
@@ -499,7 +499,7 @@ export default function AdminProductsPage() {
 
         {/* No-photo unpublished products warning */}
         {(() => {
-          const noPhotoUnpub = products.filter(p => !p.is_published && (!p.image || p.image.trim() === "" || p.image.startsWith("file:")));
+          const noPhotoUnpub = products.filter(p => !p.image || !/^(\/|https?:\/\/)/.test(p.image.trim()));
           if (noPhotoUnpub.length === 0) return null;
           return (
             <div className="mb-3 bg-amber-50 border border-amber-300 rounded-2xl px-5 py-3 flex items-start gap-3">
@@ -869,7 +869,8 @@ export default function AdminProductsPage() {
               const PHONE_SET = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
               const ACC_SET   = ["charger","speaker","earbuds","powerbank","cables","accessories"];
               // Image missing check
-              const isMissingImage = !p.image || p.image.trim() === "" || p.image.trim() === "null" || p.image.startsWith("file:");
+              // Valid image = starts with / or https:// (same as SharedProductCard)
+              const isMissingImage = !p.image || !/^(\/|https?:\/\/)/.test(p.image.trim());
 
               const rowBg = isMissingImage
                 ? "bg-amber-50/80 border-l-4 border-l-amber-400"

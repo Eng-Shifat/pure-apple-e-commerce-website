@@ -108,19 +108,21 @@ export async function GET(req: NextRequest) {
         prod.offer_price_pre_owned = null;
         prod.offer_type = null;
       }
-      // Mark products missing image
+      // Mark products missing image — same logic as SharedProductCard
+      // Valid image must start with / or https:// (same regex as card component)
       const hasImage = !!(
         prod.image &&
         typeof prod.image === "string" &&
-        prod.image.trim() !== "" &&
-        prod.image.trim() !== "null"
+        /^(\/|https?:\/\/)/.test(prod.image.trim())
       );
-      // Also check color_images as fallback
+      // Also check color_images as fallback — any color with valid image URL
       let hasColorImage = false;
       if (!hasImage && prod.color_images) {
         try {
           const ci = JSON.parse(prod.color_images);
-          hasColorImage = Object.values(ci).some((v) => v && typeof v === "string" && v.trim() !== "");
+          hasColorImage = Object.values(ci).some(
+            (v) => v && typeof v === "string" && /^(\/|https?:\/\/)/.test((v as string).trim())
+          );
         } catch {}
       }
       return { ...prod, _hasImage: hasImage || hasColorImage };
