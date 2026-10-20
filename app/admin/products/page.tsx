@@ -57,8 +57,12 @@ const CATEGORIES = [
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function safeImg(src: string) {
-  if (!src || src.startsWith("file:")) return "/images/Phone/iphone/iPhone 16/iPhone_16.webp";
+  if (!src || src.startsWith("file:")) return "";
   return src;
+}
+
+function hasValidImage(src: string | undefined | null): boolean {
+  return !!(src && !src.startsWith("file:") && /^(\/|https?:\/\/)/.test(src.trim()));
 }
 
 function capFirst(s: string) {
@@ -425,8 +429,14 @@ export default function AdminProductsPage() {
             </div>
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200">
-                  <img src={safeImg(delConfirm.image)} alt={delConfirm.name} className="w-full h-full object-contain p-1" />
+                <div className="w-9 h-9 shrink-0 rounded-lg overflow-hidden border flex items-center justify-center
+                  ${hasValidImage(delConfirm.image) ? 'bg-white border-gray-200' : 'bg-gray-100 border-gray-200'}">
+                  {hasValidImage(delConfirm.image) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={safeImg(delConfirm.image)} alt={delConfirm.name} className="w-full h-full object-contain p-1" />
+                  ) : (
+                    <ImageOff size={16} className="text-gray-300" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm text-gray-900 truncate">{delConfirm.name}</p>
@@ -563,9 +573,16 @@ export default function AdminProductsPage() {
                       onClick={() => { setDealProduct(p); setDealPrice(p.deal_price && p.deal_price < p.price ? String(p.deal_price) : ""); }}
                       className={`flex items-center gap-3 w-full px-3 py-2.5 text-left hover:bg-orange-50 transition-colors ${dealProduct?.id === p.id ? "bg-orange-50 border-l-2 border-orange-400" : ""}`}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={safeImg(p.image)} alt={p.name}
-                        className="w-9 h-9 rounded-lg object-contain bg-gray-100 p-1 border border-gray-200 shrink-0" />
+                      <div className="w-9 h-9 rounded-lg border border-gray-200 bg-gray-100 shrink-0 flex items-center justify-center overflow-hidden">
+                        {hasValidImage(p.image) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={safeImg(p.image)} alt={p.name}
+                            className="w-full h-full object-contain p-1"
+                            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        ) : (
+                          <ImageOff size={14} className="text-gray-300" />
+                        )}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-sm text-gray-900 truncate">{p.name}</p>
                         <p className="text-[11px] text-gray-400">৳{p.price.toLocaleString("en-BD")}</p>
@@ -679,9 +696,16 @@ export default function AdminProductsPage() {
             <Zap size={14} className="text-orange-500 shrink-0" />
             {activeDeal ? (
               <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={safeImg(activeDeal.image)} alt={activeDeal.name}
-                  className="w-6 h-6 rounded-lg object-contain bg-white border border-orange-200 p-0.5 shrink-0" />
+                <div className="w-6 h-6 rounded-lg border border-orange-200 bg-white shrink-0 flex items-center justify-center overflow-hidden">
+                  {hasValidImage(activeDeal.image) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={safeImg(activeDeal.image)} alt={activeDeal.name}
+                      className="w-full h-full object-contain p-0.5"
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  ) : (
+                    <ImageOff size={10} className="text-orange-300" />
+                  )}
+                </div>
                 <span className="font-semibold text-gray-800 text-xs truncate max-w-[120px]">{activeDeal.name}</span>
                 <span className="text-xs font-bold text-orange-600 shrink-0">
                   ৳{(activeDeal.deal_price ?? activeDeal.price).toLocaleString("en-BD")}
@@ -898,7 +922,7 @@ export default function AdminProductsPage() {
                           src={safeImg(p.image)}
                           alt={p.name}
                           className="w-full h-full object-contain p-1"
-                          onError={e => { (e.target as HTMLImageElement).src = "/images/Phone/iphone/iPhone 16/iPhone_16.webp"; }}
+                          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                         />
                       )}
                     </div>
