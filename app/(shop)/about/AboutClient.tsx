@@ -273,17 +273,13 @@ export default function AboutClient() {
           </div>
 
           {/* Store photo */}
-          <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white mb-5 relative" style={{ minHeight: 160 }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-gray-50 to-leaf-50 flex flex-col items-center justify-center gap-2">
-              <Image src="/logo/pure-apple-logo.svg" alt="Pure Apple" width={40} height={40} className="opacity-20" />
-              <p className="text-gray-300 text-xs">public/images/store/store-main.webp</p>
-            </div>
+          <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white mb-5">
             <Image
-              src="/images/store/store-main.webp"
+              src="/images/About/Shop.webp"
               alt="Pure Apple Store"
               width={1200}
               height={380}
-              className="w-full object-cover relative z-10"
+              className="w-full object-cover"
               style={{ maxHeight: 300, objectPosition: "center" }}
             />
           </div>
