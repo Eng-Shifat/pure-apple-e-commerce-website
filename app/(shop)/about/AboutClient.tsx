@@ -315,7 +315,7 @@ export default function AboutClient() {
                 যোগাযোগ করুন
               </h3>
               <div className="space-y-3">
-                {/* Phone — tappable on mobile */}
+                {/* Phone 1 */}
                 <a href="tel:+8801804660238"
                   className="flex items-center gap-3 group active:opacity-70 transition-opacity">
                   <span className="w-9 h-9 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center shrink-0">
@@ -325,7 +325,18 @@ export default function AboutClient() {
                     <p className="text-[10px] text-gray-400 leading-none mb-0.5">Phone</p>
                     <p className="text-gray-800 font-semibold text-sm">+880 1804-660238</p>
                   </div>
-                  {/* Tap indicator on mobile */}
+                  <span className="ml-auto md:hidden text-[10px] text-brand-500 font-bold bg-brand-50 px-2 py-1 rounded-lg">Call</span>
+                </a>
+                {/* Phone 2 */}
+                <a href="tel:+8801863190537"
+                  className="flex items-center gap-3 group active:opacity-70 transition-opacity">
+                  <span className="w-9 h-9 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center shrink-0">
+                    <Phone size={15} />
+                  </span>
+                  <div>
+                    <p className="text-[10px] text-gray-400 leading-none mb-0.5">Phone</p>
+                    <p className="text-gray-800 font-semibold text-sm">+880 1863-190537</p>
+                  </div>
                   <span className="ml-auto md:hidden text-[10px] text-brand-500 font-bold bg-brand-50 px-2 py-1 rounded-lg">Call</span>
                 </a>
 
@@ -382,10 +393,10 @@ export default function AboutClient() {
               </h3>
               <div className="space-y-2">
                 {[
-                  { day: "শনিবার – মঙ্গলবার", time: "10:00 – 21:00", open: true },
+                  { day: "শনিবার – মঙ্গলবার", time: "11:00 – 22:00", open: true },
                   { day: "বুধবার",              time: "বন্ধ",           open: false },
-                  { day: "বৃহস্পতিবার",         time: "10:00 – 21:00", open: true },
-                  { day: "শুক্রবার",             time: "14:00 – 21:00", open: true },
+                  { day: "বৃহস্পতিবার",         time: "11:00 – 22:00", open: true },
+                  { day: "শুক্রবার",             time: "11:00 – 22:00", open: true },
                 ].map(r => (
                   <div key={r.day} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-50">
                     <div className="flex items-center gap-2">

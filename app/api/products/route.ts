@@ -96,16 +96,39 @@ export async function GET(req: NextRequest) {
 
   // Server-side: expire offer fields on-the-fly (don't update DB here, just mask)
   const now = Date.now();
-  const products = (data ?? []).map((p) => {
-    const prod = { ...p, image: fixLocalImage(p.image) };
-    // If offer has expired, mask offer fields so UI doesn't show stale data
-    if (prod.offer_ends_at && new Date(prod.offer_ends_at).getTime() < now) {
-      prod.offer_price_brand_new = null;
-      prod.offer_price_pre_owned = null;
-      prod.offer_type = null;
-    }
-    return prod;
-  });
+  // Check if this is an admin request (admin panel fetches with admin=true param)
+  const isAdminRequest = searchParams.get("admin") === "true";
+
+  const products = (data ?? [])
+    .map((p) => {
+      const prod = { ...p, image: fixLocalImage(p.image) };
+      // If offer has expired, mask offer fields so UI doesn't show stale data
+      if (prod.offer_ends_at && new Date(prod.offer_ends_at).getTime() < now) {
+        prod.offer_price_brand_new = null;
+        prod.offer_price_pre_owned = null;
+        prod.offer_type = null;
+      }
+      // Mark products missing image
+      const hasImage = !!(
+        prod.image &&
+        typeof prod.image === "string" &&
+        prod.image.trim() !== "" &&
+        prod.image.trim() !== "null"
+      );
+      // Also check color_images as fallback
+      let hasColorImage = false;
+      if (!hasImage && prod.color_images) {
+        try {
+          const ci = JSON.parse(prod.color_images);
+          hasColorImage = Object.values(ci).some((v) => v && typeof v === "string" && v.trim() !== "");
+        } catch {}
+      }
+      return { ...prod, _hasImage: hasImage || hasColorImage };
+    })
+    // Shop-এ শুধু image আছে এমন products দেখাবে
+    // Admin request-এ সব দেখাবে (warning সহ)
+    .filter((p) => isAdminRequest || p._hasImage)
+    .map(({ _hasImage, ...p }) => ({ ...p, _missingImage: !_hasImage }));
 
   const payload = { products };
   cacheSet(cacheKey, payload, 20_000);

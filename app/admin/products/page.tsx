@@ -309,7 +309,8 @@ export default function AdminProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await adminFetch("/api/products");
+      // admin=true → image নেই এমন products-ও দেখাবে, warning সহ
+      const res = await adminFetch("/api/products?admin=true");
       const d   = await res.json();
       setProducts(d.products ?? []);
     } catch {
@@ -387,11 +388,12 @@ export default function AdminProductsPage() {
   }
 
   const stats = {
-    total:       products.length,
-    published:   products.filter(p => p.is_published).length,
-    unpublished: products.filter(p => !p.is_published).length,
-    popular:     products.filter(p => p.is_featured).length,
-    hotDeals:    products.filter(p => p.is_hot_deal).length,
+    total:        products.length,
+    published:    products.filter(p => p.is_published).length,
+    unpublished:  products.filter(p => !p.is_published).length,
+    popular:      products.filter(p => p.is_featured).length,
+    hotDeals:     products.filter(p => p.is_hot_deal).length,
+    missingPhoto: products.filter(p => !p.image || p.image.trim() === "" || p.image.trim() === "null" || p.image.startsWith("file:")).length,
   };
 
   return (
@@ -476,13 +478,14 @@ export default function AdminProductsPage() {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-5">
           {[
-            { label: "Total Products", val: stats.total,       color: "text-gray-900",  bg: "bg-white",         border: "border-gray-100",  icon: "📦" },
-            { label: "Published",      val: stats.published,   color: "text-green-600", bg: "bg-green-50",      border: "border-green-100", icon: "✅" },
-            { label: "Unpublished",    val: stats.unpublished, color: "text-red-500",   bg: "bg-red-50",        border: "border-red-100",   icon: "🚫" },
-            { label: "Popular",        val: stats.popular,     color: "text-orange-500",bg: "bg-orange-50",     border: "border-orange-100",icon: "⭐" },
-            { label: "Hot Deals",      val: stats.hotDeals,    color: "text-red-500",   bg: "bg-red-50",        border: "border-red-100",   icon: "🔥" },
+            { label: "Total Products", val: stats.total,        color: "text-gray-900",   bg: "bg-white",        border: "border-gray-100",   icon: "📦" },
+            { label: "Published",      val: stats.published,    color: "text-green-600",  bg: "bg-green-50",     border: "border-green-100",  icon: "✅" },
+            { label: "Unpublished",    val: stats.unpublished,  color: "text-red-500",    bg: "bg-red-50",       border: "border-red-100",    icon: "🚫" },
+            { label: "Popular",        val: stats.popular,      color: "text-orange-500", bg: "bg-orange-50",    border: "border-orange-100", icon: "⭐" },
+            { label: "Hot Deals",      val: stats.hotDeals,     color: "text-red-500",    bg: "bg-red-50",       border: "border-red-100",    icon: "🔥" },
+            { label: "Photo Missing",  val: stats.missingPhoto, color: stats.missingPhoto > 0 ? "text-amber-600" : "text-gray-400", bg: stats.missingPhoto > 0 ? "bg-amber-50" : "bg-white", border: stats.missingPhoto > 0 ? "border-amber-300" : "border-gray-100", icon: "🖼️" },
           ].map(s => (
             <div key={s.label} className={`${s.bg} rounded-2xl border ${s.border} px-4 py-3.5 flex items-center gap-3`}>
               <span className="text-xl">{s.icon}</span>
@@ -865,29 +868,48 @@ export default function AdminProductsPage() {
               // Colorful row tinting by category group
               const PHONE_SET = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
               const ACC_SET   = ["charger","speaker","earbuds","powerbank","cables","accessories"];
-              const rowBg = PHONE_SET.includes(p.category)
-                ? idx % 2 === 0 ? "bg-blue-50/30" : "bg-blue-50/60"
-                : ACC_SET.includes(p.category)
-                  ? idx % 2 === 0 ? "bg-orange-50/30" : "bg-orange-50/60"
-                  : idx % 2 === 0 ? "bg-white" : "bg-gray-50/40";
+              // Image missing check
+              const isMissingImage = !p.image || p.image.trim() === "" || p.image.trim() === "null" || p.image.startsWith("file:");
+
+              const rowBg = isMissingImage
+                ? "bg-amber-50/80 border-l-4 border-l-amber-400"
+                : PHONE_SET.includes(p.category)
+                  ? idx % 2 === 0 ? "bg-blue-50/30" : "bg-blue-50/60"
+                  : ACC_SET.includes(p.category)
+                    ? idx % 2 === 0 ? "bg-orange-50/30" : "bg-orange-50/60"
+                    : idx % 2 === 0 ? "bg-white" : "bg-gray-50/40";
               return (
                 <div key={p.id}
-                  className={`grid items-center px-4 py-3 border-b border-gray-100 hover:bg-yellow-50/50 transition-colors duration-150 ${rowBg} ${!p.is_published ? "opacity-50" : ""}`}
+                  className={`grid items-center px-4 py-3 border-b border-gray-100 hover:bg-yellow-50/50 transition-colors duration-150 ${rowBg} ${!p.is_published ? "opacity-60" : ""}`}
                   style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 90px 90px 90px 110px" }}>
 
                   {/* Product */}
                   <div className="flex items-center gap-3 min-w-0 pr-2">
-                    <div className="w-11 h-11 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={safeImg(p.image)}
-                        alt={p.name}
-                        className="w-full h-full object-contain p-1"
-                        onError={e => { (e.target as HTMLImageElement).src = "/images/Phone/iphone/iPhone 16/iPhone_16.webp"; }}
-                      />
+                    <div className={`w-11 h-11 shrink-0 rounded-xl overflow-hidden flex items-center justify-center relative ${isMissingImage ? "bg-amber-100 border-2 border-amber-300" : "bg-gray-100 border border-gray-200"}`}>
+                      {isMissingImage ? (
+                        <div className="flex flex-col items-center gap-0.5">
+                          <ImageOff size={18} className="text-amber-400" />
+                          <span className="text-[8px] font-bold text-amber-500">No photo</span>
+                        </div>
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={safeImg(p.image)}
+                          alt={p.name}
+                          className="w-full h-full object-contain p-1"
+                          onError={e => { (e.target as HTMLImageElement).src = "/images/Phone/iphone/iPhone 16/iPhone_16.webp"; }}
+                        />
+                      )}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={p.name}>{p.name}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-bold text-gray-900 text-sm truncate leading-tight" title={p.name}>{p.name}</p>
+                        {isMissingImage && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-amber-700 bg-amber-200 border border-amber-400 px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                            <AlertCircle size={9} /> Photo Missing — Shop-এ Hidden
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                         <span className={`text-[10px] font-semibold capitalize px-1.5 py-0.5 rounded-full transition-colors ${
                           category !== "All" && p.category === category
