@@ -95,7 +95,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-x-3 mb-3">
 
             {/* Contact */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {/* Phone 1 */}
               <a href="tel:+8801804660238"
                 className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/c">
@@ -207,7 +207,7 @@ export default function Footer() {
               Better Tech, Brighter Tomorrow. Your trusted source for premium smartphones &amp; gadgets.
             </p>
 
-            <div className="space-y-2.5 mb-5">
+            <div className="space-y-1.5 mb-5">
               <a href="tel:+8801804660238"
                 className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/c">
                 <span className="w-6 h-6 rounded-lg bg-[#FB5724]/15 flex items-center justify-center shrink-0 group-hover/c:bg-[#FB5724]/25 transition-colors">
