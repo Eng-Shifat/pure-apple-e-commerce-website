@@ -7,7 +7,7 @@ import {
   Search, RefreshCw, Package, ChevronDown,
   Flame, Star, Eye, EyeOff, AlertCircle, CheckCircle,
   Loader2, X, ArrowUpDown, ArrowUp, ArrowDown,
-  Zap, Timer, Tag, ExternalLink, Trash2,
+  Zap, Timer, Tag, ExternalLink, Trash2, ImageOff,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
