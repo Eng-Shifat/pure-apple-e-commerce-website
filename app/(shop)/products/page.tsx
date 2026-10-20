@@ -478,23 +478,41 @@ function ProductsPageInner() {
 
             {/* Active filter chips */}
             {(priceFilters.some(Boolean) || search) && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {priceFilters.map((on, i) => on && (
-                  <span key={i} className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-3 py-1 rounded-full">
-                    {PRICE_RANGES[i].label}
-                    <button onClick={() => togglePrice(i)} className="hover:text-orange-800"><X size={11} /></button>
-                  </span>
-                ))}
-                {search && (
-                  <span className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-3 py-1 rounded-full">
-                    &ldquo;{search}&rdquo;
-                    <button onClick={() => setSearch("")} className="hover:text-orange-800"><X size={11} /></button>
-                  </span>
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {/* Search + price chips */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {search && (
+                    <span className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-3 py-1 rounded-full">
+                      &ldquo;{search}&rdquo;
+                      <button onClick={() => setSearch("")} className="hover:text-orange-800"><X size={11} /></button>
+                    </span>
+                  )}
+                  {priceFilters.map((on, i) => on && (
+                    <span key={i} className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-semibold px-3 py-1 rounded-full">
+                      {PRICE_RANGES[i].label}
+                      <button onClick={() => togglePrice(i)} className="hover:text-orange-800"><X size={11} /></button>
+                    </span>
+                  ))}
+                  <button onClick={() => { setPriceFilters([false, false, false, false]); setSearch(""); }}
+                    className="text-xs text-gray-400 hover:text-gray-600 underline">
+                    Clear all
+                  </button>
+                </div>
+                {/* Inline result counts when in search mode */}
+                {isSearchMode && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {searchBrandNew.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-3 py-1 rounded-full">
+                        <BadgeCheck size={11} /> Brand New <span className="text-gray-400 font-normal">{searchBrandNew.length} results</span>
+                      </span>
+                    )}
+                    {searchPreOwned.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-bold px-3 py-1 rounded-full">
+                        <RefreshCw size={11} /> Pre-Owned <span className="text-gray-400 font-normal">{searchPreOwned.length} results</span>
+                      </span>
+                    )}
+                  </div>
                 )}
-                <button onClick={() => { setPriceFilters([false, false, false, false]); setSearch(""); }}
-                  className="text-xs text-gray-400 hover:text-gray-600 underline">
-                  Clear all
-                </button>
               </div>
             )}
 
@@ -536,16 +554,10 @@ function ProductsPageInner() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-8 pt-2">
+                <div className="space-y-4 pt-2">
                   {searchBrandNew.length > 0 && (
                     <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center gap-1.5 bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1.5 rounded-full text-xs font-bold">
-                          <BadgeCheck size={13} /> Brand New
-                        </div>
-                        <span className="text-xs text-gray-400">{searchBrandNew.length} result{searchBrandNew.length !== 1 ? "s" : ""}</span>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                         {searchBrandNew.map(p => (
                           <SharedProductCard key={p.id} product={dbToShared(p)}
                             onAddToCart={(sp) => addItem({ id: sp.id, name: sp.name, variant: sp.variant ?? "", price: sp.price, original_price: sp.originalPrice, rating: sp.rating ?? 0, review_count: 0, image: sp.image, slug: sp.slug, badge: sp.badge, badge_color: sp.badgeColor } as never)}
@@ -557,21 +569,15 @@ function ProductsPageInner() {
 
                   {searchBrandNew.length > 0 && searchPreOwned.length > 0 && (
                     <div className="flex items-center gap-4">
-                      <div className="flex-1 h-px bg-gray-200" />
-                      <span className="text-xs text-gray-400 font-medium px-2">Pre-Owned Options</span>
-                      <div className="flex-1 h-px bg-gray-200" />
+                      <div className="flex-1 h-px bg-gray-100" />
+                      <span className="text-[10px] text-gray-300 font-medium px-2">Pre-Owned</span>
+                      <div className="flex-1 h-px bg-gray-100" />
                     </div>
                   )}
 
                   {searchPreOwned.length > 0 && (
                     <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-full text-xs font-bold">
-                          <RefreshCw size={12} /> Pre-Owned
-                        </div>
-                        <span className="text-xs text-gray-400">{searchPreOwned.length} result{searchPreOwned.length !== 1 ? "s" : ""}</span>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                         {searchPreOwned.map(p => {
                           // Use brand-new image if available for same product name
                           const brandNewMatch = allProducts.find(
