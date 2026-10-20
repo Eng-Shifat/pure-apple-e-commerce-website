@@ -36,6 +36,7 @@ interface DbProduct {
   region_prices?:    string; // JSON object e.g. {"HK":0,"JP":-2000}
   regions?:          string; // comma-separated e.g. "HK,JP"
   colors?:           string; // JSON array
+  color_images?:     string; // JSON object {"Black":"https://...","White":"..."}
   is_available?:     boolean;
 }
 
@@ -45,6 +46,8 @@ const BRAND_LABEL: Record<string, string> = {
   apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi",
   realme: "Realme", nothing: "Nothing", motorola: "Motorola", vivo: "Vivo",
   honor: "Honor", iqoo: "iQOO", google: "Google",
+  charger: "Charger", speaker: "Speaker", earbuds: "Ear Buds",
+  powerbank: "Power Bank", cables: "Cables", accessories: "Accessories",
 };
 
 const CATEGORIES = [
@@ -62,6 +65,15 @@ const CATEGORIES = [
   { label: "Google",   key: "google",   bgFill: "#4285F4", logoColor: "text-blue-600"   },
 ];
 
+const ACCESSORY_CATEGORIES = [
+  { label: "Charger",     key: "charger",     emoji: "🔌", bgFill: "#F97316" },
+  { label: "Speaker",     key: "speaker",     emoji: "🔊", bgFill: "#8B5CF6" },
+  { label: "Ear Buds",    key: "earbuds",     emoji: "🎧", bgFill: "#06B6D4" },
+  { label: "Power Bank",  key: "powerbank",   emoji: "🔋", bgFill: "#10B981" },
+  { label: "Cables",      key: "cables",      emoji: "🔗", bgFill: "#64748B" },
+  { label: "Accessories", key: "accessories", emoji: "🎒", bgFill: "#EC4899" },
+];
+
 const PRICE_RANGES = [
   { label: "Under ৳30,000",     min: 0,      max: 29999   },
   { label: "৳30,000 – ৳60,000", min: 30000,  max: 60000   },
@@ -75,6 +87,8 @@ const SLUG_TO_BRAND: Record<string, string> = {
   apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi",
   realme: "Realme", nothing: "Nothing", motorola: "Motorola", vivo: "Vivo",
   honor: "Honor", iqoo: "iQOO", google: "Google",
+  charger: "Charger", speaker: "Speaker", earbuds: "Ear Buds",
+  powerbank: "Power Bank", cables: "Cables", accessories: "Accessories",
 };
 
 // ─── DB product → SharedProduct ───────────────────────────────
@@ -85,12 +99,16 @@ function dbToShared(p: DbProduct, overrideImage?: string): SharedProduct {
   let regionPrices:    Record<string, number> | undefined;
   let regionList:      string[] | undefined;
   let colorList:       string[] | undefined;
+  let colorImagesMap:  Record<string, string> = {};
 
   try { if (p.storage_variants) storageVariants = JSON.parse(p.storage_variants); } catch {}
   try { if (p.storage_prices)   storagePrices   = JSON.parse(p.storage_prices);   } catch {}
   try { if (p.region_prices)    regionPrices    = JSON.parse(p.region_prices);     } catch {}
   if (p.regions) regionList = p.regions.split(",").map(r => r.trim()).filter(Boolean);
   try { if (p.colors) colorList = JSON.parse(p.colors); } catch {}
+  try { if (p.color_images) colorImagesMap = JSON.parse(p.color_images); } catch {}
+
+  const baseImage = overrideImage ?? p.image;
 
   return {
     id:              p.id,
@@ -99,18 +117,22 @@ function dbToShared(p: DbProduct, overrideImage?: string): SharedProduct {
     price:           p.price,
     originalPrice:   p.original_price,
     rating:          p.rating,
-    image:           overrideImage ?? p.image,
+    image:           baseImage,
     slug:            p.slug,
     badge:           p.badge,
     badgeColor:      p.badge_color ?? "#FB5724",
     showStartingFrom: !!(storageVariants && storageVariants.length > 1),
-    // Extended for variant pricing
     storage:         storageVariants?.join(" / "),
     storageVariants,
     storagePrices,
     regionList,
     regionPrices,
-    colors:          colorList?.map(c => ({ name: c, hex: "", image: p.image })),
+    // color_images আছে → সেই image দিয়ে swatch বানাবে; না থাকলে product এর main image
+    colors: colorList?.map(c => ({
+      name:  c,
+      hex:   "",
+      image: colorImagesMap[c] || baseImage,
+    })),
   };
 }
 
@@ -128,7 +150,10 @@ function ProductsPageInner() {
   const [search,         setSearch]         = useState(searchParams.get("q") ?? "");
   const [sortKey,        setSortKey]        = useState<SortKey>("featured");
   const [priceFilters,   setPriceFilters]   = useState<boolean[]>([false, false, false, false]);
-  const [brandsVisible,  setBrandsVisible]  = useState(false);
+  const [brandsVisible,    setBrandsVisible]    = useState(false);
+  const [showSuggestions,  setShowSuggestions]  = useState(false);
+  const [suggestionIdx,    setSuggestionIdx]    = useState(-1);
+  const searchRef = useRef<HTMLDivElement>(null);
   const brandsRef = useRef<HTMLUListElement>(null);
 
   // ── Fetch ALL products once ──
@@ -163,6 +188,71 @@ function ProductsPageInner() {
       return () => clearTimeout(t);
     }
   }, [sidebarOpen]);
+
+  // ── Suggestions: typing হলে product নাম match করে দেখাবে ──
+  const suggestions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (q.length < 1) return [];
+    const seen = new Set<string>();
+    return allProducts
+      .filter(p => {
+        const name = p.name.toLowerCase();
+        if (!name.includes(q)) return false;
+        if (seen.has(p.name)) return false;
+        seen.add(p.name);
+        return true;
+      })
+      .slice(0, 8);
+  }, [search, allProducts]);
+
+  // Outside click → suggestion বন্ধ
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+        setSuggestionIdx(-1);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  function handleSuggestionSelect(p: DbProduct) {
+    setSearch(p.name);
+    setShowSuggestions(false);
+    setSuggestionIdx(-1);
+  }
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSuggestionIdx(i => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSuggestionIdx(i => Math.max(i - 1, -1));
+    } else if (e.key === "Enter" && suggestionIdx >= 0) {
+      e.preventDefault();
+      handleSuggestionSelect(suggestions[suggestionIdx]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setSuggestionIdx(-1);
+    }
+  }
+
+  // Highlight matching part of suggestion text
+  function highlightMatch(text: string, query: string) {
+    if (!query.trim()) return <span>{text}</span>;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return <span>{text}</span>;
+    return (
+      <>
+        <span>{text.slice(0, idx)}</span>
+        <span className="text-orange-500 font-bold">{text.slice(idx, idx + query.length)}</span>
+        <span>{text.slice(idx + query.length)}</span>
+      </>
+    );
+  }
 
   function togglePrice(i: number) {
     setPriceFilters(prev => prev.map((v, idx) => idx === i ? !v : v));
@@ -396,6 +486,60 @@ function ProductsPageInner() {
 
 
 
+            {/* Accessories */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
+              <div className="px-4 py-3 border-b border-gray-50">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Accessories</h3>
+              </div>
+              <ul>
+                {ACCESSORY_CATEGORIES.map((cat, i) => (
+                  <li key={cat.key}
+                    style={{
+                      opacity: brandsVisible ? 1 : 0,
+                      transform: brandsVisible ? "translateX(0)" : "translateX(-32px)",
+                      transition: brandsVisible
+                        ? `opacity 0.32s ease ${(CATEGORIES.length + i) * 42}ms, transform 0.35s cubic-bezier(0.22,1,0.36,1) ${(CATEGORIES.length + i) * 42}ms`
+                        : "none",
+                    }}
+                  >
+                    <button onClick={() => handleBrandClick(cat.label)}
+                      className="group/sb relative w-full flex items-center px-4 py-2.5 text-sm font-semibold overflow-hidden">
+                      <span aria-hidden
+                        className={`absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] rounded-r-lg ${
+                          activeCategory === cat.label
+                            ? "translate-x-0"
+                            : "translate-x-[-101%] group-hover/sb:translate-x-0"
+                        }`}
+                        style={{ backgroundColor: cat.bgFill }}
+                      />
+                      <span className={`
+                        relative z-10 flex items-center justify-center w-5 h-5 shrink-0 mr-2.5 text-base
+                        transition-all duration-300 ease-in-out
+                        ${activeCategory === cat.label
+                          ? "translate-x-10 opacity-0 scale-50"
+                          : "group-hover/sb:translate-x-10 group-hover/sb:opacity-0 group-hover/sb:scale-50"
+                        }
+                      `}>
+                        {cat.emoji}
+                      </span>
+                      <span className={`
+                        relative z-10 flex-1 text-left transition-all duration-300 ease-in-out
+                        ${activeCategory === cat.label
+                          ? "-translate-x-7 text-white"
+                          : "text-gray-600 group-hover/sb:-translate-x-7 group-hover/sb:text-white"
+                        }
+                      `}>
+                        {cat.label}
+                      </span>
+                      {activeCategory === cat.label && (
+                        <ChevronRight size={14} className="relative z-10 text-white/70 shrink-0" />
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             {/* Price range */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
@@ -448,19 +592,89 @@ function ProductsPageInner() {
                 )}
               </button>
 
-              <div className="flex items-center gap-2 flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-3 py-2 focus-within:border-orange-400 transition-colors">
-                <Search size={14} className="text-gray-400 shrink-0" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder={`Search ${activeCategory === "All" ? "phones" : activeCategory} models…`}
-                  className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent min-w-0"
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="text-gray-400 hover:text-gray-600">
-                    <X size={14} />
-                  </button>
+              {/* ── Search with autocomplete ── */}
+              <div ref={searchRef} className="relative flex-1 min-w-0">
+                <div className={`flex items-center gap-2 bg-white border rounded-lg px-3 py-2 transition-colors ${showSuggestions && suggestions.length > 0 ? "border-orange-400 rounded-b-none" : "border-gray-200 focus-within:border-orange-400"}`}>
+                  <Search size={14} className="text-gray-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={e => {
+                      setSearch(e.target.value);
+                      setShowSuggestions(true);
+                      setSuggestionIdx(-1);
+                    }}
+                    onFocus={() => { if (search.trim()) setShowSuggestions(true); }}
+                    onKeyDown={handleSearchKeyDown}
+                    placeholder={`Search ${activeCategory === "All" ? "phones" : activeCategory} models…`}
+                    className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent min-w-0"
+                    autoComplete="off"
+                  />
+                  {search && (
+                    <button onClick={() => { setSearch(""); setShowSuggestions(false); }} className="text-gray-400 hover:text-gray-600 shrink-0">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Suggestion dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-orange-300 border-t-0 rounded-b-xl shadow-xl z-50 overflow-hidden">
+                    {suggestions.map((p, i) => {
+                      const isActive = i === suggestionIdx;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); handleSuggestionSelect(p); }}
+                          onMouseEnter={() => setSuggestionIdx(i)}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors border-b border-gray-50 last:border-b-0
+                            ${isActive ? "bg-orange-50" : "hover:bg-gray-50"}`}
+                        >
+                          {/* Product image thumbnail */}
+                          {p.image && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={/^(\/|https?:\/\/)/.test(p.image) ? p.image : "/logo/pure-apple-logo.png"}
+                              alt={p.name}
+                              className="w-8 h-8 object-contain shrink-0 rounded"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-800 truncate">
+                              {highlightMatch(p.name, search)}
+                            </p>
+                            <p className="text-[10px] text-gray-400 flex items-center gap-1.5">
+                              <span className={`font-medium ${p.condition === "brand-new" ? "text-orange-500" : "text-green-600"}`}>
+                                {p.condition === "brand-new" ? "Brand New" : "Pre-Owned"}
+                              </span>
+                              <span>·</span>
+                              <span>{BRAND_LABEL[p.category] ?? p.category}</span>
+                              <span>·</span>
+                              <span className="font-semibold text-gray-600">৳{p.price.toLocaleString("en-BD")}</span>
+                            </p>
+                          </div>
+                          {isActive && <ChevronRight size={13} className="text-orange-400 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                    {/* Footer hint */}
+                    <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-[10px] text-gray-400">
+                        {suggestions.length} result{suggestions.length !== 1 ? "s" : ""} found
+                      </span>
+                      <span className="text-[10px] text-gray-400 hidden sm:block">↑↓ navigate · Enter select · Esc close</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* No suggestion found hint */}
+                {showSuggestions && search.trim().length > 0 && suggestions.length === 0 && !loading && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-orange-200 border-t-0 rounded-b-xl shadow-lg z-50 px-4 py-3">
+                    <p className="text-xs text-gray-500">
+                      <span className="font-medium">&ldquo;{search}&rdquo;</span> নামে কোনো product পাওয়া যায়নি
+                    </p>
+                  </div>
                 )}
               </div>
 

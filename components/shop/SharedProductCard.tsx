@@ -62,8 +62,9 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
   const [added,    setAdded]    = useState(false);
   const [colorIdx, setColorIdx] = useState(0);
 
+  // সব colors দেখাবে — image থাকলে switch হবে, না থাকলে শুধু dot badge
   const colors: ColorVariant[] = Array.isArray(product.colors)
-    ? product.colors.filter((c) => c && typeof c === "object" && c.image)
+    ? product.colors.filter((c) => c && typeof c === "object")
     : [];
   const activeColor = colors[colorIdx];
 
@@ -75,8 +76,10 @@ export default function SharedProductCard({ product, onAddToCart }: SharedProduc
     return product.price;
   })();
 
-  // Display variant label
-  const shownImage = activeColor?.image ?? product.image;
+  // color এর নিজস্ব image থাকলে সেটা দেখাবে, না থাকলে product এর main image
+  const shownImage = (activeColor?.image && activeColor.image !== product.image)
+    ? activeColor.image
+    : (activeColor?.image ?? product.image);
   const storageLabel = product.storage || (product.variant ?? "").split(" – ")[0];
   const shownVariant = activeColor
     ? `${storageLabel ? storageLabel + " – " : ""}${activeColor.name}`
