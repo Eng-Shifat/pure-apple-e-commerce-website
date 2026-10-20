@@ -96,7 +96,7 @@ export default function Footer() {
 
             {/* Contact */}
             <div className="space-y-2">
-              {/* Phone */}
+              {/* Phone 1 */}
               <a href="tel:+8801804660238"
                 className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/c">
                 {/* orange filter = invert+sepia+saturate converts black PNG → #FB5724 */}
@@ -108,6 +108,18 @@ export default function Footer() {
                   />
                 </span>
                 <span className="leading-tight">+880 1804-660238</span>
+              </a>
+              {/* Phone 2 */}
+              <a href="tel:+8801863190537"
+                className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/c2">
+                <span className="w-6 h-6 rounded-md bg-[#FB5724]/15 flex items-center justify-center shrink-0 group-hover/c2:bg-[#FB5724]/25 transition-colors">
+                  <Image
+                    src="/icon/telephone.png" alt="Phone" width={13} height={13}
+                    className="object-contain"
+                    style={{ filter: "invert(45%) sepia(90%) saturate(600%) hue-rotate(345deg) brightness(105%)" }}
+                  />
+                </span>
+                <span className="leading-tight">+880 1863-190537</span>
               </a>
 
               {/* Email */}
@@ -149,10 +161,10 @@ export default function Footer() {
               </h4>
               <div className="rounded-xl border border-white/10 bg-white/5 px-2 py-2 space-y-1.5">
                 {[
-                  { day: "শনি – মঙ্গল", time: "10:00–21:00" },
+                  { day: "শনি – মঙ্গল", time: "11:00–22:00" },
                   { day: "বুধবার",       time: "বন্ধ" },
-                  { day: "বৃহস্পতি",     time: "10:00–21:00" },
-                  { day: "শুক্রবার",     time: "14:00–21:00" },
+                  { day: "বৃহস্পতি",     time: "11:00–22:00" },
+                  { day: "শুক্রবার",     time: "11:00–22:00" },
                 ].map((row) => (
                   <div key={row.day} className="flex items-center justify-between gap-1">
                     <span className="text-gray-400 text-[9.5px] leading-tight whitespace-nowrap">{row.day}</span>
@@ -203,6 +215,14 @@ export default function Footer() {
                     style={{ filter: "invert(45%) sepia(90%) saturate(600%) hue-rotate(345deg) brightness(105%)" }} />
                 </span>
                 +880 1804-660238
+              </a>
+              <a href="tel:+8801863190537"
+                className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/c2">
+                <span className="w-6 h-6 rounded-lg bg-[#FB5724]/15 flex items-center justify-center shrink-0 group-hover/c2:bg-[#FB5724]/25 transition-colors">
+                  <Image src="/icon/telephone.png" alt="Phone" width={13} height={13} className="object-contain"
+                    style={{ filter: "invert(45%) sepia(90%) saturate(600%) hue-rotate(345deg) brightness(105%)" }} />
+                </span>
+                +880 1863-190537
               </a>
               <a href="mailto:pureapplebd@gmail.com"
                 className="flex items-center gap-2 text-gray-400 text-[11px] hover:text-[#FB5724] transition-colors group/m">
@@ -283,10 +303,10 @@ export default function Footer() {
             </h4>
             <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 space-y-2">
               {[
-                { day: "শনি – মঙ্গল", time: "10:00 – 21:00" },
+                { day: "শনি – মঙ্গল", time: "11:00 – 22:00" },
                 { day: "বুধবার",       time: "বন্ধ" },
-                { day: "বৃহস্পতি",     time: "10:00 – 21:00" },
-                { day: "শুক্রবার",     time: "14:00 – 21:00" },
+                { day: "বৃহস্পতি",     time: "11:00 – 22:00" },
+                { day: "শুক্রবার",     time: "11:00 – 22:00" },
               ].map((row) => (
                 <div key={row.day} className="flex items-center justify-between gap-2">
                   <span className="text-gray-400 text-[10px] leading-tight">{row.day}</span>
