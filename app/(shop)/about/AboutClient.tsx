@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import {
-  Phone, Mail, MapPin, Clock,
   Facebook, Instagram, Youtube, MessageCircle,
 } from "lucide-react";
 
@@ -203,21 +202,6 @@ export default function AboutClient() {
                 </div>
               </div>
 
-              {/* Stats — 4 cols on mobile too */}
-              <div className="grid grid-cols-4 gap-2 sm:gap-3 mt-6">
-                {[
-                  { v: "5000+", l: "Clients" },
-                  { v: "500+",  l: "Products" },
-                  { v: "4+",    l: "Years" },
-                  { v: "4.9★",  l: "Rating" },
-                ].map(s => (
-                  <div key={s.l} className="text-center bg-white/5 rounded-xl py-3 border border-white/8">
-                    <div className="text-base sm:text-lg font-black text-brand-400">{s.v}</div>
-                    <div className="text-gray-400 text-[9px] sm:text-[10px] font-medium mt-0.5">{s.l}</div>
-                  </div>
-                ))}
-              </div>
-
               {/* Buttons */}
               <div className="flex gap-3 mt-6 justify-center lg:justify-start">
                 <Link href="/products"
@@ -305,119 +289,6 @@ export default function AboutClient() {
             />
           </div>
 
-          {/* Contact + Hours — stacked on mobile, side by side on md+ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* Contact card */}
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm">
-              <h3 className="font-bold text-gray-900 text-sm mb-4 flex items-center gap-2">
-                <span className="w-1 h-4 rounded-full bg-brand-500" />
-                যোগাযোগ করুন
-              </h3>
-              <div className="space-y-3">
-                {/* Phone 1 */}
-                <a href="tel:+8801804660238"
-                  className="flex items-center gap-3 group active:opacity-70 transition-opacity">
-                  <span className="w-9 h-9 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center shrink-0">
-                    <Phone size={15} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] text-gray-400 leading-none mb-0.5">Phone</p>
-                    <p className="text-gray-800 font-semibold text-sm">+880 1804-660238</p>
-                  </div>
-                  <span className="ml-auto md:hidden text-[10px] text-brand-500 font-bold bg-brand-50 px-2 py-1 rounded-lg">Call</span>
-                </a>
-                {/* Phone 2 */}
-                <a href="tel:+8801863190537"
-                  className="flex items-center gap-3 group active:opacity-70 transition-opacity">
-                  <span className="w-9 h-9 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center shrink-0">
-                    <Phone size={15} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] text-gray-400 leading-none mb-0.5">Phone</p>
-                    <p className="text-gray-800 font-semibold text-sm">+880 1863-190537</p>
-                  </div>
-                  <span className="ml-auto md:hidden text-[10px] text-brand-500 font-bold bg-brand-50 px-2 py-1 rounded-lg">Call</span>
-                </a>
-
-                {/* Email */}
-                <a href="mailto:pureapplebd@gmail.com"
-                  className="flex items-center gap-3 group active:opacity-70 transition-opacity">
-                  <span className="w-9 h-9 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center shrink-0">
-                    <Mail size={15} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[10px] text-gray-400 leading-none mb-0.5">Email</p>
-                    <p className="text-gray-800 font-semibold text-sm truncate">pureapplebd@gmail.com</p>
-                  </div>
-                </a>
-
-                {/* Address */}
-                <div className="flex items-start gap-3">
-                  <span className="w-9 h-9 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center shrink-0 mt-0.5">
-                    <MapPin size={15} />
-                  </span>
-                  <div>
-                    <p className="text-[10px] text-gray-400 leading-none mb-0.5">Address</p>
-                    <p className="text-gray-800 font-semibold text-sm leading-snug">
-                      Jamuna Future Park, Level-4,<br />
-                      Block-B, Shop No: 4B-012B2,<br />
-                      Dhaka, Bangladesh
-                    </p>
-                  </div>
-                </div>
-
-                {/* WhatsApp CTA — prominent on mobile */}
-                <a href="https://wa.me/8801804660238" target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] font-bold text-sm py-2.5 rounded-xl active:scale-95 transition-all">
-                  <MessageCircle size={15} /> WhatsApp-এ Message করুন
-                </a>
-
-                {/* Social row */}
-                <div className="flex gap-2 pt-0.5">
-                  {socialLinks.map((s) => (
-                    <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                      className={`w-8 h-8 rounded-xl bg-gray-100 text-gray-500 hover:text-white flex items-center justify-center transition-all active:scale-95 ${s.bg}`}>
-                      {s.icon}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Store Hours card */}
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm">
-              <h3 className="font-bold text-gray-900 text-sm mb-4 flex items-center gap-2">
-                <span className="w-1 h-4 rounded-full bg-brand-500" />
-                Store Hours
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { day: "শনিবার – মঙ্গলবার", time: "11:00 – 22:00", open: true },
-                  { day: "বুধবার",              time: "বন্ধ",           open: false },
-                  { day: "বৃহস্পতিবার",         time: "11:00 – 22:00", open: true },
-                  { day: "শুক্রবার",             time: "11:00 – 22:00", open: true },
-                ].map(r => (
-                  <div key={r.day} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-50">
-                    <div className="flex items-center gap-2">
-                      <Clock size={12} className={r.open ? "text-leaf-500" : "text-red-400"} />
-                      <span className="text-gray-700 text-sm">{r.day}</span>
-                    </div>
-                    <span className={`text-sm font-bold ${r.open ? "text-leaf-600" : "text-red-500"}`}>
-                      {r.time}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Map button — big tap target on mobile */}
-              <a href="https://maps.google.com/?q=Jamuna+Future+Park+Dhaka" target="_blank" rel="noopener noreferrer"
-                className="mt-4 w-full flex items-center justify-center gap-2 bg-brand-50 hover:bg-brand-100 active:scale-95 text-brand-600 font-semibold text-sm py-3 rounded-xl border border-brand-100 transition-all">
-                <MapPin size={14} /> Google Maps-এ দেখুন
-              </a>
-            </div>
-
-          </div>
         </div>
       </section>
 
