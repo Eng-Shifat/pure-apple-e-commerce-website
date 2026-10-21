@@ -113,6 +113,8 @@ function toDatetimeLocal(iso: string | null | undefined): string {
   } catch { return ""; }
 }
 
+type GalleryItem = { url: string; color: string };
+
 // ── Parse new storage_prices format ─────────────────────────────────────────
 // Format: {"128GB": 83999, "UK|128GB": 87000, "UK|256GB": 98000}
 // Returns: { base: {"128GB": "83999"}, variants: {"UK": {"128GB":"87000","256GB":"98000"}} }
@@ -149,9 +151,19 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   const [imageSizeError, setImageSizeError] = useState("");
   const [localPreview, setLocalPreview] = useState<string>("");
 
-  const [colors,          setColors]          = useState<string[]>(parseArr(initialData.colors));
+  // Colors এখন Gallery Images থেকে derive হয়। শুধু legacy "photo ছাড়া" color গুলো আলাদা রাখা হয়েছে।
+  const [extraColors, setExtraColors] = useState<string[]>(() => {
+    const legacy = parseArr(initialData.colors);
+    let covered: string[] = [];
+    try {
+      const g = initialData.image_gallery ? JSON.parse(initialData.image_gallery) : [];
+      if (Array.isArray(g)) covered = g.map((x: unknown) => (typeof x === "object" && x ? String((x as GalleryItem).color ?? "") : "")).filter(Boolean);
+      const ci = initialData.color_images ? JSON.parse(initialData.color_images) : {};
+      covered = covered.concat(Object.keys(ci));
+    } catch {}
+    return legacy.filter((c) => !covered.includes(c));
+  });
   const [storageVariants, setStorageVariants] = useState<string[]>(parseArr(initialData.storage_variants));
-  const [colorInput,      setColorInput]      = useState("");
   const [storageInput,    setStorageInput]    = useState("");
 
   // Region list
@@ -167,22 +179,35 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   const [baseStoragePrices,   setBaseStoragePrices]   = useState<Record<string, string>>(initParsed.base);
   const [regionStorageMatrix, setRegionStorageMatrix] = useState<Record<string, Record<string, string>>>(initParsed.matrix);
 
-  // ── NEW: Color images ────────────────────────────────────────────────────
-  // colorImages: {"Black": "https://...", "White": "https://..."}
-  const [colorImages,       setColorImages]       = useState<Record<string, string>>(() => {
-    if (!initialData.color_images) return {};
-    try { return JSON.parse(initialData.color_images) as Record<string,string>; } catch { return {}; }
-  });
-  const [colorImageUploading, setColorImageUploading] = useState<Record<string, boolean>>({});
-  const [colorImageErrors,    setColorImageErrors]    = useState<Record<string, string>>({});
-
-  // ── Gallery images (additional product photos) ───────────────────────────
-  const [galleryImages,   setGalleryImages]   = useState<string[]>(() => {
-    if (!initialData.image_gallery) return [];
-    try { const p = JSON.parse(initialData.image_gallery); return Array.isArray(p) ? p : []; } catch { return []; }
+  // ── Gallery images (প্রতিটা photo-র সাথে optional color) ─────────────────
+  // image_gallery format: [{"url":"https://...","color":"Cosmic Orange"}, ...]  (পুরোনো ["url", ...] ও support করে)
+  const [galleryImages, setGalleryImages] = useState<GalleryItem[]>(() => {
+    const items: GalleryItem[] = [];
+    try {
+      const g = initialData.image_gallery ? JSON.parse(initialData.image_gallery) : [];
+      if (Array.isArray(g)) {
+        for (const it of g) {
+          if (typeof it === "string") items.push({ url: it, color: "" });
+          else if (it && typeof it.url === "string") items.push({ url: it.url, color: String(it.color ?? "") });
+        }
+      }
+    } catch {}
+    // Legacy color_images → gallery তে merge
+    try {
+      const ci: Record<string, string> = initialData.color_images ? JSON.parse(initialData.color_images) : {};
+      for (const [color, url] of Object.entries(ci)) {
+        if (!url) continue;
+        const ex = items.find((x) => x.url === url);
+        if (ex) { if (!ex.color) ex.color = color; }
+        else if (!items.some((x) => x.color === color)) items.push({ url, color });
+      }
+    } catch {}
+    return items;
   });
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [galleryUrlInput,  setGalleryUrlInput]  = useState("");
+  const [pendingColor,     setPendingColor]     = useState("");
+  const [customColorInput, setCustomColorInput] = useState("");
 
   const initCondition = (initialData.condition ?? urlCondition) || "brand-new";
 
@@ -219,18 +244,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   function handleNameChange(v: string) {
     set("name", v);
     if (!initialData.slug) set("slug", slugify(v));
-  }
-
-  // ── Color helpers ──
-  function addColor(c: string) {
-    const val = c.trim();
-    if (!val || colors.includes(val)) return;
-    setColors((prev) => [...prev, val]);
-    setColorInput("");
-  }
-  function removeColor(c: string) {
-    setColors((prev) => prev.filter((x) => x !== c));
-    setColorImages((prev) => { const n = { ...prev }; delete n[c]; return n; });
   }
 
   // ── Storage helpers ──
@@ -273,28 +286,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     }));
   }
 
-  // ── Color image upload ──
-  async function handleColorImageUpload(color: string, file: File) {
-    setColorImageErrors((prev) => ({ ...prev, [color]: "" }));
-    if (file.size > 20 * 1024) {
-      setColorImageErrors((prev) => ({ ...prev, [color]: `${(file.size/1024).toFixed(0)} KB — max 20 KB` }));
-      return;
-    }
-    setColorImageUploading((prev) => ({ ...prev, [color]: true }));
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const up = await adminFetch("/api/admin/upload", { method: "POST", body: fd });
-      const upData = await up.json();
-      if (!up.ok) throw new Error(upData.error ?? "Upload failed");
-      setColorImages((prev) => ({ ...prev, [color]: upData.url as string }));
-    } catch (err: unknown) {
-      setColorImageErrors((prev) => ({ ...prev, [color]: err instanceof Error ? err.message : "Upload failed" }));
-    } finally {
-      setColorImageUploading((prev) => ({ ...prev, [color]: false }));
-    }
-  }
-
   // ── Main image upload ──
   async function handleImageUpload(file: File) {
     setImageSizeError("");
@@ -333,7 +324,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       const up = await adminFetch("/api/admin/upload", { method: "POST", body: fd });
       const upData = await up.json();
       if (!up.ok) throw new Error(upData.error ?? "Upload failed");
-      setGalleryImages((prev) => [...prev, upData.url as string]);
+      setGalleryImages((prev) => [...prev, { url: upData.url as string, color: pendingColor }]);
     } catch (err: unknown) {
       setError(`Gallery upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
@@ -435,9 +426,16 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
       }
     }
 
-    // ── Color images JSON ─────────────────────────────────────────────────
-    const finalColorImages = Object.keys(colorImages).length > 0
-      ? JSON.stringify(colorImages)
+    // ── Gallery থেকে colors + color_images derive ───────────────────────────
+    const galleryColors = Array.from(new Set(galleryImages.map((g) => g.color.trim()).filter(Boolean)));
+    const finalColors = Array.from(new Set([...galleryColors, ...extraColors]));
+    const colorImagesDerived: Record<string, string> = {};
+    for (const g of galleryImages) {
+      const c = g.color.trim();
+      if (c && g.url && !colorImagesDerived[c]) colorImagesDerived[c] = g.url;
+    }
+    const finalColorImages = Object.keys(colorImagesDerived).length > 0
+      ? JSON.stringify(colorImagesDerived)
       : null;
 
     setSaving(true);
@@ -470,9 +468,11 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
           ? { battery_health: batteryStr === "" ? null : batteryStr }
           : { battery_health: undefined }),
         stock:            form.stock === "" ? null : Number(form.stock),
-        colors:           colors.length > 0 ? JSON.stringify(colors) : null,
+        colors:           finalColors.length > 0 ? JSON.stringify(finalColors) : null,
         color_images:     finalColorImages,
-        image_gallery:    galleryImages.length > 0 ? JSON.stringify(galleryImages) : null,
+        image_gallery:    galleryImages.length > 0
+          ? JSON.stringify(galleryImages.map((g) => ({ url: g.url, color: g.color.trim() })))
+          : null,
         storage_variants: storageVariants.length > 0 ? JSON.stringify(storageVariants) : null,
         storage_prices:   Object.keys(finalStoragePrices).length > 0
           ? JSON.stringify(finalStoragePrices) : null,
@@ -660,88 +660,6 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             <X size={13}/> Offer সরিয়ে দাও
           </button>
         )}
-      </section>
-
-      {/* ── 🎨 Colors + Images ── */}
-      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-        <div>
-          <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">🎨 Available Colors & Images</h2>
-          <p className="text-xs text-gray-400 mt-1">Color select করলে সেই color-এর জন্য আলাদা image দিতে পারবেন। Image না দিলেও চলবে।</p>
-        </div>
-
-        {/* Color presets */}
-        <div className="flex flex-wrap gap-2">
-          {COLOR_PRESETS.map((c) => (
-            <button key={c} type="button" onClick={() => addColor(c)} disabled={colors.includes(c)}
-              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${colors.includes(c) ? "bg-brand-500 text-white border-brand-500" : "border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600"}`}
-            >{c}</button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input value={colorInput} onChange={(e) => setColorInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addColor(colorInput); }}}
-            placeholder="Custom color name…" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
-          <button type="button" onClick={() => addColor(colorInput)} className="px-4 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:bg-brand-600 flex items-center gap-1"><Plus size={14}/> Add</button>
-        </div>
-
-        {/* Color cards with image upload */}
-        {colors.length > 0 && (
-          <div className="space-y-3">
-            {colors.map((c) => {
-              const img = colorImages[c];
-              const isUp = colorImageUploading[c];
-              const err = colorImageErrors[c];
-              return (
-                <div key={c} className="border border-gray-100 rounded-xl p-3 bg-gray-50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full border border-gray-300 inline-block" style={{backgroundColor: c.toLowerCase() === "black" ? "#111" : c.toLowerCase() === "white" ? "#fff" : c.toLowerCase() === "gold" ? "#d4af37" : c.toLowerCase() === "silver" ? "#c0c0c0" : c.toLowerCase() === "red" ? "#ef4444" : c.toLowerCase() === "purple" ? "#7c3aed" : c.toLowerCase() === "pink" ? "#ec4899" : c.toLowerCase() === "green" ? "#22c55e" : c.toLowerCase() === "yellow" ? "#eab308" : c.toLowerCase() === "blue" ? "#3b82f6" : "#9ca3af"}}/>
-                      {c}
-                    </span>
-                    <button type="button" onClick={() => removeColor(c)} className="text-gray-300 hover:text-red-400"><X size={14}/></button>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {/* Image preview */}
-                    <div className="w-14 h-14 rounded-lg bg-white border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-                      {img ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={img} alt={c} className="w-full h-full object-contain p-1"/>
-                      ) : (
-                        <ImageOff size={18} className="text-gray-300"/>
-                      )}
-                    </div>
-
-                    {/* Upload + URL */}
-                    <div className="flex-1 space-y-1.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <label className={`cursor-pointer text-xs flex items-center gap-1.5 border rounded-lg px-3 py-1.5 font-medium transition ${isUp ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand-300 text-brand-600 hover:bg-brand-50"}`}>
-                          {isUp ? <><Loader2 size={12} className="animate-spin"/> Uploading…</> : <><Upload size={12}/> Upload</>}
-                          <input type="file" accept="image/*" disabled={isUp} className="hidden"
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleColorImageUpload(c, f); }}/>
-                        </label>
-                        <span className="text-[10px] text-gray-400">or paste URL</span>
-                        {img && (
-                          <button type="button" onClick={() => setColorImages((prev) => { const n = {...prev}; delete n[c]; return n; })}
-                            className="text-[10px] text-red-400 hover:text-red-600 border border-red-200 px-2 py-1 rounded-lg">Remove</button>
-                        )}
-                      </div>
-                      <input
-                        value={img ?? ""}
-                        onChange={(e) => setColorImages((prev) => ({ ...prev, [c]: e.target.value }))}
-                        placeholder="https://… (optional)"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-300 bg-white"
-                      />
-                      {err && <p className="text-[11px] text-red-500">{err}</p>}
-                      {!img && <p className="text-[10px] text-amber-500 flex items-center gap-1"><AlertCircle size={11}/> Photo নেই — color শুধু নাম হিসেবে দেখাবে</p>}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {colors.length === 0 && <p className="text-xs text-gray-400">No colors added — color selector won&apos;t show on product page.</p>}
       </section>
 
       {/* ── 💾 Storage + Region Matrix Pricing ── */}
@@ -965,31 +883,81 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </div>
       </section>
 
-      {/* ── Gallery Images ── */}
+      {/* ── Gallery Images (with Color) ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Gallery Images <span className="text-gray-400 font-normal normal-case">(Optional)</span></h2>
+          <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Gallery Images & Colors <span className="text-gray-400 font-normal normal-case">(Optional)</span></h2>
           <span className="text-[11px] text-gray-400">{galleryImages.length} photo{galleryImages.length !== 1 ? "s" : ""} added</span>
         </div>
-        <p className="text-xs text-gray-400 -mt-2">Product detail page-এ main image-এর নিচে thumbnail হিসেবে দেখাবে। Click করলে main image বদলাবে।</p>
+        <p className="text-xs text-gray-400 -mt-2">প্রতিটা photo-র সাথে color দিন। Product page-এ client color-এ click করলে সেই color-এর photo দেখাবে, আর thumbnail-এ click করলে color-ও বদলাবে। যে colors দিবেন সেগুলোই product page-এর Color selector-এ আসবে।</p>
+
+        {/* Color for the NEXT photo */}
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-gray-600">নতুন photo-র Color</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setPendingColor("")}
+              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${pendingColor === "" ? "bg-gray-800 text-white border-gray-800" : "border-gray-200 text-gray-600 hover:border-gray-400"}`}
+            >No color</button>
+            {Array.from(new Set([...COLOR_PRESETS, ...galleryImages.map((g) => g.color).filter(Boolean)])).map((c) => (
+              <button key={c} type="button" onClick={() => setPendingColor(c)}
+                className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${pendingColor === c ? "bg-brand-500 text-white border-brand-500" : "border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600"}`}
+              >{c}</button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input value={customColorInput} onChange={(e) => setCustomColorInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const v = customColorInput.trim(); if (v) { setPendingColor(v); setCustomColorInput(""); } } }}
+              placeholder="Custom color name… e.g. Cosmic Orange" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+            <button type="button" onClick={() => { const v = customColorInput.trim(); if (v) { setPendingColor(v); setCustomColorInput(""); } }}
+              className="px-4 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold hover:bg-brand-600 flex items-center gap-1"><Plus size={14}/> Use</button>
+          </div>
+          <p className="text-[11px] text-gray-500">Selected: <span className="font-bold text-brand-600">{pendingColor || "No color"}</span></p>
+        </div>
 
         {/* Existing gallery thumbnails */}
         {galleryImages.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {galleryImages.map((url, i) => (
-              <div key={i} className="relative group w-20 h-20 rounded-xl border-2 border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-contain p-1"/>
-                <button
-                  type="button"
-                  onClick={() => setGalleryImages((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
-                >
-                  <X size={10}/>
-                </button>
-                <span className="absolute bottom-1 left-1 text-[9px] font-bold text-gray-400 bg-white/80 px-1 rounded">#{i + 1}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {galleryImages.map((g, i) => (
+              <div key={i} className="border border-gray-100 rounded-xl p-2 bg-gray-50 space-y-2">
+                <div className="relative group w-full h-24 rounded-lg border border-gray-100 overflow-hidden bg-white flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={g.url} alt={`Gallery ${i + 1}`} className="w-full h-full object-contain p-1"/>
+                  <button
+                    type="button"
+                    onClick={() => setGalleryImages((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                  >
+                    <X size={10}/>
+                  </button>
+                  <span className="absolute bottom-1 left-1 text-[9px] font-bold text-gray-400 bg-white/80 px-1 rounded">#{i + 1}</span>
+                </div>
+                <input
+                  list="gallery-color-options"
+                  value={g.color}
+                  onChange={(e) => setGalleryImages((prev) => prev.map((x, idx) => idx === i ? { ...x, color: e.target.value } : x))}
+                  placeholder="Color (optional)"
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-300 bg-white"
+                />
               </div>
             ))}
+          </div>
+        )}
+        <datalist id="gallery-color-options">
+          {Array.from(new Set([...COLOR_PRESETS, ...galleryImages.map((g) => g.color).filter(Boolean)])).map((c) => <option key={c} value={c}/>)}
+        </datalist>
+
+        {/* Legacy colors without photo */}
+        {extraColors.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-bold text-gray-500">Photo ছাড়া Colors (শুধু নাম হিসেবে দেখাবে)</p>
+            <div className="flex flex-wrap gap-2">
+              {extraColors.map((c) => (
+                <span key={c} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-gray-700">
+                  {c}
+                  <button type="button" onClick={() => setExtraColors((prev) => prev.filter((x) => x !== c))} className="text-gray-400 hover:text-red-500"><X size={11}/></button>
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
@@ -1011,7 +979,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
                 if (e.key === "Enter") {
                   e.preventDefault();
                   const url = galleryUrlInput.trim();
-                  if (url) { setGalleryImages((prev) => [...prev, url]); setGalleryUrlInput(""); }
+                  if (url) { setGalleryImages((prev) => [...prev, { url, color: pendingColor }]); setGalleryUrlInput(""); }
                 }
               }}
             />
@@ -1019,7 +987,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
               type="button"
               onClick={() => {
                 const url = galleryUrlInput.trim();
-                if (url) { setGalleryImages((prev) => [...prev, url]); setGalleryUrlInput(""); }
+                if (url) { setGalleryImages((prev) => [...prev, { url, color: pendingColor }]); setGalleryUrlInput(""); }
               }}
               className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-xl transition"
             >
@@ -1027,7 +995,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             </button>
           </div>
         </div>
-        <p className="text-[11px] text-gray-400">Max 20 KB per upload। URL paste করে Enter বা + press করুন।</p>
+        <p className="text-[11px] text-gray-400">Max 20 KB per upload। উপরে color select করে তারপর photo add করুন। URL paste করে Enter বা + press করুন।</p>
       </section>
 
       {/* ── Battery Health ── */}

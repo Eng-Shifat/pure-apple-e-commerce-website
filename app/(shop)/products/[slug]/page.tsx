@@ -314,17 +314,58 @@ export default function ProductDetailPage() {
   }, [product?.id, slug]);
 
   // ── Build image list from DB product ──
-  const colorList = parseArr(product?.colors);
-  // Main image + image_gallery additional photos
-  const galleryExtra: string[] = product?.image_gallery
-    ? parseArr(product.image_gallery).map(fixImage)
-    : [];
-  const images: string[] = product
-    ? [fixImage(product.image), ...galleryExtra].filter(Boolean)
-    : [];
+  // Colors = product.colors + gallery-র color গুলো (duplicate ছাড়া)
+  const colorList: string[] = (() => {
+    const base = parseArr(product?.colors);
+    const out = [...base];
+    if (product?.image_gallery) {
+      try {
+        const g = JSON.parse(product.image_gallery);
+        if (Array.isArray(g)) for (const it of g) {
+          const c = it && typeof it === "object" ? String((it as { color?: unknown }).color ?? "").trim() : "";
+          if (c && !out.some((x) => x.toLowerCase() === c.toLowerCase())) out.push(c);
+        }
+      } catch { /* ignore */ }
+    }
+    return out;
+  })();
+
+  // Main image + image_gallery additional photos (প্রতিটা photo-র সাথে optional color)
+  // image_gallery: [{"url":"...","color":"Cosmic Orange"}, ...] অথবা পুরোনো ["url", ...]
+  const galleryItems: { url: string; color: string }[] = (() => {
+    if (!product?.image_gallery) return [];
+    try {
+      const g = JSON.parse(product.image_gallery);
+      if (!Array.isArray(g)) return [];
+      return g
+        .map((it: unknown) =>
+          typeof it === "string"
+            ? { url: fixImage(it), color: "" }
+            : it && typeof (it as { url?: unknown }).url === "string"
+              ? { url: fixImage((it as { url: string }).url), color: String((it as { color?: unknown }).color ?? "") }
+              : null
+        )
+        .filter((x): x is { url: string; color: string } => !!x);
+    } catch { return []; }
+  })();
+
+  const images: string[] = product ? [fixImage(product.image), ...galleryItems.map((g) => g.url)] : [];
+  // images এর সাথে parallel — কোন image কোন color এর (main image = "")
+  const imageColors: string[] = product ? ["", ...galleryItems.map((g) => g.color)] : [];
 
   function pickColor(name: string) {
     setSelColor(name);
+    const idx = imageColors.findIndex((c) => c.toLowerCase() === name.toLowerCase());
+    if (idx >= 0) setActiveImg(idx);
+  }
+
+  function pickImage(i: number) {
+    setActiveImg(i);
+    const c = imageColors[i];
+    if (c) {
+      const match = colorList.find((x) => x.toLowerCase() === c.toLowerCase());
+      if (match) setSelColor(match);
+    }
   }
 
   const storageVariants = product?.storage_variants ? parseArr(product.storage_variants) : [];
@@ -555,7 +596,7 @@ export default function ProductDetailPage() {
                 {images.map((src, i) => (
                   <button
                     key={i}
-                    onClick={() => setActiveImg(i)}
+                    onClick={() => pickImage(i)}
                     className={`
                       relative w-16 h-16 rounded-xl border-2 overflow-hidden bg-white
                       flex items-center justify-center
