@@ -61,7 +61,7 @@ export async function PUT(
     v === "" || v === null || v === undefined || Number.isNaN(Number(v)) ? null : Number(v);
 
   for (const k of [
-    "original_price", "stock", "deal_price", "battery_health",
+    "original_price", "stock", "deal_price",
     "brand_new_price", "pre_owned_price",
     "offer_price_brand_new", "offer_price_pre_owned",
   ]) {
@@ -79,9 +79,12 @@ export async function PUT(
     payload.price = payload.brand_new_price;
   }
 
-  // battery_health can be a single number ("89") or a range ("80-95") — skip old Number() check
-  if (payload.battery_health != null && typeof payload.battery_health === "number" && (payload.battery_health < 0 || payload.battery_health > 100)) {
-    return NextResponse.json({ error: "Battery health must be between 0 and 100" }, { status: 400 });
+  // battery_health: stored as TEXT — supports single "89" or range "80-95"
+  // Do NOT convert via numOrNull — that turns "80-95" into null (NaN → null bug)
+  if ("battery_health" in payload) {
+    const bh = payload.battery_health;
+    payload.battery_health =
+      bh === "" || bh === null || bh === undefined ? null : String(bh);
   }
 
   // offer_ends_at = "" or explicit null → clear offer
