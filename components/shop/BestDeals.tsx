@@ -77,7 +77,6 @@ export default function BestDeals() {
             View All →
           </Link>
         </div>
-
         {/* Mobile: single-row horizontal scroll */}
         <div
           className="flex gap-3 overflow-x-auto sm:hidden pb-4"
