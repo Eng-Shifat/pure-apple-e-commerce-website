@@ -313,11 +313,13 @@ export default function ProductDetailPage() {
   }, [product?.id, slug]);
 
   // ── Build image list from DB product ──
-  // Main image first, then parse colors for color-keyed images
   const colorList = parseArr(product?.colors);
-  // Build image gallery: main image + any additional images stored in image_gallery (future)
+  // Main image + image_gallery additional photos
+  const galleryExtra: string[] = product?.image_gallery
+    ? parseArr(product.image_gallery).map(fixImage)
+    : [];
   const images: string[] = product
-    ? [fixImage(product.image)].filter(Boolean)
+    ? [fixImage(product.image), ...galleryExtra].filter(Boolean)
     : [];
 
   function pickColor(name: string) {
@@ -561,36 +563,6 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Related products photo strip — shows in left column below image */}
-            {related.length > 0 && (
-              <div className="mt-1">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Related Products</p>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                  {related.slice(0, 8).map((rp) => (
-                    <Link
-                      key={rp.id}
-                      href={`/products/${rp.slug}`}
-                      className="shrink-0 flex flex-col items-center gap-1 group"
-                    >
-                      <div className="w-[68px] h-[68px] rounded-2xl border-2 border-gray-100 group-hover:border-brand-400 bg-white flex items-center justify-center overflow-hidden transition-all duration-200 shadow-sm group-hover:shadow-md">
-                        <div className="relative w-12 h-12">
-                          <Image
-                            src={fixImage(rp.image)}
-                            alt={rp.name}
-                            fill
-                            className="object-contain group-hover:scale-110 transition-transform duration-200"
-                            sizes="48px"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-gray-500 text-center w-[68px] line-clamp-1 leading-tight px-0.5">
-                        {rp.name}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* RIGHT: Info */}

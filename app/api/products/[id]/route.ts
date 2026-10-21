@@ -42,7 +42,7 @@ export async function PUT(
     "category", "condition", "is_available", "stock",
     "product_code", "colors", "storage_variants",
     "storage_prices", "region_prices", "regions",
-    "emi_available", "whatsapp_number", "battery_health",
+    "emi_available", "whatsapp_number", "battery_health", "image_gallery",
     // Legacy today's deal
     "is_today_deal", "deal_price", "deal_ends_at",
     // New: condition-specific prices

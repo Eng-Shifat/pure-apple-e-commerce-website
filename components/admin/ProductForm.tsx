@@ -36,6 +36,7 @@ interface ProductFormProps {
     regions?: string;
     emi_available?: boolean;
     whatsapp_number?: string;
+    image_gallery?: string | null;
     brand_new_price?: number | null;
     pre_owned_price?: number | null;
     offer_price_brand_new?: number | null;
@@ -175,6 +176,14 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
   const [colorImageUploading, setColorImageUploading] = useState<Record<string, boolean>>({});
   const [colorImageErrors,    setColorImageErrors]    = useState<Record<string, string>>({});
 
+  // ── Gallery images (additional product photos) ───────────────────────────
+  const [galleryImages,   setGalleryImages]   = useState<string[]>(() => {
+    if (!initialData.image_gallery) return [];
+    try { const p = JSON.parse(initialData.image_gallery); return Array.isArray(p) ? p : []; } catch { return []; }
+  });
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [galleryUrlInput,  setGalleryUrlInput]  = useState("");
+
   const initCondition = (initialData.condition ?? urlCondition) || "brand-new";
 
   const [form, setForm] = useState({
@@ -313,6 +322,25 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     }
   }
 
+  // ── Gallery image upload ──
+  async function handleGalleryUpload(file: File) {
+    if (file.size > 20 * 1024) { setError(`Gallery image too large (max 20 KB).`); return; }
+    setGalleryUploading(true);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await adminFetch("/api/admin/upload", { method: "POST", body: fd });
+      const upData = await up.json();
+      if (!up.ok) throw new Error(upData.error ?? "Upload failed");
+      setGalleryImages((prev) => [...prev, upData.url as string]);
+    } catch (err: unknown) {
+      setError(`Gallery upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setGalleryUploading(false);
+    }
+  }
+
   // ── Offer helpers ──
   const hasActiveOffer = (() => {
     return Number(form.offer_price_brand_new) > 0 || Number(form.offer_price_pre_owned) > 0;
@@ -444,6 +472,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         stock:            form.stock === "" ? null : Number(form.stock),
         colors:           colors.length > 0 ? JSON.stringify(colors) : null,
         color_images:     finalColorImages,
+        image_gallery:    galleryImages.length > 0 ? JSON.stringify(galleryImages) : null,
         storage_variants: storageVariants.length > 0 ? JSON.stringify(storageVariants) : null,
         storage_prices:   Object.keys(finalStoragePrices).length > 0
           ? JSON.stringify(finalStoragePrices) : null,
@@ -934,6 +963,71 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ── Gallery Images ── */}
+      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Gallery Images <span className="text-gray-400 font-normal normal-case">(Optional)</span></h2>
+          <span className="text-[11px] text-gray-400">{galleryImages.length} photo{galleryImages.length !== 1 ? "s" : ""} added</span>
+        </div>
+        <p className="text-xs text-gray-400 -mt-2">Product detail page-এ main image-এর নিচে thumbnail হিসেবে দেখাবে। Click করলে main image বদলাবে।</p>
+
+        {/* Existing gallery thumbnails */}
+        {galleryImages.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {galleryImages.map((url, i) => (
+              <div key={i} className="relative group w-20 h-20 rounded-xl border-2 border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-contain p-1"/>
+                <button
+                  type="button"
+                  onClick={() => setGalleryImages((prev) => prev.filter((_, idx) => idx !== i))}
+                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                >
+                  <X size={10}/>
+                </button>
+                <span className="absolute bottom-1 left-1 text-[9px] font-bold text-gray-400 bg-white/80 px-1 rounded">#{i + 1}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add new gallery image */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <label className={`cursor-pointer flex items-center gap-2 border-2 border-dashed rounded-xl px-4 py-2.5 text-sm transition shrink-0 ${galleryUploading ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand-300 text-brand-600 hover:bg-brand-50"}`}>
+            {galleryUploading ? <><Loader2 size={14} className="animate-spin"/> Uploading…</> : <><Upload size={14}/> Upload photo</>}
+            <input type="file" accept="image/*" disabled={galleryUploading} className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleGalleryUpload(f); e.target.value = ""; }}/>
+          </label>
+          <div className="flex gap-2 flex-1">
+            <input
+              type="text"
+              value={galleryUrlInput}
+              onChange={(e) => setGalleryUrlInput(e.target.value)}
+              placeholder="or paste image URL…"
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-300"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const url = galleryUrlInput.trim();
+                  if (url) { setGalleryImages((prev) => [...prev, url]); setGalleryUrlInput(""); }
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const url = galleryUrlInput.trim();
+                if (url) { setGalleryImages((prev) => [...prev, url]); setGalleryUrlInput(""); }
+              }}
+              className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-xl transition"
+            >
+              <Plus size={16}/>
+            </button>
+          </div>
+        </div>
+        <p className="text-[11px] text-gray-400">Max 20 KB per upload। URL paste করে Enter বা + press করুন।</p>
       </section>
 
       {/* ── Battery Health ── */}

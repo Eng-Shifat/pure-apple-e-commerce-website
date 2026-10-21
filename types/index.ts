@@ -67,6 +67,8 @@ export interface Product {
   regions?: string;
   emi_available?: boolean;
   battery_health?: string | number | null;
+  /** JSON string: ["https://...", "https://..."] — additional product images for gallery */
+  image_gallery?: string | null;
   whatsapp_number?: string;
   created_at?: string;
   updated_at?: string;
