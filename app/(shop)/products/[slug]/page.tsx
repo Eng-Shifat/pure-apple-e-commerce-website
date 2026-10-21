@@ -50,9 +50,9 @@ function RelatedCard({ p }: { p: Product }) {
 
 // ── Sticky Cart Bar ──
 function StickyCartBar({
-  product, qty, selColor, selStorage, price, onDismiss,
+  product, qty, selColor, selStorage, selRegion, price, onDismiss,
 }: {
-  product: Product; qty: number; selColor: string; selStorage: string; price: number; onDismiss: () => void;
+  product: Product; qty: number; selColor: string; selStorage: string; selRegion?: string; price: number; onDismiss: () => void;
 }) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50" style={{ animation: "slideUp 0.25s ease-out" }}>
@@ -66,6 +66,7 @@ function StickyCartBar({
             <div className="flex items-center gap-2 flex-wrap mt-0.5">
               {selColor   && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{selColor}</span>}
               {selStorage && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{selStorage}</span>}
+              {selRegion  && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{selRegion}</span>}
               <span className="text-xs text-gray-400">Qty: <strong>{qty}</strong></span>
             </div>
           </div>
@@ -240,7 +241,7 @@ export default function ProductDetailPage() {
   const addItem = useCartStore((s) => s.addItem);
 
   // Reset "Added!" state when user changes qty/color/storage
-  useEffect(() => { setAdded(false); }, [qty, selColor, selStorage]);
+  useEffect(() => { setAdded(false); }, [qty, selColor, selStorage, selRegion]);
 
   // ── Fetch product from DB only ──
   useEffect(() => {
@@ -332,28 +333,43 @@ export default function ProductDetailPage() {
     : [];
 
   // ── Dynamic price based on selected storage + region ──
+  // storage_prices format (admin ProductForm):
+  //   { "256GB": 148000, "512GB": 165000,            ← Base (region ছাড়া)
+  //     "Sim+ E-Sim|256GB": 148000, "Dual E-Sim|512GB": 170000 }   ← Region|Storage matrix (absolute price)
+  // Legacy: region_prices = { "HK": -5000 } (delta) — এখনো support করা হয়েছে।
+  const storagePriceMap: Record<string, number> = (() => {
+    if (!product?.storage_prices) return {};
+    try {
+      const sp = JSON.parse(product.storage_prices);
+      return sp && typeof sp === "object" ? sp : {};
+    } catch { return {}; }
+  })();
+
+  const regionDeltaMap: Record<string, number> = (() => {
+    if (!product?.region_prices) return {};
+    try {
+      const rp = JSON.parse(product.region_prices);
+      return rp && typeof rp === "object" ? rp : {};
+    } catch { return {}; }
+  })();
+
   const baseFor = (storage: string): number => {
-    if (product && storage === storageVariants[0]) return conditionBasePrice;
-    if (product?.storage_prices) {
-      try {
-        const sp: Record<string, number> = JSON.parse(product.storage_prices);
-        return sp[storage] ?? conditionBasePrice;
-      } catch { /* fall through */ }
-    }
-    return conditionBasePrice;
+    if (!storage || storage === storageVariants[0]) return conditionBasePrice;
+    const v = Number(storagePriceMap[storage]);
+    return v > 0 ? v : conditionBasePrice;
   };
 
-  const deltaFor = (region: string): number => {
-    if (product?.region_prices) {
-      try {
-        const rp: Record<string, number> = JSON.parse(product.region_prices);
-        return rp[region] ?? 0;
-      } catch { /* ignore */ }
+  const priceFor = (storage: string, region: string): number => {
+    // 1) Region × Storage matrix (absolute price) — সবচেয়ে বেশি priority
+    if (region && storage) {
+      const m = Number(storagePriceMap[`${region}|${storage}`]);
+      if (m > 0) return m;
     }
-    return 0;
+    // 2) Storage base price + legacy region delta
+    return baseFor(storage) + (region ? Number(regionDeltaMap[region] ?? 0) : 0);
   };
 
-  const computedPrice = baseFor(selStorage) + deltaFor(selRegion);
+  const computedPrice = priceFor(selStorage, selRegion);
 
   const offerDiscount = activeOfferInfo && product
     ? Math.max(0, conditionBasePrice - activeOfferInfo.offer_price)
@@ -445,7 +461,7 @@ export default function ProductDetailPage() {
   const inStock   = product.is_available !== false;
   const stockCount = product.stock ?? null;
 
-  const waMsg = encodeURIComponent(`Hi! I'm interested in *${product.name}*${selColor ? ` (${selColor})` : ""}${selStorage ? ` – ${selStorage}` : ""}. Please let me know more. Product link: ${typeof window !== "undefined" ? window.location.href : ""}`);
+  const waMsg = encodeURIComponent(`Hi! I'm interested in *${product.name}*${selColor ? ` (${selColor})` : ""}${selStorage ? ` – ${selStorage}` : ""}${selRegion ? ` – ${selRegion}` : ""}. Please let me know more. Product link: ${typeof window !== "undefined" ? window.location.href : ""}`);
   const waLink = product.whatsapp_number ? `https://wa.me/${product.whatsapp_number.replace(/\D/g,"")}?text=${waMsg}` : null;
 
   return (
@@ -805,6 +821,7 @@ export default function ProductDetailPage() {
             qty={qty}
             selColor={selColor}
             selStorage={selStorage}
+            selRegion={selRegion}
             price={displayPrice}
             onDismiss={() => setShowCartBar(false)}
           />
