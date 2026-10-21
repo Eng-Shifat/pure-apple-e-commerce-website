@@ -66,7 +66,7 @@ export interface Product {
   /** comma-separated region codes: "HK,JP,US" */
   regions?: string;
   emi_available?: boolean;
-  battery_health?: number | null;
+  battery_health?: string | number | null;
   whatsapp_number?: string;
   created_at?: string;
   updated_at?: string;

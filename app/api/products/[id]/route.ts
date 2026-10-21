@@ -79,7 +79,8 @@ export async function PUT(
     payload.price = payload.brand_new_price;
   }
 
-  if (payload.battery_health != null && (Number(payload.battery_health) < 0 || Number(payload.battery_health) > 100)) {
+  // battery_health can be a single number ("89") or a range ("80-95") — skip old Number() check
+  if (payload.battery_health != null && typeof payload.battery_health === "number" && (payload.battery_health < 0 || payload.battery_health > 100)) {
     return NextResponse.json({ error: "Battery health must be between 0 and 100" }, { status: 400 });
   }
 

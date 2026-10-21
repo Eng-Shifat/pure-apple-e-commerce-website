@@ -752,7 +752,7 @@ export default function ProductDetailPage() {
                     { label:"Model / Variant",    value: product.variant || product.name },
                     { label:"Product Code",       value: product.product_code || "—" },
                     { label:"Condition",          value: product.condition==="pre-owned" ? "Pre-Owned" : "Brand New" },
-                    ...(product.battery_health != null && Number(product.battery_health) > 0
+                    ...(product.battery_health != null && String(product.battery_health).trim() !== ""
                       ? [{ label:"Battery Health", value: `🔋 ${product.battery_health}%` }]
                       : []),
                     { label:"Display",            value: product.spec_screen || "—" },

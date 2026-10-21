@@ -193,7 +193,7 @@ export async function POST(req: NextRequest) {
     emi_available: emi_available ?? false,
     whatsapp_number: whatsapp_number ?? null,
     ...(battery_health !== undefined && battery_health !== null && battery_health !== ""
-      ? { battery_health: Math.min(100, Math.max(0, Number(battery_health))) }
+      ? { battery_health: String(battery_health) }
       : {}),
     // Legacy today's deal
     is_today_deal: is_today_deal ?? false,

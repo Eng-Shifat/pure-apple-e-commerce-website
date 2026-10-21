@@ -13,7 +13,7 @@ interface ProductFormProps {
     variant?: string;
     price?: number;
     original_price?: number;
-    battery_health?: number | null;
+    battery_health?: string | number | null;
     rating?: number;
     review_count?: number;
     image?: string;
@@ -352,9 +352,27 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     }
 
     const batteryStr = String(form.battery_health ?? "").trim();
-    if (batteryStr !== "" && !(Number(batteryStr) >= 0 && Number(batteryStr) <= 100)) {
-      setError("Battery Health 0 থেকে 100-এর মধ্যে হতে হবে।");
-      return;
+    if (batteryStr !== "") {
+      // Single number: 89
+      const single = /^\d{1,3}$/.test(batteryStr);
+      // Range: 80-95 or 80 - 95
+      const range = /^(\d{1,3})\s*-\s*(\d{1,3})$/.test(batteryStr);
+      if (!single && !range) {
+        setError("Battery Health সঠিকভাবে দিন — যেমন: 89 বা 91-95");
+        return;
+      }
+      if (single && !(Number(batteryStr) >= 0 && Number(batteryStr) <= 100)) {
+        setError("Battery Health 0 থেকে 100-এর মধ্যে হতে হবে।");
+        return;
+      }
+      if (range) {
+        const m = batteryStr.match(/^(\d{1,3})\s*-\s*(\d{1,3})$/);
+        const lo = Number(m![1]), hi = Number(m![2]);
+        if (lo < 0 || hi > 100 || lo >= hi) {
+          setError("Battery Health range সঠিক নয় — যেমন: 80-95 (ছোট সংখ্যা আগে, 0-100 এর মধ্যে)");
+          return;
+        }
+      }
     }
 
     const bnOffer = form.offer_price_brand_new !== "" ? Number(form.offer_price_brand_new) : null;
@@ -421,7 +439,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         offer_ends_at: offerEndsAt,
         offer_type: (bnOffer || poOffer) ? (form.offer_type || "Offer") : null,
         ...(batteryStr !== "" || initialData.battery_health != null
-          ? { battery_health: batteryStr === "" ? null : Number(batteryStr) }
+          ? { battery_health: batteryStr === "" ? null : batteryStr }
           : { battery_health: undefined }),
         stock:            form.stock === "" ? null : Number(form.stock),
         colors:           colors.length > 0 ? JSON.stringify(colors) : null,
@@ -924,9 +942,17 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         <div className="max-w-xs">
           <label className="block text-xs font-semibold text-gray-600 mb-1">Battery Health (%)</label>
           <div className="relative">
-            <input type="number" min="0" max="100" step="1" value={form.battery_health} onChange={(e) => set("battery_health", e.target.value)} placeholder="e.g. 89" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"/>
+            <input
+              type="text"
+              inputMode="text"
+              value={form.battery_health}
+              onChange={(e) => set("battery_health", e.target.value)}
+              placeholder="e.g. 89 or 91-95"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
+            />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
           </div>
+          <p className="text-[11px] text-gray-400 mt-1">একটি সংখ্যা (89) বা range (91-95) দিতে পারবেন</p>
         </div>
       </section>
 
