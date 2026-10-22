@@ -703,7 +703,6 @@ export const PHONES: CatalogPhone[] = [
       { name: "Black", hex: "#1C1C1E", image: "/images/Phone/Nothing/nothing-4b.webp" },
     ],
   },
-];
 
   // ═══════════════════════════════════════════════
   // MEIZU — /images/Phone/Meizu/...
