@@ -712,7 +712,7 @@ export const PHONES: CatalogPhone[] = [
     id: "mz1", brand: "meizu", name: "Meizu 21 Pro", storage: "256GB",
     price: 64999, originalPrice: 72999, rating: 4.5, reviewCount: 120,
     slug: "meizu-21-pro", badge: "New", badgeColor: "#0066CC",
-    specs: { screen: "6.79″", ram: "12GB", camera: "50 MP" },
+    specs: { screen: '6.79"', ram: "12GB", camera: "50 MP" },
     colors: [
       { name: "Obsidian Black", hex: "#1a1a1a", image: "/images/Phone/Meizu/meizu-21-pro-black.webp" },
       { name: "Pearl White",   hex: "#F0EEE9", image: "/images/Phone/Meizu/meizu-21-pro-white.webp" },
@@ -722,7 +722,7 @@ export const PHONES: CatalogPhone[] = [
     id: "mz2", brand: "meizu", name: "Meizu 21", storage: "128GB",
     price: 49999, originalPrice: 54999, rating: 4.4, reviewCount: 85,
     slug: "meizu-21",
-    specs: { screen: "6.55″", ram: "8GB", camera: "50 MP" },
+    specs: { screen: '6.55"', ram: "8GB", camera: "50 MP" },
     colors: [
       { name: "Midnight Blue", hex: "#003087", image: "/images/Phone/Meizu/meizu-21-blue.webp" },
       { name: "Silver",        hex: "#C0C0C0", image: "/images/Phone/Meizu/meizu-21-silver.webp" },
@@ -732,7 +732,7 @@ export const PHONES: CatalogPhone[] = [
     id: "mz3", brand: "meizu", name: "Meizu Note 21", storage: "128GB",
     price: 34999, originalPrice: 39999, rating: 4.3, reviewCount: 64,
     slug: "meizu-note-21", badge: "Value", badgeColor: "#059669",
-    specs: { screen: "6.79″", ram: "8GB", camera: "64 MP" },
+    specs: { screen: '6.79"', ram: "8GB", camera: "64 MP" },
     colors: [
       { name: "Forest Green", hex: "#228B22", image: "/images/Phone/Meizu/meizu-note-21-green.webp" },
       { name: "Ivory White",  hex: "#FFFFF0", image: "/images/Phone/Meizu/meizu-note-21-white.webp" },
