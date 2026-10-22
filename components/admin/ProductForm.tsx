@@ -70,6 +70,7 @@ const CATEGORIES = [
   { label: "Vivo",     value: "vivo"     },
   { label: "Honor",    value: "honor"    },
   { label: "iQOO",     value: "iqoo"     },
+  { label: "Meizu",    value: "meizu"    },
   { label: "── Accessories ──",  value: "", disabled: true },
   { label: "Charger",     value: "charger"     },
   { label: "Speaker",     value: "speaker"     },
