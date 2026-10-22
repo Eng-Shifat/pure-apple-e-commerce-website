@@ -40,6 +40,7 @@ const SECTIONS = [
       { key: "vivo",     label: "Vivo",     emoji: "📱", color: "bg-indigo-50 border-indigo-100", badge: "bg-indigo-100 text-indigo-700", dot: "bg-indigo-400"  },
       { key: "honor",    label: "Honor",    emoji: "📱", color: "bg-emerald-50 border-emerald-100", badge: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-400" },
       { key: "iqoo",     label: "iQOO",     emoji: "📱", color: "bg-rose-50 border-rose-100",     badge: "bg-rose-100 text-rose-700",     dot: "bg-rose-400"    },
+      { key: "meizu",    label: "Meizu",    emoji: "📱", color: "bg-blue-50 border-blue-200",     badge: "bg-blue-100 text-blue-700",     dot: "bg-blue-500"    },
     ],
     filter: (p: Product, subKey: string) => p.category === subKey,
   },

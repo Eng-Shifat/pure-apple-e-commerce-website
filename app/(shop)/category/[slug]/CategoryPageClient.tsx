@@ -50,7 +50,7 @@ interface DbProduct {
 const BRAND_LABEL: Record<string, string> = {
   apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi",
   realme: "Realme", nothing: "Nothing", motorola: "Motorola", vivo: "Vivo",
-  honor: "Honor", iqoo: "iQOO", google: "Google",
+  honor: "Honor", iqoo: "iQOO", google: "Google", meizu: "Meizu",
 };
 
 // ─── DB product → SharedProduct ───────────────────────────────

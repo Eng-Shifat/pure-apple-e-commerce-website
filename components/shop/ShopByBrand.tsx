@@ -92,6 +92,15 @@ const brands = [
     shadow: "hover:shadow-[0_8px_24px_rgba(0,0,0,0.15)]",
     labelHover: "group-hover:text-[#0B0B0B]",
   },
+  {
+    name: "Meizu",
+    logo: "/images/brands/meizu-logo.svg",
+    slug: "meizu",
+    card: "from-[#eff6ff] to-[#dbeafe]",
+    border: "border-[#bfdbfe] hover:border-[#0066CC]",
+    shadow: "hover:shadow-[0_8px_24px_rgba(0,102,204,0.15)]",
+    labelHover: "group-hover:text-[#0066CC]",
+  },
 ];
 
 export default function ShopByBrand() {

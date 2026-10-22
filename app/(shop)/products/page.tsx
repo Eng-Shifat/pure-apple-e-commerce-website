@@ -45,7 +45,7 @@ interface DbProduct {
 const BRAND_LABEL: Record<string, string> = {
   apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi",
   realme: "Realme", nothing: "Nothing", motorola: "Motorola", vivo: "Vivo",
-  honor: "Honor", iqoo: "iQOO", google: "Google",
+  honor: "Honor", iqoo: "iQOO", google: "Google", meizu: "Meizu",
   charger: "Charger", speaker: "Speaker", earbuds: "Ear Buds",
   powerbank: "Power Bank", cables: "Cables", accessories: "Accessories",
 };
@@ -63,6 +63,7 @@ const CATEGORIES = [
   { label: "Honor",    key: "honor",    bgFill: "#CC0000", logoColor: "text-red-700"    },
   { label: "iQOO",     key: "iqoo",     bgFill: "#0B0B0B", logoColor: "text-gray-900"   },
   { label: "Google",   key: "google",   bgFill: "#4285F4", logoColor: "text-blue-600"   },
+  { label: "Meizu",    key: "meizu",    bgFill: "#0066CC", logoColor: "text-blue-600"   },
 ];
 
 const ACCESSORY_CATEGORIES = [
@@ -86,7 +87,7 @@ type SortKey = "featured" | "price-asc" | "price-desc" | "rating";
 const SLUG_TO_BRAND: Record<string, string> = {
   apple: "Apple", samsung: "Samsung", oneplus: "OnePlus", redmi: "Redmi",
   realme: "Realme", nothing: "Nothing", motorola: "Motorola", vivo: "Vivo",
-  honor: "Honor", iqoo: "iQOO", google: "Google",
+  honor: "Honor", iqoo: "iQOO", google: "Google", meizu: "Meizu",
   charger: "Charger", speaker: "Speaker", earbuds: "Ear Buds",
   powerbank: "Power Bank", cables: "Cables", accessories: "Accessories",
 };

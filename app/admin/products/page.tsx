@@ -49,7 +49,7 @@ const BADGE_PRESETS = [
 const CATEGORIES = [
   "All",
   // Phone brands
-  "apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing",
+  "apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing","meizu",
   // Accessories
   "charger","speaker","earbuds","powerbank","cables","accessories",
 ];
@@ -744,7 +744,7 @@ export default function AdminProductsPage() {
 
         {/* ── Category + Condition — single combined row ── */}
         {(() => {
-          const PHONE_BRANDS = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
+          const PHONE_BRANDS = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing","meizu"];
           const ACCESSORIES  = ["charger","speaker","earbuds","powerbank","cables","accessories"];
           const isPhone = PHONE_BRANDS.includes(category);
           const isAcc   = ACCESSORIES.includes(category);
@@ -890,7 +890,7 @@ export default function AdminProductsPage() {
           ) : (
             displayed.map((p, idx) => {
               // Colorful row tinting by category group
-              const PHONE_SET = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing"];
+              const PHONE_SET = ["apple","samsung","google","oneplus","redmi","realme","vivo","iqoo","honor","motorola","nothing","meizu"];
               const ACC_SET   = ["charger","speaker","earbuds","powerbank","cables","accessories"];
               // Image missing check
               // Valid image = starts with / or https:// (same as SharedProductCard)
