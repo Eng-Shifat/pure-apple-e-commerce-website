@@ -1,11 +1,11 @@
 // SAVE PATH: lib/supabase-server.ts
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 // Memoized per warm Lambda instance. This helper runs on nearly every
 // request (login, logout, /me, admin checks, uploads) — rebuilding the
 // Supabase client each time was wasted Active CPU on Vercel's Fluid
 // Compute billing. Reuse the same client across requests instead.
-let _supabaseAdmin: ReturnType<typeof createClient> | null = null;
+let _supabaseAdmin: SupabaseClient | null = null;
 
 export function getSupabaseAdmin() {
   if (_supabaseAdmin) return _supabaseAdmin;

@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { offerStatus, resolveOfferPrice, type Offer } from "@/lib/offers";
 import { todaysDealOffer, TODAYS_DEAL_SLUG } from "@/lib/todaysDeal";
 
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 // Built once per warm Lambda instance, not once per request —
 // createClient() does real setup work (CPU), and this route can be
 // hit a lot, so reusing the client across requests cuts Active CPU.
-let _supabase: ReturnType<typeof createClient> | null = null;
+let _supabase: SupabaseClient | null = null;
 function getSupabase() {
   if (!_supabase) {
     _supabase = createClient(
