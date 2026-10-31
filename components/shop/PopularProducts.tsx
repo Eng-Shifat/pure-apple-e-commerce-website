@@ -85,8 +85,9 @@ export default function PopularProducts() {
   function slide(dir: "left" | "right") {
     const el = sliderRef.current;
     if (!el) return;
-    const cardWidth = el.querySelector("div")?.offsetWidth ?? 220;
-    el.scrollBy({ left: dir === "left" ? -(cardWidth + 16) * 2 : (cardWidth + 16) * 2, behavior: "smooth" });
+    // scroll by ~2 columns worth
+    const cardWidth = 215 + 16; // card width + gap
+    el.scrollBy({ left: dir === "left" ? -(cardWidth * 2) : cardWidth * 2, behavior: "smooth" });
   }
 
   function handleAddToCart(p: Product) {
@@ -112,7 +113,7 @@ export default function PopularProducts() {
             <p className="hidden sm:block text-gray-400 text-sm mt-1">Discover the most loved devices by our customers.</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {/* Desktop nav arrows */}
+            {/* Prev / Next arrows — desktop only */}
             <div className="hidden sm:flex items-center gap-1">
               <button
                 onClick={() => slide("left")}
@@ -141,34 +142,54 @@ export default function PopularProducts() {
         </div>
 
         {loading ? (
-          /* Skeleton — single-row scroll on all sizes */
-          <div className="flex gap-4 overflow-x-hidden pb-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="rounded-2xl bg-gray-100 animate-pulse shrink-0"
-                style={{ width: "200px", height: "320px" }}
-              />
-            ))}
-          </div>
-        ) : (
-          /* ── Single-row slider on ALL screen sizes ── */
-          <div className="relative">
+          <>
+            {/* Mobile skeleton */}
+            <div className="flex gap-3 overflow-x-hidden sm:hidden pb-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-[175px] shrink-0 rounded-2xl bg-gray-100 animate-pulse" style={{ height: "320px" }} />
+              ))}
+            </div>
+            {/* Desktop skeleton — 2-row grid */}
             <div
-              ref={sliderRef}
-              className="flex gap-4 overflow-x-auto pb-3 pt-4 scroll-smooth"
+              className="hidden sm:grid gap-4"
+              style={{ gridTemplateRows: "repeat(2, auto)", gridAutoFlow: "column", gridAutoColumns: "215px" }}
+            >
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="rounded-2xl bg-gray-100 animate-pulse" style={{ height: "320px" }} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* ── Mobile: single-row horizontal scroll ── */}
+            <div
+              className="flex gap-3 overflow-x-auto sm:hidden pb-2 pt-4"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {products.map((p) => (
-                <div
-                  key={p.id}
-                  className="shrink-0 w-[175px] sm:w-[200px] lg:w-[215px]"
-                >
+                <div key={p.id} className="w-[175px] shrink-0">
                   <ProductCard product={p} onAddToCart={handleAddToCart} />
                 </div>
               ))}
             </div>
-          </div>
+
+            {/* ── Desktop: 2-row grid that slides horizontally ── */}
+            <div
+              ref={sliderRef}
+              className="hidden sm:grid gap-4 overflow-x-auto pt-3 pb-4"
+              style={{
+                gridTemplateRows: "repeat(2, auto)",
+                gridAutoFlow: "column",
+                gridAutoColumns: "215px",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }}
+            >
+              {products.map((p) => (
+                <ProductCard key={p.id} product={p} onAddToCart={handleAddToCart} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </section>

@@ -1,3 +1,4 @@
+// SAVE PATH: components/shop/BestDeals.tsx
 "use client";
 
 import Link from "next/link";
@@ -80,8 +81,8 @@ export default function BestDeals() {
   function slide(dir: "left" | "right") {
     const el = sliderRef.current;
     if (!el) return;
-    const cardWidth = el.querySelector("div")?.offsetWidth ?? 220;
-    el.scrollBy({ left: dir === "left" ? -(cardWidth + 16) * 2 : (cardWidth + 16) * 2, behavior: "smooth" });
+    const cardWidth = 215 + 16; // card width + gap
+    el.scrollBy({ left: dir === "left" ? -(cardWidth * 2) : cardWidth * 2, behavior: "smooth" });
   }
 
   function handleAddToCart(p: Product) {
@@ -104,7 +105,7 @@ export default function BestDeals() {
             <p className="text-gray-400 text-sm mt-1">Top offers. Limited time only.</p>
           </div>
           <div className="flex items-center gap-2">
-            {/* Desktop nav arrows */}
+            {/* Prev / Next arrows — desktop only */}
             <div className="hidden sm:flex items-center gap-1">
               <button
                 onClick={() => slide("left")}
@@ -132,22 +133,33 @@ export default function BestDeals() {
           </div>
         </div>
 
-        {/* ── Single-row slider on ALL screen sizes ── */}
-        <div className="relative">
-          <div
-            ref={sliderRef}
-            className="flex gap-4 overflow-x-auto pb-4 scroll-smooth"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="shrink-0 w-[175px] sm:w-[200px] lg:w-[215px]"
-              >
-                <ProductCard product={product} onAddToCart={handleAddToCart} />
-              </div>
-            ))}
-          </div>
+        {/* ── Mobile: single-row horizontal scroll ── */}
+        <div
+          className="flex gap-3 overflow-x-auto sm:hidden pb-4"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {products.map((product) => (
+            <div key={product.id} className="flex-shrink-0 w-[175px]">
+              <ProductCard product={product} onAddToCart={handleAddToCart} />
+            </div>
+          ))}
+        </div>
+
+        {/* ── Desktop: 2-row grid that slides horizontally ── */}
+        <div
+          ref={sliderRef}
+          className="hidden sm:grid gap-4 overflow-x-auto pb-8"
+          style={{
+            gridTemplateRows: "repeat(2, auto)",
+            gridAutoFlow: "column",
+            gridAutoColumns: "215px",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+          ))}
         </div>
 
       </div>
