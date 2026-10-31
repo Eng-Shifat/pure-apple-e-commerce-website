@@ -381,9 +381,12 @@ export default function Navbar() {
               <div className="relative" ref={catRef}
                 onMouseEnter={handleCatEnter}
                 onMouseLeave={handleCatLeave}>
-                <button className={`flex items-center gap-1 text-sm font-medium transition-colors ${catHover ? "text-brand-600" : "text-gray-800 hover:text-brand-600"}`}>
+                <Link
+                  href="/products?view=categories"
+                  onClick={() => { setCatHover(false); setCatVisible(false); }}
+                  className={`flex items-center gap-1 text-sm font-medium transition-colors ${catHover ? "text-brand-600" : "text-gray-800 hover:text-brand-600"}`}>
                   Categories <ChevronDown size={14} className={`transition-transform duration-200 ${catHover ? "rotate-180" : ""}`} />
-                </button>
+                </Link>
 
                 <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[600px] transition-all duration-200 origin-top ${catHover ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-1 pointer-events-none"}`}>
                   <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex">
