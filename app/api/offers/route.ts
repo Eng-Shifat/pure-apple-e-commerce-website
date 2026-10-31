@@ -1,4 +1,4 @@
-// app/api/offers/route.ts
+// SAVE PATH: app/api/offers/route.ts
 // GET  /api/offers                → live + upcoming offers (products সহ) — homepage
 // GET  /api/offers?slug=black-friday → একটা offer, সব product সহ
 // GET  /api/offers?all=true       → admin: সব offer (ended সহ)
@@ -12,11 +12,18 @@ import { todaysDealOffer, TODAYS_DEAL_SLUG } from "@/lib/todaysDeal";
 
 export const dynamic = "force-dynamic";
 
+// Built once per warm Lambda instance, not once per request —
+// createClient() does real setup work (CPU), and this route can be
+// hit a lot, so reusing the client across requests cuts Active CPU.
+let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

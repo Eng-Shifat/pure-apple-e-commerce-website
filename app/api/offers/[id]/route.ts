@@ -1,3 +1,4 @@
+// SAVE PATH: app/api/offers/[id]/route.ts
 // PUT    /api/offers/[id] → offer update (+ products replace করতে `products` পাঠান)
 // DELETE /api/offers/[id] → offer delete
 
@@ -5,11 +6,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { createClient } from "@supabase/supabase-js";
 
+// Built once per warm Lambda instance, not once per request —
+// createClient() does real setup work (CPU), and this route can be
+// hit a lot, so reusing the client across requests cuts Active CPU.
+let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

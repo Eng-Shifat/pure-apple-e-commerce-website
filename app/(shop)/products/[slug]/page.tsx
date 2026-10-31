@@ -1,3 +1,4 @@
+// SAVE PATH: app/(shop)/products/[slug]/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -293,6 +294,12 @@ export default function ProductDetailPage() {
         (payload) => setProduct((prev) => (prev ? { ...prev, ...(payload.new as Partial<Product>) } : prev))
       )
       .subscribe();
+    // NOTE: Supabase realtime (above) already pushes product updates over a
+    // websocket for free — it does NOT call a Vercel serverless function.
+    // We previously ALSO polled /api/products every 30s per open tab, which
+    // burned Vercel function invocations/compute for no real benefit. That
+    // poll is removed; we only do one lightweight refetch when the user
+    // comes back to the tab (covers the rare case a realtime event was missed).
     const refetch = () => {
       if (document.visibilityState === "hidden") return;
       fetch(`/api/products?slug=${slug}`, { cache: "no-store" })
@@ -304,11 +311,9 @@ export default function ProductDetailPage() {
         })
         .catch(() => {});
     };
-    const timer = setInterval(refetch, 30000);
     document.addEventListener("visibilitychange", refetch);
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(timer);
       document.removeEventListener("visibilitychange", refetch);
     };
   }, [product?.id, slug]);

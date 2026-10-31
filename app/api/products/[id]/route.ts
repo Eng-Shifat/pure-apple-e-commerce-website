@@ -4,11 +4,18 @@ import { requireAdmin } from "@/lib/adminAuth";
 import { clearCache } from "@/lib/serverCache";
 import { createClient } from "@supabase/supabase-js";
 
+// Built once per warm Lambda instance, not once per request —
+// createClient() does real setup work (CPU), and this route can be
+// hit a lot, so reusing the client across requests cuts Active CPU.
+let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
 }
 
 // GET /api/products/[id]
