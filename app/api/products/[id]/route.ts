@@ -57,6 +57,7 @@ export async function PUT(
     // New: offer system
     "offer_price_brand_new", "offer_price_pre_owned",
     "offer_ends_at", "offer_type",
+    "description",
   ];
 
   const payload: Record<string, unknown> = {};

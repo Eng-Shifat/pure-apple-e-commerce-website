@@ -1,4 +1,5 @@
 // SAVE PATH: app/api/products/route.ts
+const ACCESSORY_CATS = new Set(["charger","speaker","earbuds","powerbank","cables","accessories"]);
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -166,9 +167,10 @@ export async function POST(req: NextRequest) {
     // New: offer system
     offer_price_brand_new, offer_price_pre_owned,
     offer_ends_at, offer_type,
+    description,
   } = body;
 
-  if (!name || !price || !slug || !image) {
+  if (!name || !price || !slug || (!image && !ACCESSORY_CATS.has(category ?? ""))) {
     return NextResponse.json({ error: "name, price, slug and image are required" }, { status: 400 });
   }
 
@@ -211,6 +213,7 @@ export async function POST(req: NextRequest) {
     offer_price_pre_owned: offer_price_pre_owned ? Number(offer_price_pre_owned) : null,
     offer_ends_at: offer_ends_at ?? null,
     offer_type:    offer_type ?? null,
+    description: description ?? null,
     created_at: new Date().toISOString(),
   }]).select().single();
 

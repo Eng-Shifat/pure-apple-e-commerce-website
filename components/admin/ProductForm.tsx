@@ -46,6 +46,7 @@ interface ProductFormProps {
     is_today_deal?: boolean;
     deal_price?: number | null;
     deal_ends_at?: string | null;
+    description?: string | null;
   };
   mode?: "create" | "edit";
 }
@@ -79,6 +80,9 @@ const CATEGORIES = [
   { label: "Cables",      value: "cables"      },
   { label: "Accessories", value: "accessories" },
 ];
+
+// Categories that are accessories (not phones) — show description box, hide phone specs
+const ACCESSORY_CATEGORIES = new Set(["charger", "speaker", "earbuds", "powerbank", "cables", "accessories"]);
 
 const OFFER_TYPES = ["Offer", "Today's Deal", "Flash Sale", "Weekend Deal", "Clearance"];
 const COLOR_PRESETS = ["Black","White","Silver","Gold","Burgundy","Glacier","Desert Titanium","Natural Titanium","Blue Titanium","Purple","Pink","Green","Yellow","Red","Midnight","Starlight"];
@@ -237,6 +241,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     offer_price_pre_owned: String(initialData.offer_price_pre_owned ?? ""),
     offer_ends_at:   toDatetimeLocal(initialData.offer_ends_at),
     offer_type:      initialData.offer_type ?? "Offer",
+    description:     initialData.description ?? "",
   });
 
   function set(key: string, value: unknown) {
@@ -480,6 +485,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         // region_prices ও regions এখন matrix থেকে derived — backward compat এর জন্য রাখছি
         region_prices:    null,
         regions:          regionList.length > 0 ? regionList.join(",") : null,
+        description:      form.description.trim() || null,
       }),
     });
 
@@ -490,10 +496,11 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
     setTimeout(() => router.push("/admin/products"), 1200);
   }
 
-  const previewSrc = safeImageSrc(form.image);
-  const isBrandNew = form.condition === "brand-new";
-  const isPreOwned = form.condition === "pre-owned";
-  const hasImage   = !!previewSrc || !!localPreview;
+  const previewSrc   = safeImageSrc(form.image);
+  const isBrandNew   = form.condition === "brand-new";
+  const isPreOwned   = form.condition === "pre-owned";
+  const hasImage     = !!previewSrc || !!localPreview;
+  const isAccessory  = ACCESSORY_CATEGORIES.has(form.category);
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto p-6 space-y-8">
@@ -663,8 +670,8 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         )}
       </section>
 
-      {/* ── 💾 Storage + Region Matrix Pricing ── */}
-      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
+      {/* ── 💾 Storage + Region Matrix Pricing (phones only) ── */}
+      {!isAccessory && <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
         <div>
           <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">💾 Storage & Region Pricing</h2>
           <p className="text-xs text-gray-400 mt-1">
@@ -820,7 +827,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
           </div>
         )}
         {storageVariants.length === 0 && <p className="text-xs text-gray-400">Storage variant না দিলে region pricing দেখাবে না।</p>}
-      </section>
+      </section>}
 
       {/* ── Product Image (Main) ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
@@ -999,8 +1006,8 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         <p className="text-[11px] text-gray-400">Max 20 KB per upload। উপরে color select করে তারপর photo add করুন। URL paste করে Enter বা + press করুন।</p>
       </section>
 
-      {/* ── Battery Health ── */}
-      <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+      {/* ── Battery Health (phones only) ── */}
+      {!isAccessory && <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Battery Health (Optional)</h2>
         <div className="max-w-xs">
           <label className="block text-xs font-semibold text-gray-600 mb-1">Battery Health (%)</label>
@@ -1017,7 +1024,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
           </div>
           <p className="text-[11px] text-gray-400 mt-1">একটি সংখ্যা (89) বা range (91-95) দিতে পারবেন</p>
         </div>
-      </section>
+      </section>}
 
       {/* ── Badge ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
@@ -1043,7 +1050,46 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
         </div>
       </section>
 
-      {/* ── Specs ── */}
+      {/* ── Description (Accessories only) ── */}
+      {isAccessory && (
+        <section className="bg-white rounded-2xl border-2 border-blue-200 p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">📝 Description</h2>
+            <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full uppercase">Accessories</span>
+          </div>
+          <p className="text-xs text-gray-500">
+            Product-এর বিবরণ লিখুন — compatibility, wattage, cable type ইত্যাদি। Product page-এ সরাসরি দেখাবে।
+          </p>
+          <div className="relative">
+            <textarea
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              placeholder={
+                form.category === "charger"
+                  ? "e.g. 65W GaN fast charger, USB-C + USB-A dual port, compatible with iPhone 15/16, Samsung Galaxy S series..."
+                  : form.category === "earbuds"
+                  ? "e.g. Active Noise Cancellation, 30hr battery, IPX5 water resistant, Bluetooth 5.3..."
+                  : form.category === "speaker"
+                  ? "e.g. 20W stereo output, 360° sound, IPX7 waterproof, 12hr playtime, Bluetooth 5.0..."
+                  : form.category === "powerbank"
+                  ? "e.g. 20000mAh, 65W PD fast charging, 2x USB-C + 1x USB-A, LED indicator..."
+                  : form.category === "cables"
+                  ? "e.g. USB-C to Lightning, 1.2m braided cable, 30W fast charging, MFi certified..."
+                  : "Product description লিখুন — features, compatibility, specifications..."
+              }
+              rows={6}
+              maxLength={2000}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-y leading-relaxed"
+            />
+            <span className="absolute bottom-3 right-3 text-[10px] text-gray-300 font-mono select-none">
+              {form.description.length}/2000
+            </span>
+          </div>
+        </section>
+      )}
+
+      {/* ── Specs (phones only) ── */}
+      {!isAccessory && (
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
         <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">Specs</h2>
         <div className="grid grid-cols-3 gap-4">
@@ -1061,6 +1107,7 @@ export default function ProductForm({ initialData = {}, mode = "create" }: Produ
           </div>
         </div>
       </section>
+      )}
 
       {/* ── EMI & WhatsApp ── */}
       <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
