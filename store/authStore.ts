@@ -1,7 +1,6 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { supabase } from "@/lib/supabase";
 
 // ── Server-এ admin যাচাই (timeout সহ — spinner যেন কখনো আটকে না থাকে) ──
 // এই "verified" সময় শুধু memory-তে থাকে (localStorage-এ না), তাই tab reload হলে আবার যাচাই হয়।
@@ -33,6 +32,7 @@ export interface AuthUser {
   email: string;
   role: "admin" | "customer";
   name: string;
+  accessToken?: string;
 }
 
 interface AuthStore {
@@ -51,28 +51,41 @@ export const useAuthStore = create<AuthStore>()(
       setHasHydrated: (v) => set({ _hasHydrated: v }),
 
       async login(email, password) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return { ok: false, error: error.message };
+        // সরাসরি Supabase-এ না গিয়ে Next.js API route দিয়ে login — CORS সমস্যা নেই
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
 
-        // admin কিনা — server যাচাই করে (client-এর কথায় বিশ্বাস নেই)
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          return { ok: false, error: data.error ?? "Login failed" };
+        }
+
+        const { user: u, session } = await res.json();
+        const token = session?.access_token ?? "";
+
+        // admin কিনা — server যাচাই করে
         let role: "admin" | "customer" = "customer";
         try {
-          if (await verifyAdminOnServer(data.session?.access_token ?? "", 5000)) role = "admin";
-        } catch { /* timeout/network হলে customer ধরা হবে; admin হলে /admin layout আবার যাচাই করবে */ }
+          if (await verifyAdminOnServer(token, 5000)) role = "admin";
+        } catch { /* timeout/network হলে customer ধরা হবে */ }
 
         set({
           user: {
-            id: data.user.id,
-            email: data.user.email ?? "",
+            id: u.id,
+            email: u.email ?? "",
             role,
-            name: data.user.email?.split("@")[0] ?? "User",
+            name: u.email?.split("@")[0] ?? "User",
+            accessToken: token,
           },
         });
         return { ok: true, role };
       },
 
       async logout() {
-        await supabase.auth.signOut();
+        await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
         set({ user: null });
       },
     }),

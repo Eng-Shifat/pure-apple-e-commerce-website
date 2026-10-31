@@ -5,7 +5,6 @@ import Link from "next/link";
 import ShineLogo from "@/components/shop/ShineLogo";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore, verifyAdminOnServer, recentlyVerifiedAdmin } from "@/store/authStore";
-import { supabase } from "@/lib/supabase";
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart3,
   LogOut, ChevronRight, ExternalLink, FolderOpen, Flame,
@@ -36,8 +35,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        const token = data.session?.access_token;
+        // supabase client-এর বদলে store থেকে token নিচ্ছি — CORS নেই
+        const token = user.accessToken;
         if (!token) { if (!cancelled) { setVerified(false); router.replace("/login"); } return; }
 
         if (user.role === "admin" && recentlyVerifiedAdmin()) { if (!cancelled) setVerified(true); return; }
