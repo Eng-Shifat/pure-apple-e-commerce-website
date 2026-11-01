@@ -38,6 +38,12 @@ const clientPhotos = [
   "/images/Happy Client/23.webp",
   "/images/Happy Client/24.webp",
   "/images/Happy Client/25.webp",
+  "/images/Happy Client/26.webp",
+  "/images/Happy Client/27.webp",
+  "/images/Happy Client/28.webp",
+  "/images/Happy Client/29.webp",
+  "/images/Happy Client/30.webp",
+  "/images/Happy Client/31.webp",
 ];
 
 // ─── Infinite Marquee ─────────────────────────────────────────────────
