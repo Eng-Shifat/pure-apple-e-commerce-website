@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { Eye, EyeOff, Loader2, LogIn, Mail, Lock } from "lucide-react";
 import Navbar from "@/components/shop/Navbar";
@@ -10,13 +10,16 @@ import MobileBottomNav from "@/components/shop/MobileBottomNav";
 import ShineLogo from "@/components/shop/ShineLogo";
 
 export default function LoginPage() {
-  const router    = useRouter();
-  const login     = useAuthStore((s) => s.login);
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const login        = useAuthStore((s) => s.login);
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [showPw,   setShowPw]   = useState(false);
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
+
+  const sessionExpired = searchParams.get("reason") === "session_expired";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +51,14 @@ export default function LoginPage() {
               Welcome back — sign in to your account
             </p>
           </div>
+
+          {/* ── Session expired notice ── */}
+          {sessionExpired && (
+            <div className="mb-4 flex items-start gap-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-2xl">
+              <span className="text-base leading-none mt-0.5">⏱️</span>
+              <p>আপনার admin session শেষ হয়ে গেছে। আবার login করুন।</p>
+            </div>
+          )}
 
           {/* ── Card ── */}
           <div className="bg-white rounded-3xl border border-gray-100 shadow-lg shadow-orange-50/60 overflow-hidden">

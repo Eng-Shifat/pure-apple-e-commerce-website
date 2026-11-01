@@ -31,26 +31,44 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!hasHydrated) return;
+
+    // User নেই → login-এ পাঠাও
     if (!user) { router.replace("/login"); return; }
+
+    // Token নেই → session invalid, login-এ পাঠাও
+    const token = user.accessToken;
+    if (!token) { router.replace("/login"); return; }
+
+    // ✅ সম্প্রতি verified admin → আবার network call না করে সরাসরি allow
+    if (user.role === "admin" && recentlyVerifiedAdmin()) {
+      setVerified(true);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       try {
-        // supabase client-এর বদলে store থেকে token নিচ্ছি — CORS নেই
-        const token = user.accessToken;
-        if (!token) { if (!cancelled) { setVerified(false); router.replace("/login"); } return; }
-
-        if (user.role === "admin" && recentlyVerifiedAdmin()) { if (!cancelled) setVerified(true); return; }
-
         const ok = await verifyAdminOnServer(token, 10000);
         if (cancelled) return;
-        setVerified(ok);
-        if (!ok) router.replace("/");
+
+        if (ok) {
+          // ✅ Server confirmed admin
+          setVerified(true);
+        } else {
+          // ❌ Token expired বা admin না — logout করে login-এ পাঠাও
+          // Home-এ না পাঠানোর কারণ: user ভাববে "কেন home-এ?" — login-এ
+          // পাঠালে বুঝবে session শেষ হয়ে গেছে।
+          setVerified(false);
+          await logout();
+          router.replace("/login?reason=session_expired");
+        }
       } catch {
+        // Network/timeout → error screen দেখাও যাতে retry করতে পারে
         if (!cancelled) setVerified("error");
       }
     })();
     return () => { cancelled = true; };
-  }, [user, hasHydrated, router, attempt]);
+  }, [user, hasHydrated, router, attempt, logout]);
 
   if (verified === "error") {
     return (
