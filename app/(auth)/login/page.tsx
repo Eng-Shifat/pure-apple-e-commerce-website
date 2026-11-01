@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
@@ -9,17 +9,33 @@ import Navbar from "@/components/shop/Navbar";
 import MobileBottomNav from "@/components/shop/MobileBottomNav";
 import ShineLogo from "@/components/shop/ShineLogo";
 
+// ── useSearchParams() must live inside a <Suspense> boundary ──────────────
+// Next.js 16 (App Router) throws a build error if useSearchParams() is
+// called outside Suspense during static prerendering.
+// Solution: extract everything that reads searchParams into a child
+// component and wrap it in <Suspense> from the parent.
+// ─────────────────────────────────────────────────────────────────────────
+
+function SessionExpiredBanner() {
+  const searchParams   = useSearchParams();
+  const sessionExpired = searchParams.get("reason") === "session_expired";
+  if (!sessionExpired) return null;
+  return (
+    <div className="mb-4 flex items-start gap-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-2xl">
+      <span className="text-base leading-none mt-0.5">⏱️</span>
+      <p>আপনার admin session শেষ হয়ে গেছে। আবার login করুন।</p>
+    </div>
+  );
+}
+
 export default function LoginPage() {
-  const router       = useRouter();
-  const searchParams = useSearchParams();
-  const login        = useAuthStore((s) => s.login);
+  const router   = useRouter();
+  const login    = useAuthStore((s) => s.login);
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [showPw,   setShowPw]   = useState(false);
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
-
-  const sessionExpired = searchParams.get("reason") === "session_expired";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,13 +68,10 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* ── Session expired notice ── */}
-          {sessionExpired && (
-            <div className="mb-4 flex items-start gap-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-2xl">
-              <span className="text-base leading-none mt-0.5">⏱️</span>
-              <p>আপনার admin session শেষ হয়ে গেছে। আবার login করুন।</p>
-            </div>
-          )}
+          {/* ── Session expired notice (Suspense required for useSearchParams) ── */}
+          <Suspense fallback={null}>
+            <SessionExpiredBanner />
+          </Suspense>
 
           {/* ── Card ── */}
           <div className="bg-white rounded-3xl border border-gray-100 shadow-lg shadow-orange-50/60 overflow-hidden">
